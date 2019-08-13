@@ -1,0 +1,19 @@
+language: smalltalk
+
+services:
+  - rabbitmq
+
+os:
+  - linux
+
+smalltalk:
+  - Pharo32-stable
+  - Pharo64-stable
+  - Pharo32-alpha
+  - Pharo64-alpha
+
+matrix:
+  allow_failures:
+    - smalltalk: Pharo32-alpha
+    - smalltalk: Pharo64-alpha
+  fash_finish: true
