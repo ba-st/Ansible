@@ -228,8 +228,7 @@ AMQPTest >> testBasicGetWithImplicitAcknowledge [
 
 	self
 		withQueueNamed: 'hello'
-		declaredOnChannelDo: [ :queue :channel | 
-			| messageReceived |
+		declaredOnChannelDo: [ :queue :channel | | messageReceived |
 
 			channel
 				basicPublish: 'Hello world!' utf8Encoded
