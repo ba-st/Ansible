@@ -61,7 +61,7 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 	super loadFrom: anXmlNode.
 	fields := OrderedCollection new.
 	xml
-		tagsNamed: #field
+		elementsAt: #field
 		do: [ :each | 
 			fields
 				add:
@@ -72,7 +72,7 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 	hasContents := ( xml attributeAt: #content ) = '1'.
 	synchronous := ( xml attributeAt: #synchronous ) = '1'.
 	xml
-		tagsNamed: #chassis
+		elementsAt: #chassis
 		do: [ :each | 
 			( each attributeAt: #name ) = 'server'
 				ifTrue: [ serverMethod := true ].
@@ -81,7 +81,7 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 			].
 	responses := Set new.
 	xml
-		tagsNamed: #response
+		elementsAt: #response
 		do: [ :each | responses add: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) ) ]
 ]
 

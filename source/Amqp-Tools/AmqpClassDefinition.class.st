@@ -26,7 +26,7 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 	super loadFrom: anXmlNode.
 	methods := Dictionary new.
 	xml
-		tagsNamed: #method
+		elementsAt: #method
 		do: [ :each | 
 			AmqpMethodDefinition new
 				loadFrom: each;
@@ -36,14 +36,14 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 
 	contentProperties := OrderedCollection new.
 	xml
-		tagsNamed: #field
-		childrenDo: [ :each | 
+		descendantElementsNamed: #field
+		do: [ :each |  
 			contentProperties
 				add:
 					( AmqpFieldDefinition new
 						loadFrom: each;
 						container: self )
-			]
+			] 
 ]
 
 { #category : #accessing }

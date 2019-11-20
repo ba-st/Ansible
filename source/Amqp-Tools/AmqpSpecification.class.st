@@ -48,7 +48,7 @@ AmqpSpecification class >> official091 [
 { #category : #accessing }
 AmqpSpecification >> allMethods [
 
-	^ ( classDefinitions values collect: [ :each | each methods values ] ) concatenation
+	^ ( classDefinitions values collect: [ :each | each methods values ] ) flattened
 ]
 
 { #category : #accessing }
@@ -133,27 +133,29 @@ AmqpSpecification >> loadFromXml: aStream [
 	portNumber := ( a attributeAt: #port ) asInteger.
 
 	constants := Dictionary new.
+
 	a
-		tagsNamed: #constant
-		childrenDo: [ :each | 
+		descendantElementsNamed: #constant
+		do: [ :constant | 
 			constants
-				at: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) )
-				put: ( each attributeAt: #value ) asInteger
+				at: ( self class normalizeName: ( constant attributeAt: #name ) )
+				put: ( constant attributeAt: #value ) asInteger
 			].
+
 
 	domains := Dictionary new.
 	self insertBaseDomains.
 	a
-		tagsNamed: #domain
-		childrenDo: [ :each | 
+		descendantElementsNamed: #domain
+		do: [ :domain | 
 			domains
-				at: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) )
-				put: ( AmqpSpecification normalizeName: ( each attributeAt: #type ) )
+				at: ( self class normalizeName: ( domain attributeAt: #name ) )
+				put: ( self class normalizeName: ( domain attributeAt: #type ) )
 			].
 
 	classDefinitions := Dictionary new.
 	a
-		tagsNamed: #class
+		elementsAt: #class
 		do: [ :each | 
 			AmqpClassDefinition new
 				loadFrom: each;
