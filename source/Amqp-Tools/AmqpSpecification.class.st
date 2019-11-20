@@ -135,7 +135,7 @@ AmqpSpecification >> loadFromXml: aStream [
 	constants := Dictionary new.
 
 	a
-		descendantElementsNamed: #constant
+		allElementsNamed: #constant
 		do: [ :constant | 
 			constants
 				at: ( self class normalizeName: ( constant attributeAt: #name ) )
@@ -146,7 +146,7 @@ AmqpSpecification >> loadFromXml: aStream [
 	domains := Dictionary new.
 	self insertBaseDomains.
 	a
-		descendantElementsNamed: #domain
+		allElementsNamed: #domain
 		do: [ :domain | 
 			domains
 				at: ( self class normalizeName: ( domain attributeAt: #name ) )

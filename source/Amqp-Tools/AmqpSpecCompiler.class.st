@@ -307,7 +307,7 @@ AmqpSpecCompiler >> generateEverything [
 	spec constants
 		keysAndValuesDo: [ :name :value | 
 			pc
-				compile: ( AmqpSpecCompiler methodNameFor: name ) , ' ^' , value asString
+				compile: ( self class methodNameFor: name ) , ' ^' , value asString
 				classified: 'AMQP protocol constants'
 			].
 
@@ -318,7 +318,7 @@ AmqpSpecCompiler >> generateEverything [
 		do: [ :def | 
 			pc
 				compile:
-					( AmqpSpecCompiler methodNameFor: def classDef name , ' ' , def name , ' method' ) , ' ^ '
+					( self class methodNameFor: def classDef name , ' ' , def name , ' method' ) , ' ^ '
 						, ( self classNameFor: def classDef name , ' ' , def name )
 				classified: 'AMQP methods'
 			].
@@ -327,7 +327,7 @@ AmqpSpecCompiler >> generateEverything [
 			def hasProperties
 				ifTrue: [ pc
 						compile:
-							( AmqpSpecCompiler methodNameFor: def propertiesName , ' class' ) , ' ^ '
+							( self class methodNameFor: def propertiesName , ' class' ) , ' ^ '
 								, ( self classNameFor: def propertiesName )
 						classified: 'AMQP content properties'
 					]

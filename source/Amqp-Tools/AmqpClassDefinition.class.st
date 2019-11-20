@@ -36,7 +36,7 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 
 	contentProperties := OrderedCollection new.
 	xml
-		descendantElementsNamed: #field
+		elementsAt: #field
 		do: [ :each |  
 			contentProperties
 				add:
