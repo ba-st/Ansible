@@ -13,7 +13,7 @@ Class {
 	#category : #'Amqp-Tools'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> loadFrom: aUrl [
 
 	^ self new loadFromXml: aUrl asUrl retrieveContents contents readStream
@@ -30,18 +30,19 @@ AmqpSpecification class >> normalizeName: aString [
 	^ s
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> official08 [
 
 	^ self
-		loadFrom: 'http://jira.amqp.org/confluence/download/attachments/720900/amqp0-8.stripped.xml?version=1'
+		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-8.stripped.xml'
+
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> official091 [
 
 	^ self
-		loadFrom: 'http://jira.amqp.org/confluence/download/attachments/720900/amqp0-9-1.stripped.xml?version=1'
+		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
 ]
 
 { #category : #accessing }
@@ -118,8 +119,8 @@ AmqpSpecification >> loadFromXml: aStream [
 
 	| d a |
 
-	d := XMLDOMParser parseDocumentFrom: aStream.
-	a := d firstTagNamed: #amqp.
+	d := XMLDOMParser parse: aStream.
+	a := d findElementNamed: #amqp.
 
 	majorVersion := ( a attributeAt: #major ) asInteger.
 	minorVersion := ( a attributeAt: #minor ) asInteger.
@@ -207,7 +208,7 @@ AmqpSpecification >> resolve [
 { #category : #accessing }
 AmqpSpecification >> resolveDomain: aString [
 
-	^ domains at: ( AmqpSpecification normalizeName: aString )
+	^ domains at: ( self class normalizeName: aString )
 ]
 
 { #category : #accessing }

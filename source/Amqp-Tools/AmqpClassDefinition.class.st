@@ -17,7 +17,7 @@ AmqpClassDefinition >> contentProperties [
 { #category : #'as yet unclassified' }
 AmqpClassDefinition >> hasProperties [
 
-	^ self contentProperties isEmpty not
+	^ self contentProperties isNotEmpty
 ]
 
 { #category : #'as yet unclassified' }
