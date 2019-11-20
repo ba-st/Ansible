@@ -145,6 +145,13 @@ AmqpChannel >> closeReason [
 ]
 
 { #category : #'AMQP receiving messages' }
+AmqpChannel >> consumeFrom: aQueueName applying: aBlock [
+	
+	^ self consumeFrom: aQueueName callback: aBlock selector: #value:
+
+]
+
+{ #category : #'AMQP receiving messages' }
 AmqpChannel >> consumeFrom: queue callback: anObject selector: aSymbol [
 
 	^ self
