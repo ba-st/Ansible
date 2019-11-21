@@ -60,7 +60,7 @@ AmqpEntityDefinition >> printOn: aStream [
 	super printOn: aStream.
 	aStream
 		space;
-		nextPutAll: name;
+		nextPutAll: name asString;
 		nextPut: $(;
 		nextPutAll: index asString;
 		nextPut: $)

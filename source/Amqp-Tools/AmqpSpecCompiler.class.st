@@ -218,117 +218,118 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> encodePropertiesSource: c [
+AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 
-	| s |
+	| source |
 
-	s := WriteStream with: 'encodeOn: codec
+	source := WriteStream with: 'encodeOn: codec
 	| qFlags |
 	qFlags := 0.
 
 '.
-	c
+	aClassDefinition
 		propertiesAndMasksDo: [ :f :bitMask | 
 			f isReserved
 				ifFalse: [ f domain = 'bit'
-						ifTrue: [ s
+						ifTrue: [ source
 								nextPutAll: '	' , f methodName , ' ifTrue: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
-						ifFalse: [ s
+						ifFalse: [ source
 								nextPutAll: '	' , f methodName , ' isNil ifFalse: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
 					]
 			].
-	s
+	source
 		cr;
 		nextPutAll: '	self encodeFlags: qFlags on: codec.';
 		cr;
 		cr.
-	c
+	aClassDefinition
 		propertiesAndMasksDo: [ :f :bitMask | 
 			f isReserved
 				ifFalse: [ f domain = 'bit'
-						ifFalse: [ s
+						ifFalse: [ source
 								nextPutAll: '	' , f methodName , ' isNil ifFalse: [' , ( self encodeFieldSource: f ) , '].';
 								cr
 							]
 					]
 			].
-	^ s contents
+	^ source contents
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateClass: def [
+AmqpSpecCompiler >> generateClass: aClassDefinition [
 
-	self generateContentProperties: def.
-	def methods valuesDo: [ :each | self generateMethod: each ]
+	self halt.
+	self generateContentProperties: aClassDefinition.
+	aClassDefinition methods valuesDo: [ :method | self generateMethod: method ]
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateContentProperties: def [
+AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 
-	| c fs |
+	| class fs |
 
-	def hasProperties
+	aClassDefinition hasProperties
 		ifFalse: [ ^ self ].
-	fs := def contentProperties reject: [ :each | each isReserved ].
-	c := self
+	fs := aClassDefinition contentProperties reject: [ :each | each isReserved ].
+	class := self
 		subclassOf: AmqpProtocolProperties
-		named: def propertiesName
+		named: aClassDefinition propertiesName
 		instanceVariables: ( fs collect: [ :each | each methodName ] ).
 	fs
 		do: [ :f | 
-			c compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
-			c compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
+			class compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
+			class compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
 			].
-	c compile: 'codecClassId ^ ' , def index asString classified: 'AMQP codec'.
-	c compile: ( self decodePropertiesSource: def ) classified: 'AMQP codec'.
-	c compile: ( self encodePropertiesSource: def ) classified: 'AMQP codec'
+	class compile: 'codecClassId ^ ' , aClassDefinition index asString classified: 'AMQP codec'.
+	class compile: ( self decodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'.
+	class compile: ( self encodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> generateEverything [
 
-	| p pc |
+	| protocol class |
 
-	p := self subclassOf: AmqpProtocol named: '' instanceVariables: #().
-	pc := p class.
+	protocol := self subclassOf: AmqpProtocol named: '' instanceVariables: #().
+	class := protocol class.
 
-	pc compile: 'portNumber ^' , spec portNumber asString classified: 'AMQP protocol'.
-	pc compile: 'majorVersion ^' , spec majorVersion asString classified: 'AMQP protocol'.
-	pc compile: 'minorVersion ^' , spec minorVersion asString classified: 'AMQP protocol'.
-	pc compile: 'revision ^' , spec revision asString classified: 'AMQP protocol'.
-	pc
+	class compile: 'portNumber ^' , spec portNumber asString classified: 'AMQP protocol'.
+	class compile: 'majorVersion ^' , spec majorVersion asString classified: 'AMQP protocol'.
+	class compile: 'minorVersion ^' , spec minorVersion asString classified: 'AMQP protocol'.
+	class compile: 'revision ^' , spec revision asString classified: 'AMQP protocol'.
+	class
 		compile: 'isObsoleteProtocolVariant ^' , spec isObsoleteProtocolVariant asString
 		classified: 'AMQP protocol'.
 
 	spec constants
 		keysAndValuesDo: [ :name :value | 
-			pc
+			class
 				compile: ( self class methodNameFor: name ) , ' ^' , value asString
 				classified: 'AMQP protocol constants'
 			].
 
 	spec classDefinitions valuesDo: [ :def | self generateClass: def ].
-	pc compile: self initializerSource classified: 'class initialization'.
+	class compile: self initializerSource classified: 'class initialization'.
 
 	spec allMethods
 		do: [ :def | 
-			pc
+			class
 				compile:
 					( self class methodNameFor: def classDef name , ' ' , def name , ' method' ) , ' ^ '
 						, ( self classNameFor: def classDef name , ' ' , def name )
 				classified: 'AMQP methods'
 			].
 	spec classDefinitions
-		valuesDo: [ :def | 
-			def hasProperties
-				ifTrue: [ pc
+		valuesDo: [ :classDefinition | 
+			classDefinition hasProperties
+				ifTrue: [ class
 						compile:
-							( self class methodNameFor: def propertiesName , ' class' ) , ' ^ '
-								, ( self classNameFor: def propertiesName )
+							( self class methodNameFor: classDefinition propertiesName , ' class' ) , ' ^ '
+								, ( self classNameFor: classDefinition propertiesName )
 						classified: 'AMQP content properties'
 					]
 			]
@@ -359,46 +360,45 @@ AmqpSpecCompiler >> generateMethod: def [
 { #category : #accessing }
 AmqpSpecCompiler >> initializerSource [
 
-	| source |
+	^ String
+		streamContents: [ :stream | 
+			stream
+				nextPutAll:
+					'initialize
 
-	source := WriteStream with: 'initialize
 	super initialize.
 '.
-	spec classDefinitions
-		valuesDo: [ :each | 
-			each hasProperties
-				ifTrue: [ source
-						nextPutAll: '	classIds at: ';
-						nextPutAll: each index asString;
+
+			spec classDefinitions
+				valuesDo: [ :classDefinition | 
+					classDefinition hasProperties
+						ifTrue: [ stream
+								nextPutAll: '	classIds at: ';
+								nextPutAll: classDefinition index asString;
+								nextPutAll: ' put: ';
+								nextPutAll: ( self classNameFor: classDefinition propertiesName );
+								nextPut: $.;
+								nextPut: Character cr
+							]
+					].
+				
+			spec allMethods
+				do: [ :each | 
+					stream
+						nextPutAll: '	methodIds at: ';
+						nextPutAll: each methodId asString;
 						nextPutAll: ' put: ';
-						nextPutAll: ( self classNameFor: each propertiesName );
+						nextPutAll: ( self classNameFor: each classDef name , ' ' , each name );
 						nextPut: $.;
 						nextPut: Character cr
 					]
-			].
-	spec allMethods
-		do: [ :each | 
-			source
-				nextPutAll: '	methodIds at: ';
-				nextPutAll: each methodId asString;
-				nextPutAll: ' put: ';
-				nextPutAll: ( self classNameFor: each classDef name , ' ' , each name );
-				nextPut: $.;
-				nextPut: Character cr
-			].
-	^ source contents
+			]
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> prefix [
 
 	^ prefix
-]
-
-{ #category : #accessing }
-AmqpSpecCompiler >> prefix: anObject [
-
-	prefix := anObject
 ]
 
 { #category : #accessing }
@@ -430,20 +430,22 @@ AmqpSpecCompiler >> spec: anObject [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> subclassOf: aSuperClass named: aString instanceVariables: aCollection [
+AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables: aCollection [
 
-	| ivs n c |
+	| instanceVariableNames |
 
-	ivs := WriteStream with: ''.
-	n := self classNameFor: aString.
-	aCollection do: [ :each | ivs nextPutAll: each ] separatedBy: [ ivs space ].
-	c := aSuperClass
-		subclass: n
-		instanceVariableNames: ivs contents
+	instanceVariableNames := String
+		streamContents: [ :stream | 
+			aCollection
+				do: [ :instanceVariableName | stream nextPutAll: instanceVariableName ]
+				separatedBy: [ stream space ]
+			].
+		
+	^ aSuperClass
+		subclass: ( self classNameFor: aClassName )
+		instanceVariableNames: instanceVariableNames
 		classVariableNames: ''
-		poolDictionaries: ''
-		category: definitionCategory.
-	^ c
+		package: definitionCategory
 ]
 
 { #category : #accessing }

@@ -22,12 +22,14 @@ AmqpSpecification class >> loadFrom: aUrl [
 { #category : #utility }
 AmqpSpecification class >> normalizeName: aString [
 
-	| s |
+	^ NormalizedName from: aString	
+		
+	"| s |
 
 	s := aString asLowercase.
 	s := s copyReplaceAll: '-' with: ' '.
 	s := s copyReplaceAll: '_' with: ' '.
-	^ s
+	^ s "
 ]
 
 { #category : #'instance creation' }
@@ -70,33 +72,33 @@ AmqpSpecification >> domains [
 ]
 
 { #category : #initialization }
-AmqpSpecification >> initializeLoadFromXml: aStream [
+AmqpSpecification >> initializeClassDefinitionsFrom: root [
 
-	| document root |
+	classDefinitions := Dictionary new.
+	root
+		elementsAt: #class
+		do: [ :each | 
+			AmqpClassDefinition new
+				loadFrom: each;
+				installOn: classDefinitions
+			]
+]
 
-	document := XMLDOMParser parse: aStream.
-	root := document findElementNamed: #amqp.
-
-	majorVersion := ( root attributeAt: #major ) asInteger.
-	minorVersion := ( root attributeAt: #minor ) asInteger.
-	revision := ( root attributeAt: #revision ifAbsent: [ 0 ] ) asInteger.	"Special-case a mistake in the 0-8 XML."
-	( majorVersion = 8 and: [ minorVersion = 0 ] )
-		ifTrue: [ majorVersion := 0.
-			minorVersion := 8
-			].
-
-	portNumber := ( root attributeAt: #port ) asInteger.
+{ #category : #initialization }
+AmqpSpecification >> initializeConstantsFrom: root [
 
 	constants := Dictionary new.
-
 	root
 		allElementsNamed: #constant
 		do: [ :constant | 
 			constants
 				at: ( self class normalizeName: ( constant attributeAt: #name ) )
 				put: ( constant attributeAt: #value ) asInteger
-			].
+			]
+]
 
+{ #category : #initialization }
+AmqpSpecification >> initializeDomainsFrom: root [
 
 	domains := Dictionary new.
 	self insertBaseDomains.
@@ -106,18 +108,42 @@ AmqpSpecification >> initializeLoadFromXml: aStream [
 			domains
 				at: ( self class normalizeName: ( domain attributeAt: #name ) )
 				put: ( self class normalizeName: ( domain attributeAt: #type ) )
-			].
+			]
+]
 
-	classDefinitions := Dictionary new.
-	root
-		elementsAt: #class
-		do: [ :each | 
-			AmqpClassDefinition new
-				loadFrom: each;
-				installOn: classDefinitions
-			].
+{ #category : #initialization }
+AmqpSpecification >> initializeLoadFromXml: aStream [
 
-	self resolve
+	| document root |
+
+	document := XMLDOMParser parse: aStream.
+	root := document findElementNamed: #amqp.
+	self
+		initializeVersionFrom: root;
+		initializePortNumberFrom: root;
+		initializeConstantsFrom: root;
+		initializeDomainsFrom: root;
+		initializeClassDefinitionsFrom: root;
+		resolve
+]
+
+{ #category : #initialization }
+AmqpSpecification >> initializePortNumberFrom: root [
+
+	portNumber := ( root attributeAt: #port ) asInteger
+]
+
+{ #category : #initialization }
+AmqpSpecification >> initializeVersionFrom: root [
+
+	majorVersion := ( root attributeAt: #major ) asInteger.
+	minorVersion := ( root attributeAt: #minor ) asInteger.
+	revision := ( root attributeAt: #revision ifAbsent: [ 0 ] ) asInteger.	"Special-case a mistake in the 0-8 XML."
+		
+	( majorVersion = 8 and: [ minorVersion = 0 ] )
+		ifTrue: [ majorVersion := 0.
+			minorVersion := 8
+			]
 ]
 
 { #category : #'as yet unclassified' }
@@ -126,7 +152,7 @@ AmqpSpecification >> insertBaseDomains [
 	"For the benefit of the 0-8 spec, which is missing these ground definitions."
 
 	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
-		do: [ :d | domains at: d put: d ]
+		do: [ :d | domains at: ( NormalizedName from: d ) put: d ]
 ]
 
 { #category : #'as yet unclassified' }
