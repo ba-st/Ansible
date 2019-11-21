@@ -13,11 +13,14 @@ BaselineOfLepus >> baseline: spec [
 		do: [ self setUpDependencies: spec.
 
 			spec
+				package: 'Amqp-Protocol-Base';
+				package: 'Amqp-Protocol' with: [ spec requires: #('Amqp-Protocol-Base') ];
 				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
 				
 			spec
+				group: 'Deployment' with: #('Amqp-Protocol');
 				group: 'Tools' with: #('Amqp-Tools');
-				group: 'Development' with: #('Tools')
+				group: 'Development' with: #('Tools')				
 			]
 ]
 
