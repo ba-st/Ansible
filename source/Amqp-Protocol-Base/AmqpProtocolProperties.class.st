@@ -4,13 +4,13 @@ Class {
 	#category : #'Amqp-Protocol-Base'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocolProperties >> codecClassId [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #decoding }
 AmqpProtocolProperties >> decodeFlagsFrom: codec [
 
 	| flags flagWordIndex partialFlags |
@@ -25,13 +25,13 @@ AmqpProtocolProperties >> decodeFlagsFrom: codec [
 	] repeat
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #decoding }
 AmqpProtocolProperties >> decodeFrom: codec [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #encoding }
 AmqpProtocolProperties >> encodeFlags: flagsToEncode on: codec [
 
 	| flags remainder partialFlags |
@@ -48,7 +48,7 @@ AmqpProtocolProperties >> encodeFlags: flagsToEncode on: codec [
 	] repeat
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #encoding }
 AmqpProtocolProperties >> encodeOn: codec [
 
 	self subclassResponsibility

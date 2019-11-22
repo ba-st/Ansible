@@ -9,6 +9,13 @@ Class {
 	#category : #'Amqp-Tools'
 }
 
+{ #category : #tranforming }
+AmqpFieldDefinition >> asVariableName [
+	
+	 ^ name asMethodName
+	
+]
+
 { #category : #accessing }
 AmqpFieldDefinition >> container [
 
@@ -36,7 +43,8 @@ AmqpFieldDefinition >> domain: anObject [
 { #category : #'as yet unclassified' }
 AmqpFieldDefinition >> domainName [
 
-	^ AmqpSpecCompiler capitalizedNameFor: domain
+	^ domain upperCamelCase
+	
 ]
 
 { #category : #'as yet unclassified' }

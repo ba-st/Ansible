@@ -23,13 +23,6 @@ AmqpSpecification class >> loadFrom: aUrl [
 AmqpSpecification class >> normalizeName: aString [
 
 	^ NormalizedName from: aString	
-		
-	"| s |
-
-	s := aString asLowercase.
-	s := s copyReplaceAll: '-' with: ' '.
-	s := s copyReplaceAll: '_' with: ' '.
-	^ s "
 ]
 
 { #category : #'instance creation' }
@@ -92,7 +85,7 @@ AmqpSpecification >> initializeConstantsFrom: root [
 		allElementsNamed: #constant
 		do: [ :constant | 
 			constants
-				at: ( self class normalizeName: ( constant attributeAt: #name ) )
+				at: ( NormalizedName from: ( constant attributeAt: #name ) )
 				put: ( constant attributeAt: #value ) asInteger
 			]
 ]
@@ -100,14 +93,16 @@ AmqpSpecification >> initializeConstantsFrom: root [
 { #category : #initialization }
 AmqpSpecification >> initializeDomainsFrom: root [
 
+	self flag: 'domain is double entry list to resolve them later on #resolve'.
+
 	domains := Dictionary new.
 	self insertBaseDomains.
 	root
 		allElementsNamed: #domain
 		do: [ :domain | 
 			domains
-				at: ( self class normalizeName: ( domain attributeAt: #name ) )
-				put: ( self class normalizeName: ( domain attributeAt: #type ) )
+				at: ( NormalizedName from: ( domain attributeAt: #name ) )
+				put: ( domain attributeAt: #type )
 			]
 ]
 
@@ -152,7 +147,7 @@ AmqpSpecification >> insertBaseDomains [
 	"For the benefit of the 0-8 spec, which is missing these ground definitions."
 
 	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
-		do: [ :d | domains at: ( NormalizedName from: d ) put: d ]
+		do: [ :domain | domains at: ( NormalizedName from: domain ) put: domain ]
 ]
 
 { #category : #'as yet unclassified' }
@@ -188,7 +183,7 @@ AmqpSpecification >> resolve [
 { #category : #accessing }
 AmqpSpecification >> resolveDomain: aString [
 
-	^ domains at: ( self class normalizeName: aString )
+	^ domains at: ( NormalizedName from: aString )
 ]
 
 { #category : #accessing }

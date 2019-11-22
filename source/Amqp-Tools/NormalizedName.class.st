@@ -19,6 +19,25 @@ NormalizedName >> = anObject [
 	^ self class = anObject class and: [ self name = anObject name ]
 ]
 
+{ #category : #'as yet unclassified' }
+NormalizedName >> asClassName [
+	
+	^ self upperCamelCase 
+]
+
+{ #category : #transforming }
+NormalizedName >> asMethodName [
+
+	^ String
+		streamContents: [ :stream | 
+			| substrings |
+
+			substrings := self name substrings.
+			stream nextPutAll: substrings first.
+			substrings allButFirstDo: [ :substring | stream nextPutAll: substring capitalized ]
+			]
+]
+
 { #category : #comparing }
 NormalizedName >> hash [
 
@@ -46,4 +65,12 @@ NormalizedName >> name [
 NormalizedName >> printOn: aStream [
 
 	aStream nextPutAll: name
+]
+
+{ #category : #transforming }
+NormalizedName >> upperCamelCase [
+
+	^ String
+		streamContents:
+			[ :stream | self name substrings collect: #capitalized thenDo: [ :capitalized | stream nextPutAll: capitalized ] ]
 ]

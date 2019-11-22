@@ -82,7 +82,7 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 	responses := Set new.
 	xml
 		elementsAt: #response
-		do: [ :each | responses add: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) ) ]
+		do: [ :each | responses add: ( NormalizedName from: ( each attributeAt: #name ) ) ]
 ]
 
 { #category : #'as yet unclassified' }

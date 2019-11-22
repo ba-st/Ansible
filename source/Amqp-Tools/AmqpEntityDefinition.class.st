@@ -31,7 +31,7 @@ AmqpEntityDefinition >> installOn: aDictionary [
 AmqpEntityDefinition >> loadFrom: anXmlNode [
 
 	xml := anXmlNode.
-	name := AmqpSpecification normalizeName: ( xml attributeAt: #name ).
+	name := NormalizedName from: ( xml attributeAt: #name ).
 	index := xml attributeAt: #index ifAbsent: [ nil ].
 	index ifNotNil: [ index := index asInteger ]
 ]
@@ -39,7 +39,7 @@ AmqpEntityDefinition >> loadFrom: anXmlNode [
 { #category : #accessing }
 AmqpEntityDefinition >> methodName [
 
-	^ AmqpSpecCompiler methodNameFor: name
+	^ name asMethodName
 ]
 
 { #category : #accessing }

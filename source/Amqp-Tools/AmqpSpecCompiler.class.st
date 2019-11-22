@@ -10,12 +10,6 @@ Class {
 }
 
 { #category : #'as yet unclassified' }
-AmqpSpecCompiler class >> capitalizedNameFor: aString [
-
-	^ self joinPieces: ( aString substrings collect: [ :each | each capitalized ] )
-]
-
-{ #category : #'as yet unclassified' }
 AmqpSpecCompiler class >> joinPieces: strings [
 
 	| s |
@@ -28,57 +22,53 @@ AmqpSpecCompiler class >> joinPieces: strings [
 { #category : #'as yet unclassified' }
 AmqpSpecCompiler class >> methodNameFor: aString [
 
-	| first |
-
-	first := true.
-	^ self
-		joinPieces:
-			( aString substrings
-				collect: [ :each | 
-					first
-						ifTrue: [ first := false.
-							each
-							]
-						ifFalse: [ each capitalized ]
-					] )
+	^ aString asMethodName
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> acceptableResponseClassesSource: m [
+AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 
-	| s |
-
-	s := WriteStream with: 'acceptableResponseClasses
+	^ String
+		streamContents: [ :stream | 
+			stream
+				nextPutAll:
+					'acceptableResponseClasses
 	^ {
 '.
-	m responses
-		do: [ :each | 
-			s
-				nextPutAll: '		' , ( self classNameFor: m classDef name , ' ' , each ) , '.';
-				cr
-			].
-	s nextPutAll: '	}'.
-	^ s contents
+			methodDefinition responses
+				do: [ :response | 
+					stream
+						tab;
+						nextPutAll: prefix;
+						nextPutAll: methodDefinition classDef name asClassName;
+						nextPutAll: response asClassName;
+						nextPut: $.;
+						cr
+					].
+			stream nextPutAll: '	}'
+			]
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> classNameFor: aString [
 
-	^ ( prefix
-		, ( AmqpSpecCompiler joinPieces: ( aString substrings collect: [ :each | each capitalized ] ) ) )
-		asSymbol
+	^ ( String
+		streamContents: [ :stream | 
+			stream nextPutAll: prefix.
+			aString substrings do: [ :substring | stream nextPutAll: substring capitalized ]
+			] ) asSymbol
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> decodeFieldSource: f [
+AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 
-	^ ( f isReserved
+	^ ( aFieldDefinition isReserved
 		ifTrue: [ '' ]
-		ifFalse: [ '' , f methodName , ' := ' ] ) , 'codec next' , f domainName , '.'
+		ifFalse: [ '' , aFieldDefinition asVariableName , ' := ' ] ) , 'codec next' , aFieldDefinition domainName , '.'
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> decodeMethodSource: m [
+AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 
 	| s bitindex |
 
@@ -86,7 +76,7 @@ AmqpSpecCompiler >> decodeMethodSource: m [
 	| bitBuffer |
 '.
 	bitindex := nil.
-	m fields
+	aMethodDefinition fields
 		do: [ :f | 
 			f domain = 'bit'
 				ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
@@ -228,15 +218,15 @@ AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 
 '.
 	aClassDefinition
-		propertiesAndMasksDo: [ :f :bitMask | 
-			f isReserved
-				ifFalse: [ f domain = 'bit'
+		propertiesAndMasksDo: [ :property :bitMask | 
+			property isReserved
+				ifFalse: [ property domain = 'bit'
 						ifTrue: [ source
-								nextPutAll: '	' , f methodName , ' ifTrue: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
+								nextPutAll: '	' , property methodName , ' ifTrue: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
 						ifFalse: [ source
-								nextPutAll: '	' , f methodName , ' isNil ifFalse: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
+								nextPutAll: '	' , property methodName , ' isNil ifFalse: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
 					]
@@ -262,7 +252,6 @@ AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 { #category : #accessing }
 AmqpSpecCompiler >> generateClass: aClassDefinition [
 
-	self halt.
 	self generateContentProperties: aClassDefinition.
 	aClassDefinition methods valuesDo: [ :method | self generateMethod: method ]
 ]
@@ -270,19 +259,23 @@ AmqpSpecCompiler >> generateClass: aClassDefinition [
 { #category : #accessing }
 AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 
-	| class fs |
+	| class fieldDefinitions |
 
 	aClassDefinition hasProperties
 		ifFalse: [ ^ self ].
-	fs := aClassDefinition contentProperties reject: [ :each | each isReserved ].
+	fieldDefinitions := aClassDefinition contentProperties reject: [ :each | each isReserved ].
 	class := self
 		subclassOf: AmqpProtocolProperties
 		named: aClassDefinition propertiesName
-		instanceVariables: ( fs collect: [ :each | each methodName ] ).
-	fs
-		do: [ :f | 
-			class compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
-			class compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
+		instanceVariables: ( fieldDefinitions collect: [ :fieldDefinition | fieldDefinition methodName ] ).
+	fieldDefinitions
+		do: [ :fieldDefinition | 
+			class
+				compile: fieldDefinition methodName , ' ^ ' , fieldDefinition methodName
+				classified: 'accessing'.
+			class
+				compile: fieldDefinition methodName , ': aValue ' , fieldDefinition methodName , ' := aValue.'
+				classified: 'accessing'
 			].
 	class compile: 'codecClassId ^ ' , aClassDefinition index asString classified: 'AMQP codec'.
 	class compile: ( self decodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'.
@@ -294,7 +287,7 @@ AmqpSpecCompiler >> generateEverything [
 
 	| protocol class |
 
-	protocol := self subclassOf: AmqpProtocol named: '' instanceVariables: #().
+	protocol := self subclassOf: AmqpProtocol named: prefix instanceVariables: #().
 	class := protocol class.
 
 	class compile: 'portNumber ^' , spec portNumber asString classified: 'AMQP protocol'.
@@ -308,7 +301,7 @@ AmqpSpecCompiler >> generateEverything [
 	spec constants
 		keysAndValuesDo: [ :name :value | 
 			class
-				compile: ( self class methodNameFor: name ) , ' ^' , value asString
+				compile: ( name asMethodName ) , ' ^' , value asString
 				classified: 'AMQP protocol constants'
 			].
 
@@ -336,25 +329,32 @@ AmqpSpecCompiler >> generateEverything [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateMethod: def [
+AmqpSpecCompiler >> generateMethod: methodDefinition [
 
-	| c fs |
+	| class fieldDefinitions |
 
-	fs := def fields reject: [ :each | each isReserved ].
-	c := self
+	fieldDefinitions := methodDefinition fields
+		reject: [ :fieldDefinition | fieldDefinition isReserved ].
+
+	class := self
 		subclassOf: AmqpProtocolMethod
-		named: def classDef name , ' ' , def name
-		instanceVariables: ( fs collect: [ :each | each methodName ] ).
-	fs
-		do: [ :f | 
-			c compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
-			c compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
+		named: prefix , methodDefinition classDef name asClassName , methodDefinition name asClassName
+		instanceVariables: ( fieldDefinitions collect: #methodName ).
+
+	fieldDefinitions
+		do: [ :fieldDefinition | 
+			class
+				compile: fieldDefinition methodName , ' ^ ' , fieldDefinition methodName
+				classified: 'accessing'.
+			class
+				compile: fieldDefinition methodName , ': aValue ' , fieldDefinition methodName , ' := aValue.'
+				classified: 'accessing'
 			].
-	c compile: 'codecMethodId ^ ' , def methodId asString classified: 'AMQP codec'.
-	c compile: 'hasContents ^ ' , def hasContents asString classified: 'AMQP codec'.
-	c compile: ( self acceptableResponseClassesSource: def ) classified: 'AMQP codec'.
-	c compile: ( self decodeMethodSource: def ) classified: 'AMQP codec'.
-	c compile: ( self encodeMethodSource: def ) classified: 'AMQP codec'
+	class compile: 'codecMethodId ^ ' , methodDefinition methodId asString classified: 'AMQP codec'.
+	class compile: 'hasContents ^ ' , methodDefinition hasContents asString classified: 'AMQP codec'.
+	class compile: ( self acceptableResponseClassesSource: methodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self decodeMethodSource: methodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self encodeMethodSource: methodDefinition ) classified: 'AMQP codec'
 ]
 
 { #category : #accessing }
@@ -442,7 +442,7 @@ AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables:
 			].
 		
 	^ aSuperClass
-		subclass: ( self classNameFor: aClassName )
+		subclass: aClassName
 		instanceVariableNames: instanceVariableNames
 		classVariableNames: ''
 		package: definitionCategory
