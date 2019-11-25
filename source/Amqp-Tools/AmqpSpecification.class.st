@@ -3,12 +3,12 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'classDefinitions',
-		'domains',
 		'majorVersion',
 		'minorVersion',
 		'revision',
-		'constants',
-		'portNumber'
+		'portNumber',
+		'domainDefinitions',
+		'constantDefinitions'
 	],
 	#category : #'Amqp-Tools'
 }
@@ -17,12 +17,6 @@ Class {
 AmqpSpecification class >> loadFrom: aUrl [
 
 	^ self new initializeLoadFromXml: aUrl asUrl retrieveContents contents readStream
-]
-
-{ #category : #utility }
-AmqpSpecification class >> normalizeName: aString [
-
-	^ NormalizedName from: aString	
 ]
 
 { #category : #'instance creation' }
@@ -40,6 +34,16 @@ AmqpSpecification class >> official091 [
 		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
 ]
 
+{ #category : #'as yet unclassified' }
+AmqpSpecification >> addElementaryDomains [
+
+	"For the benefit of the 0-8 spec, which is missing these ground definitions."
+
+	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
+		do:
+			[ :elementaryType | domainDefinitions add: ( AmqpDomainDefinition named: elementaryType of: elementaryType ) ]
+]
+
 { #category : #accessing }
 AmqpSpecification >> allMethods [
 
@@ -55,13 +59,13 @@ AmqpSpecification >> classDefinitions [
 { #category : #accessing }
 AmqpSpecification >> constants [
 
-	^ constants
+	^ constantDefinitions
 ]
 
 { #category : #accessing }
 AmqpSpecification >> domains [
 
-	^ domains
+	^ domainDefinitions
 ]
 
 { #category : #initialization }
@@ -80,29 +84,29 @@ AmqpSpecification >> initializeClassDefinitionsFrom: root [
 { #category : #initialization }
 AmqpSpecification >> initializeConstantsFrom: root [
 
-	constants := Dictionary new.
+	constantDefinitions := Set new.
 	root
 		allElementsNamed: #constant
 		do: [ :constant | 
-			constants
-				at: ( NormalizedName from: ( constant attributeAt: #name ) )
-				put: ( constant attributeAt: #value ) asInteger
+			constantDefinitions
+				add:
+					( AmqpConstantDefinition
+						named: ( constant attributeAt: #name )
+						holding: ( constant attributeAt: #value ) asInteger )
 			]
 ]
 
 { #category : #initialization }
 AmqpSpecification >> initializeDomainsFrom: root [
 
-	self flag: 'domain is double entry list to resolve them later on #resolve'.
+	domainDefinitions := Set new.
 
-	domains := Dictionary new.
-	self insertBaseDomains.
+	self addElementaryDomains.
 	root
 		allElementsNamed: #domain
 		do: [ :domain | 
-			domains
-				at: ( NormalizedName from: ( domain attributeAt: #name ) )
-				put: ( domain attributeAt: #type )
+			domainDefinitions
+				add: ( AmqpDomainDefinition named: ( domain attributeAt: #name ) of: ( domain attributeAt: #type ) )
 			]
 ]
 
@@ -142,15 +146,6 @@ AmqpSpecification >> initializeVersionFrom: root [
 ]
 
 { #category : #'as yet unclassified' }
-AmqpSpecification >> insertBaseDomains [
-
-	"For the benefit of the 0-8 spec, which is missing these ground definitions."
-
-	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
-		do: [ :domain | domains at: ( NormalizedName from: domain ) put: domain ]
-]
-
-{ #category : #'as yet unclassified' }
 AmqpSpecification >> isObsoleteProtocolVariant [
 
 	^ majorVersion = 0 and: [ minorVersion < 9 ]
@@ -177,13 +172,13 @@ AmqpSpecification >> portNumber [
 { #category : #'as yet unclassified' }
 AmqpSpecification >> resolve [
 
-	classDefinitions valuesDo: [ :each | each resolveUsing: self ]
+	classDefinitions valuesDo: [ :each | each resolveDomainUsing: self ]
 ]
 
 { #category : #accessing }
-AmqpSpecification >> resolveDomain: aString [
+AmqpSpecification >> resolveDomainUsing: aDomainName [
 
-	^ domains at: ( NormalizedName from: aString )
+	^ domainDefinitions detect: [ :domain | domain name = ( AmqpName from: aDomainName ) ]
 ]
 
 { #category : #accessing }

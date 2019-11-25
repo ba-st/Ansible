@@ -72,12 +72,12 @@ AmqpClassDefinition >> propertiesAndMasksDo: aBlock [
 { #category : #'as yet unclassified' }
 AmqpClassDefinition >> propertiesName [
 
-	^ self name , ' properties'
+	^ self name lowerCamelCased, ' properties'
 ]
 
 { #category : #accessing }
-AmqpClassDefinition >> resolveUsing: spec [
+AmqpClassDefinition >> resolveDomainUsing: spec [
 
-	methods valuesDo: [ :each | each resolveUsing: spec ].
-	contentProperties do: [ :each | each resolveUsing: spec ]
+	methods valuesDo: [ :each | each resolveDomainUsing: spec ].
+	contentProperties do: [ :each | each resolveDomainUsing: spec ]
 ]

@@ -69,6 +69,7 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 						loadFrom: each;
 						container: self )
 			].
+
 	hasContents := ( xml attributeAt: #content ) = '1'.
 	synchronous := ( xml attributeAt: #synchronous ) = '1'.
 	xml
@@ -79,22 +80,23 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 			( each attributeAt: #name ) = 'client'
 				ifTrue: [ clientMethod := true ]
 			].
+
 	responses := Set new.
 	xml
 		elementsAt: #response
-		do: [ :each | responses add: ( NormalizedName from: ( each attributeAt: #name ) ) ]
+		do: [ :each | responses add: ( AmqpName from: ( each attributeAt: #name ) ) ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpMethodDefinition >> methodId [
 
 	^ ( self classDef index bitShift: 16 ) bitOr: self index
 ]
 
 { #category : #accessing }
-AmqpMethodDefinition >> resolveUsing: spec [
+AmqpMethodDefinition >> resolveDomainUsing: spec [
 
-	fields do: [ :each | each resolveUsing: spec ]
+	fields do: [ :each | each resolveDomainUsing: spec ]
 ]
 
 { #category : #accessing }

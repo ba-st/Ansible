@@ -9,13 +9,6 @@ Class {
 	#category : #'Amqp-Tools'
 }
 
-{ #category : #tranforming }
-AmqpFieldDefinition >> asVariableName [
-	
-	 ^ name asMethodName
-	
-]
-
 { #category : #accessing }
 AmqpFieldDefinition >> container [
 
@@ -43,8 +36,14 @@ AmqpFieldDefinition >> domain: anObject [
 { #category : #'as yet unclassified' }
 AmqpFieldDefinition >> domainName [
 
-	^ domain upperCamelCase
+	^ domain name
 	
+]
+
+{ #category : #accessing }
+AmqpFieldDefinition >> domainType [
+
+	^ domain type
 ]
 
 { #category : #'as yet unclassified' }
@@ -64,7 +63,7 @@ AmqpFieldDefinition >> loadFrom: anXmlNode [
 ]
 
 { #category : #'as yet unclassified' }
-AmqpFieldDefinition >> resolveUsing: spec [
+AmqpFieldDefinition >> resolveDomainUsing: aSpec [
 
-	domain := spec resolveDomain: domain
+	domain := aSpec resolveDomainUsing: domain
 ]
