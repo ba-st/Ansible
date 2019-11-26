@@ -32,9 +32,12 @@ AmqpSimpleExampleBase >> initialize [
 
 	super initialize.
 
-	conn := AmqpConnection new.
+	conn := AmqpConnectionBuilder new
+		hostname: self exampleHost;
+		username: 'guest';
+		password: 'guest';
+		build.
 	conn protocolClass: Amqp091.
-	conn host: self exampleHost.
 	conn open.
 
 	channel := conn createChannel

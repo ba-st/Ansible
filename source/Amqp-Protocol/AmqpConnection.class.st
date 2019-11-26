@@ -16,16 +16,20 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpConnection class >> protocolClass [
 
 	^ Amqp091
 ]
 
 { #category : #'instance creation' }
-AmqpConnection class >> to: aHostname using: aProtocolVersion [
+AmqpConnection class >> to: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
-	^ self new initializeTo: aHostname using: aProtocolVersion
+	^ self basicNew
+		initializeTo: aHostname
+		using: aProtocolVersion
+		with: connectionCredentials
+		parameterizedBy: connectionParameters
 ]
 
 { #category : #'as yet unclassified' }
@@ -140,13 +144,6 @@ AmqpConnection >> host: hostName port: portNumber [
 AmqpConnection >> initialize [
 
 	super initialize.
-	credentials := AmqpPlainCredentials new
-		username: 'guest';
-		password: 'guest'.
-	parameters := AmqpConnectionParameters new
-		channelMax: 0;
-		frameMax: 131072;
-		heartbeat: 0.
 	virtualHost := '/'.
 	isOpen := false.
 	closeReason := nil.
@@ -155,13 +152,16 @@ AmqpConnection >> initialize [
 ]
 
 { #category : #initialization }
-AmqpConnection >> initializeTo: aHostname using: aProtocolVersion [
+AmqpConnection >> initializeTo: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
 	protocolClass := aProtocolVersion.
 
 	socket := Socket newTCP.
 	socket connectToHostNamed: aHostname port: aProtocolVersion portNumber.
-	
+
+	credentials := connectionCredentials.
+	parameters := connectionParameters.
+
 	self initialize
 ]
 
