@@ -84,7 +84,7 @@ AmqpSpecification >> initializeClassDefinitionsFrom: root [
 { #category : #initialization }
 AmqpSpecification >> initializeConstantsFrom: root [
 
-	constantDefinitions := Set new.
+	constantDefinitions := OrderedCollection new.
 	root
 		allElementsNamed: #constant
 		do: [ :constant | 

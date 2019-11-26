@@ -65,7 +65,7 @@ AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 	^ ( aFieldDefinition isReserved
 		ifTrue: [ '' ]
 		ifFalse: [ '' , aFieldDefinition domainName lowerCamelCased , ' := ' ] ) , 'codec next'
-		, aFieldDefinition domainName upperCamelCased , '.'
+		, aFieldDefinition domainType upperCamelCased , '.'
 ]
 
 { #category : #accessing }
@@ -79,7 +79,7 @@ AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 	bitindex := nil.
 	aMethodDefinition fields
 		do: [ :fieldDefinition | 
-			fieldDefinition domain type = 'bit'
+			fieldDefinition domainType = 'bit'
 				ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
 					bitindex >= 8
 						ifTrue: [ bitindex := 0 ].
