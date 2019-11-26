@@ -65,7 +65,7 @@ AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 	^ ( aFieldDefinition isReserved
 		ifTrue: [ '' ]
 		ifFalse: [ '' , aFieldDefinition domainName lowerCamelCased , ' := ' ] ) , 'codec next'
-		, aFieldDefinition domainType upperCamelCased , '.'
+		, aFieldDefinition domainType capitalized , '.'
 ]
 
 { #category : #accessing }
