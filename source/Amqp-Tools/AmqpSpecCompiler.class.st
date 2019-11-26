@@ -148,7 +148,7 @@ AmqpSpecCompiler >> definitionCategory: anObject [
 { #category : #accessing }
 AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 
-	^ 'codec next' , aFieldDefinition domainName upperCamelCased , 'Put: '
+	^ 'codec next' , aFieldDefinition domainType capitalized , 'Put: '
 		,
 			( aFieldDefinition isReserved
 				ifTrue: [ self reservedValueForDomain: aFieldDefinition domainType ]
