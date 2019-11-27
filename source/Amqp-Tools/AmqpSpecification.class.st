@@ -23,18 +23,19 @@ AmqpSpecification class >> loadFrom: aUrl [
 AmqpSpecification class >> official08 [
 
 	^ self
-		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-8.stripped.xml'
-
+		loadFrom:
+			'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-8.stripped.xml'
 ]
 
 { #category : #'instance creation' }
 AmqpSpecification class >> official091 [
 
 	^ self
-		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
+		loadFrom:
+			'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #initialization }
 AmqpSpecification >> addElementaryDomains [
 
 	"For the benefit of the 0-8 spec, which is missing these ground definitions."
@@ -145,7 +146,7 @@ AmqpSpecification >> initializeVersionFrom: root [
 			]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpSpecification >> isObsoleteProtocolVariant [
 
 	^ majorVersion = 0 and: [ minorVersion < 9 ]
@@ -169,7 +170,7 @@ AmqpSpecification >> portNumber [
 	^ portNumber
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpSpecification >> resolve [
 
 	classDefinitions valuesDo: [ :each | each resolveDomainUsing: self ]
@@ -187,7 +188,7 @@ AmqpSpecification >> revision [
 	^ revision
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpSpecification >> versionString [
 
 	^ majorVersion asString , minorVersion asString

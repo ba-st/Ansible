@@ -9,7 +9,7 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpConnectionParameters >> applyServerSettings: aTune [
 
 	channelMax := self combine: channelMax with: aTune channelMax.
@@ -29,7 +29,7 @@ AmqpConnectionParameters >> channelMax: anObject [
 	channelMax := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpConnectionParameters >> combine: v1 with: v2 [
 
 	v1 = 0

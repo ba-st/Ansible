@@ -7,19 +7,19 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> flush [
 
 	stream flush
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextBoolean [
 
 	^ self nextOctet bitAnd: 1
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLong [
 
 	| v |
@@ -31,7 +31,7 @@ AmqpCodec >> nextLong [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLongPut: v [
 
 	v ifNil: [ ^ self nextLongPut: 0 ].
@@ -39,7 +39,7 @@ AmqpCodec >> nextLongPut: v [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLonglong [
 
 	| v |
@@ -55,7 +55,7 @@ AmqpCodec >> nextLonglong [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLonglongPut: v [
 
 	v ifNil: [ ^ self nextLonglongPut: 0 ].
@@ -63,19 +63,19 @@ AmqpCodec >> nextLonglongPut: v [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLongstr [
 
 	^ self nextLongstrBytes asString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLongstrBytes [
 
 	^ stream next: self nextLong
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextLongstrPut: v [
 
 	v
@@ -87,20 +87,20 @@ AmqpCodec >> nextLongstrPut: v [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextOctet [
 
 	^ stream next
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextOctetPut: v [
 
 	v ifNil: [ ^ self nextOctetPut: 0 ].
 	^ stream nextPut: v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextShort [
 
 	| v |
@@ -110,7 +110,7 @@ AmqpCodec >> nextShort [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextShortPut: v [
 
 	v ifNil: [ ^ self nextShortPut: 0 ].
@@ -118,13 +118,13 @@ AmqpCodec >> nextShortPut: v [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextShortstr [
 
 	^ ( stream next: self nextOctet ) asString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextShortstrPut: v [
 
 	v
@@ -136,7 +136,7 @@ AmqpCodec >> nextShortstrPut: v [
 	^ v
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTable [
 
 	| buf d key type val |
@@ -155,7 +155,7 @@ AmqpCodec >> nextTable [
 	^ d
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTablePut: d [
 
 	| s |
@@ -177,7 +177,7 @@ AmqpCodec >> nextTablePut: d [
 	^ d
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTableValue: type [
 
 	type = $S asciiValue
@@ -200,7 +200,7 @@ AmqpCodec >> nextTableValue: type [
 	AmqpProtocolSyntaxError signal: 'Unsupported AMQP table field type'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTableValuePut: val [
 
 	( val isKindOf: ScaledDecimal )
@@ -232,13 +232,13 @@ AmqpCodec >> nextTableValuePut: val [
 	AmqpProtocolSyntaxError signal: 'Unsupported AMQP table field value'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTimestamp [
 
 	^ ( DateAndTime year: 1970 day: 1 ) + self nextLonglong seconds
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> nextTimestampPut: v [
 
 	v
@@ -261,7 +261,7 @@ AmqpCodec >> stream: anObject [
 	stream := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #streaming }
 AmqpCodec >> withStream: aStream during: aBlock [
 
 	| saved |

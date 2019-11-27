@@ -32,7 +32,7 @@ AmqpConnection class >> to: aHostname using: aProtocolVersion with: connectionCr
 		parameterizedBy: connectionParameters
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> close [
 
 	| c |
@@ -50,7 +50,7 @@ AmqpConnection >> close [
 	socket close
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> closeReason [
 
 	^ closeReason
@@ -68,7 +68,7 @@ AmqpConnection >> codec: anObject [
 	codec := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> createChannel [
 
 	| handler |
@@ -90,21 +90,21 @@ AmqpConnection >> credentials: anObject [
 	credentials := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> ensureChannel: channelNumber [
 
 	self ensureOpen.
 	^ ( channels at: channelNumber ) ensureOpen
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> ensureOpen [
 
 	closeReason notNil
 		ifTrue: [ AmqpDisconnectedError signal: 'Connection closed' ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> handleConnectionClose: cmd [
 
 	self internalClose: cmd method.
@@ -113,7 +113,7 @@ AmqpConnection >> handleConnectionClose: cmd [
 	socket close
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> hardClose [
 
 	| c |
@@ -128,13 +128,13 @@ AmqpConnection >> hardClose [
 	socket close
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> host: hostName [
 
 	^ self host: hostName port: self protocolClass portNumber
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> host: hostName port: portNumber [
 
 	socket connectToHostNamed: hostName port: portNumber
@@ -165,7 +165,7 @@ AmqpConnection >> initializeTo: aHostname using: aProtocolVersion with: connecti
 	self initialize
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> installChannel0 [
 
 	| channel |
@@ -174,7 +174,7 @@ AmqpConnection >> installChannel0 [
 	channel mapEvent: self protocolClass connectionCloseMethod to: self selector: #handleConnectionClose:
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> internalClose: method [
 
 	closeReason
@@ -184,7 +184,7 @@ AmqpConnection >> internalClose: method [
 			]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> mainLoopCycle [
 
 	| frame |
@@ -199,7 +199,7 @@ AmqpConnection >> mainLoopCycle [
 		ifFalse: [ ( channels at: frame channelNumber ) handleFrame: frame ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> nextChannel [
 
 	| tries limit |
@@ -219,7 +219,7 @@ AmqpConnection >> nextChannel [
 	^ nextChannel
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> nextFrame [
 
 	| type channel length fc f |
@@ -291,7 +291,7 @@ AmqpConnection >> parameters: anObject [
 	parameters := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> processAsyncEvents [
 
 	[ self ensureOpen.
@@ -299,25 +299,25 @@ AmqpConnection >> processAsyncEvents [
 	] whileTrue: [ self mainLoopCycle ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> protocolClass [
 
 	^ protocolClass
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> protocolClass: aProtocolVersion [
 
 	protocolClass := aProtocolVersion
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> resetChannel: channelNumber [
 
 	channels removeKey: channelNumber ifAbsent: [  ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> rpc: requestMethod onChannel: channelNumber [
 
 	| ch |
@@ -327,7 +327,7 @@ AmqpConnection >> rpc: requestMethod onChannel: channelNumber [
 	^ ch waitForReply: requestMethod acceptableResponseClasses
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: pos onChannel: channelNumber [
 
 	| pieceLen |
@@ -342,14 +342,14 @@ AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: pos onChannel:
 	^ pos + pieceLen
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> sendFrame: aFrame [
 
 	aFrame encodeOn: codec.
 	codec nextOctetPut: self protocolClass frameEnd
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> sendMethod: aMethod onChannel: aChannelNumber [
 
 	self
@@ -362,7 +362,7 @@ AmqpConnection >> sendMethod: aMethod onChannel: aChannelNumber [
 	codec flush
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray onChannel: channelNumber [
 
 	| pos |
@@ -407,7 +407,7 @@ AmqpConnection >> virtualHost: anObject [
 	virtualHost := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'connection-handling' }
 AmqpConnection >> waitForEvent [
 
 	self ensureOpen.

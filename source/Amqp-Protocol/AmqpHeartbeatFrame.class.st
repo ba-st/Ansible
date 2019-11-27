@@ -4,13 +4,15 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
-AmqpHeartbeatFrame >> encodedBody [
+{ #category : #accessing }
+AmqpHeartbeatFrame >> encodeBodyOn: codec [
 
-	^ ByteArray new
+	"do nothing."
+
+	
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpHeartbeatFrame >> readFrom: conn length: length [
 
 	length = 0
