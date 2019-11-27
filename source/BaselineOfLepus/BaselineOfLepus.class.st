@@ -11,6 +11,8 @@ BaselineOfLepus >> baseline: spec [
 	spec
 		for: #pharo
 		do: [ self setUpDependencies: spec.
+			
+			ZnNetworkingUtils default socketStreamClass: SocketStream.
 
 			spec
 				package: 'Amqp-Protocol' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
@@ -36,7 +38,6 @@ BaselineOfLepus >> projectClass [
 ]
 
 { #category : #initialization }
-
 BaselineOfLepus >> setUpDependencies: spec [
 
 	spec
