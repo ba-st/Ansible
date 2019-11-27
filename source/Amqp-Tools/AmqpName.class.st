@@ -36,11 +36,11 @@ AmqpName >> lowerCamelCased [
 
 	^ String
 		streamContents: [ :stream | 
-			| substrings |
+			| parts |
 
-			substrings := self name1 substrings.
-			stream nextPutAll: substrings first.
-			substrings allButFirstDo: [ :substring | stream nextPutAll: substring capitalized ]
+			parts := self parts.
+			stream nextPutAll: parts first.
+			parts allButFirstDo: [ :part | stream nextPutAll: part capitalized ]
 			]
 ]
 
@@ -51,14 +51,14 @@ AmqpName >> name [
 ]
 
 { #category : #accessing }
-AmqpName >> name1 [
+AmqpName >> parts [ 
 
-	| s |
+	| string |
 
-	s := name asLowercase.
-	s := s copyReplaceAll: '-' with: ' '.
-	s := s copyReplaceAll: '_' with: ' '.
-	^ s
+	string := name asLowercase.
+	string := string copyReplaceAll: '-' with: ' '.
+	string := string copyReplaceAll: '_' with: ' '.
+	^ string substrings
 ]
 
 { #category : #printing }
@@ -72,5 +72,5 @@ AmqpName >> upperCamelCased [
 
 	^ String
 		streamContents:
-			[ :stream | self name1 substrings collect: #capitalized thenDo: [ :capitalized | stream nextPutAll: capitalized ] ]
+			[ :stream | self parts collect: #capitalized thenDo: [ :capitalizedPart | stream nextPutAll: capitalizedPart ] ]
 ]
