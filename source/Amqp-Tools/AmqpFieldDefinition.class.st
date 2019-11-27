@@ -36,7 +36,14 @@ AmqpFieldDefinition >> domain: anObject [
 { #category : #'as yet unclassified' }
 AmqpFieldDefinition >> domainName [
 
-	^ AmqpSpecCompiler capitalizedNameFor: domain
+	^ domain name
+	
+]
+
+{ #category : #accessing }
+AmqpFieldDefinition >> domainType [
+
+	^ domain type
 ]
 
 { #category : #'as yet unclassified' }
@@ -56,7 +63,7 @@ AmqpFieldDefinition >> loadFrom: anXmlNode [
 ]
 
 { #category : #'as yet unclassified' }
-AmqpFieldDefinition >> resolveUsing: spec [
+AmqpFieldDefinition >> resolveDomainUsing: aSpec [
 
-	domain := spec resolveDomain: domain
+	domain := aSpec resolveDomainUsing: domain
 ]

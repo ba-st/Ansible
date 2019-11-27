@@ -4,31 +4,31 @@ Class {
 	#category : #'Amqp-Protocol-Base'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocolMethod >> acceptableResponseClasses [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocolMethod >> codecMethodId [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #decoding }
 AmqpProtocolMethod >> decodeFrom: codec [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #encoding }
 AmqpProtocolMethod >> encodeOn: codec [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #testing }
 AmqpProtocolMethod >> hasContents [
 
 	self subclassResponsibility

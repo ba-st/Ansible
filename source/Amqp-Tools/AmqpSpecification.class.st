@@ -3,63 +3,51 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'classDefinitions',
-		'domains',
 		'majorVersion',
 		'minorVersion',
 		'revision',
-		'constants',
-		'portNumber'
+		'portNumber',
+		'domainDefinitions',
+		'constantDefinitions'
 	],
 	#category : #'Amqp-Tools'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> loadFrom: aUrl [
 
-	^ self new loadFromXml: aUrl asUrl retrieveContents contents readStream
+	^ self new initializeLoadFromXml: aUrl asUrl retrieveContents contents readStream
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpSpecification class >> normalizeName: aString [
-
-	| s |
-
-	s := aString asLowercase.
-	s := s copyReplaceAll: '-' with: ' '.
-	s := s copyReplaceAll: '_' with: ' '.
-	^ s
-]
-
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> official08 [
 
 	^ self
-		loadFrom: 'http://jira.amqp.org/confluence/download/attachments/720900/amqp0-8.stripped.xml?version=1'
+		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-8.stripped.xml'
+
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'instance creation' }
 AmqpSpecification class >> official091 [
 
 	^ self
-		loadFrom: 'http://jira.amqp.org/confluence/download/attachments/720900/amqp0-9-1.stripped.xml?version=1'
+		loadFrom: 'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
+]
+
+{ #category : #'as yet unclassified' }
+AmqpSpecification >> addElementaryDomains [
+
+	"For the benefit of the 0-8 spec, which is missing these ground definitions."
+
+	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
+		do:
+			[ :elementaryType | domainDefinitions add: ( AmqpDomainDefinition named: elementaryType of: elementaryType ) ]
 ]
 
 { #category : #accessing }
 AmqpSpecification >> allMethods [
 
-	^ ( classDefinitions values collect: [ :each | each methods values ] ) concatenation
-]
-
-{ #category : #accessing }
-AmqpSpecification >> class: className method: methodName [
-
-	^ ( self classAt: className ) methods at: methodName
-]
-
-{ #category : #accessing }
-AmqpSpecification >> classAt: className [
-
-	^ classDefinitions at: className
+	^ ( classDefinitions values collect: [ :each | each methods values ] ) flattened
 ]
 
 { #category : #accessing }
@@ -69,97 +57,98 @@ AmqpSpecification >> classDefinitions [
 ]
 
 { #category : #accessing }
-AmqpSpecification >> classDefinitions: anObject [
-
-	classDefinitions := anObject
-]
-
-{ #category : #accessing }
 AmqpSpecification >> constants [
 
-	^ constants
-]
-
-{ #category : #accessing }
-AmqpSpecification >> constants: anObject [
-
-	constants := anObject
+	^ constantDefinitions
 ]
 
 { #category : #accessing }
 AmqpSpecification >> domains [
 
-	^ domains
+	^ domainDefinitions
 ]
 
-{ #category : #accessing }
-AmqpSpecification >> domains: anObject [
+{ #category : #initialization }
+AmqpSpecification >> initializeClassDefinitionsFrom: root [
 
-	domains := anObject
+	classDefinitions := Dictionary new.
+	root
+		elementsAt: #class
+		do: [ :each | 
+			AmqpClassDefinition new
+				loadFrom: each;
+				installOn: classDefinitions
+			]
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpSpecification >> insertBaseDomains [
+{ #category : #initialization }
+AmqpSpecification >> initializeConstantsFrom: root [
 
-	"For the benefit of the 0-8 spec, which is missing these ground definitions."
+	constantDefinitions := OrderedCollection new.
+	root
+		allElementsNamed: #constant
+		do: [ :constant | 
+			constantDefinitions
+				add:
+					( AmqpConstantDefinition
+						named: ( constant attributeAt: #name )
+						holding: ( constant attributeAt: #value ) asInteger )
+			]
+]
 
-	#('octet' 'shortstr' 'longstr' 'short' 'long' 'longlong' 'bit' 'table' 'timestamp')
-		do: [ :d | domains at: d put: d ]
+{ #category : #initialization }
+AmqpSpecification >> initializeDomainsFrom: root [
+
+	domainDefinitions := Set new.
+
+	self addElementaryDomains.
+	root
+		allElementsNamed: #domain
+		do: [ :domain | 
+			domainDefinitions
+				add: ( AmqpDomainDefinition named: ( domain attributeAt: #name ) of: ( domain attributeAt: #type ) )
+			]
+]
+
+{ #category : #initialization }
+AmqpSpecification >> initializeLoadFromXml: aStream [
+
+	| document root |
+
+	document := XMLDOMParser parse: aStream.
+	root := document findElementNamed: #amqp.
+	self
+		initializeVersionFrom: root;
+		initializePortNumberFrom: root;
+		initializeConstantsFrom: root;
+		initializeDomainsFrom: root;
+		initializeClassDefinitionsFrom: root;
+		resolve
+]
+
+{ #category : #initialization }
+AmqpSpecification >> initializePortNumberFrom: root [
+
+	portNumber := ( root attributeAt: #port ) asInteger
+]
+
+{ #category : #initialization }
+AmqpSpecification >> initializeVersionFrom: root [
+
+	majorVersion := ( root attributeAt: #major ) asInteger.
+	minorVersion := ( root attributeAt: #minor ) asInteger.
+	revision := ( root attributeAt: #revision ifAbsent: [ 0 ] ) asInteger.	"Special-case a mistake in the 0-8 XML."
+		
+	( majorVersion = 8 and: [ minorVersion = 0 ] )
+		ifTrue: [ majorVersion := 0.
+			minorVersion := 8
+			]
 ]
 
 { #category : #'as yet unclassified' }
 AmqpSpecification >> isObsoleteProtocolVariant [
 
 	^ majorVersion = 0 and: [ minorVersion < 9 ]
-]
-
-{ #category : #'as yet unclassified' }
-AmqpSpecification >> loadFromXml: aStream [
-
-	| d a |
-
-	d := XMLDOMParser parseDocumentFrom: aStream.
-	a := d firstTagNamed: #amqp.
-
-	majorVersion := ( a attributeAt: #major ) asInteger.
-	minorVersion := ( a attributeAt: #minor ) asInteger.
-	revision := ( a attributeAt: #revision ifAbsent: [ 0 ] ) asInteger.	"Special-case a mistake in the 0-8 XML."
-	( majorVersion = 8 and: [ minorVersion = 0 ] )
-		ifTrue: [ majorVersion := 0.
-			minorVersion := 8
-			].
-
-	portNumber := ( a attributeAt: #port ) asInteger.
-
-	constants := Dictionary new.
-	a
-		tagsNamed: #constant
-		childrenDo: [ :each | 
-			constants
-				at: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) )
-				put: ( each attributeAt: #value ) asInteger
-			].
-
-	domains := Dictionary new.
-	self insertBaseDomains.
-	a
-		tagsNamed: #domain
-		childrenDo: [ :each | 
-			domains
-				at: ( AmqpSpecification normalizeName: ( each attributeAt: #name ) )
-				put: ( AmqpSpecification normalizeName: ( each attributeAt: #type ) )
-			].
-
-	classDefinitions := Dictionary new.
-	a
-		tagsNamed: #class
-		do: [ :each | 
-			AmqpClassDefinition new
-				loadFrom: each;
-				installOn: classDefinitions
-			].
-
-	self resolve
 ]
 
 { #category : #accessing }
@@ -169,21 +158,9 @@ AmqpSpecification >> majorVersion [
 ]
 
 { #category : #accessing }
-AmqpSpecification >> majorVersion: anObject [
-
-	majorVersion := anObject
-]
-
-{ #category : #accessing }
 AmqpSpecification >> minorVersion [
 
 	^ minorVersion
-]
-
-{ #category : #accessing }
-AmqpSpecification >> minorVersion: anObject [
-
-	minorVersion := anObject
 ]
 
 { #category : #accessing }
@@ -192,34 +169,22 @@ AmqpSpecification >> portNumber [
 	^ portNumber
 ]
 
-{ #category : #accessing }
-AmqpSpecification >> portNumber: anObject [
-
-	portNumber := anObject
-]
-
 { #category : #'as yet unclassified' }
 AmqpSpecification >> resolve [
 
-	classDefinitions valuesDo: [ :each | each resolveUsing: self ]
+	classDefinitions valuesDo: [ :each | each resolveDomainUsing: self ]
 ]
 
 { #category : #accessing }
-AmqpSpecification >> resolveDomain: aString [
+AmqpSpecification >> resolveDomainUsing: aDomainName [
 
-	^ domains at: ( AmqpSpecification normalizeName: aString )
+	^ domainDefinitions detect: [ :domain | domain name = ( AmqpName from: aDomainName ) ]
 ]
 
 { #category : #accessing }
 AmqpSpecification >> revision [
 
 	^ revision
-]
-
-{ #category : #accessing }
-AmqpSpecification >> revision: anObject [
-
-	revision := anObject
 ]
 
 { #category : #'as yet unclassified' }

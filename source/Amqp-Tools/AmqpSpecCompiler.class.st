@@ -10,12 +10,6 @@ Class {
 }
 
 { #category : #'as yet unclassified' }
-AmqpSpecCompiler class >> capitalizedNameFor: aString [
-
-	^ self joinPieces: ( aString substrings collect: [ :each | each capitalized ] )
-]
-
-{ #category : #'as yet unclassified' }
 AmqpSpecCompiler class >> joinPieces: strings [
 
 	| s |
@@ -25,96 +19,77 @@ AmqpSpecCompiler class >> joinPieces: strings [
 	^ s contents
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpSpecCompiler class >> methodNameFor: aString [
-
-	| first |
-
-	first := true.
-	^ self
-		joinPieces:
-			( aString substrings
-				collect: [ :each | 
-					first
-						ifTrue: [ first := false.
-							each
-							]
-						ifFalse: [ each capitalized ]
-					] )
-]
-
 { #category : #accessing }
-AmqpSpecCompiler >> acceptableResponseClassesSource: m [
+AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 
-	| s |
-
-	s := WriteStream with: 'acceptableResponseClasses
+	^ String
+		streamContents: [ :stream | 
+			stream
+				nextPutAll:
+					'acceptableResponseClasses
 	^ {
 '.
-	m responses
-		do: [ :each | 
-			s
-				nextPutAll: '		' , ( self classNameFor: m classDef name , ' ' , each ) , '.';
-				cr
-			].
-	s nextPutAll: '	}'.
-	^ s contents
+			methodDefinition responses
+				do: [ :response | 
+					stream
+						tab;
+						nextPutAll: prefix;
+						nextPutAll: methodDefinition classDef name upperCamelCased;
+						nextPutAll: response upperCamelCased ;
+						nextPut: $.;
+						cr
+					].
+			stream nextPutAll: '	}'
+			]
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> classNameFor: aString [
+AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 
-	^ ( prefix
-		, ( AmqpSpecCompiler joinPieces: ( aString substrings collect: [ :each | each capitalized ] ) ) )
-		asSymbol
-]
-
-{ #category : #accessing }
-AmqpSpecCompiler >> decodeFieldSource: f [
-
-	^ ( f isReserved
+	^ ( aFieldDefinition isReserved
 		ifTrue: [ '' ]
-		ifFalse: [ '' , f methodName , ' := ' ] ) , 'codec next' , f domainName , '.'
+		ifFalse: [ '' , aFieldDefinition name lowerCamelCased , ' := ' ] ) , 'codec next'
+		, aFieldDefinition domainType capitalized , '.'
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> decodeMethodSource: m [
+AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 
-	| s bitindex |
+	| stream bitindex |
 
-	s := WriteStream with: 'decodeFrom: codec
+	stream := WriteStream with: 'decodeFrom: codec
 	| bitBuffer |
 '.
 	bitindex := nil.
-	m fields
-		do: [ :f | 
-			f domain = 'bit'
+	aMethodDefinition fields
+		do: [ :fieldDefinition | 
+			fieldDefinition domainType = 'bit'
 				ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
 					bitindex >= 8
 						ifTrue: [ bitindex := 0 ].
 					bitindex = 0
-						ifTrue: [ s
+						ifTrue: [ stream
 								nextPutAll: '	bitBuffer := codec nextOctet.';
 								cr
 							].
-					f isReserved
-						ifFalse: [ s
-								nextPutAll: '	' , f methodName , ' := (bitBuffer bitAnd: ' , ( 1 bitShift: bitindex ) asString , ') ~= 0.'.
-							s cr
+					fieldDefinition isReserved
+						ifFalse: [ stream
+								nextPutAll: '	' , fieldDefinition name lowerCamelCased , ' := (bitBuffer bitAnd: ' , ( 1 bitShift: bitindex ) asString , ') ~= 0.'.
+							stream cr
 							].
 					bitindex := bitindex + 1
 					]
 				ifFalse: [ bitindex := nil.
-					s
-						nextPutAll: '	' , ( self decodeFieldSource: f );
+					stream
+						nextPutAll: '	' , ( self decodeFieldSource: fieldDefinition );
 						cr
 					]
 			].
-	^ s contents
+	^ stream contents
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> decodePropertiesSource: c [
+AmqpSpecCompiler >> decodePropertiesSource: aClassDefinition [
 
 	| s |
 
@@ -122,20 +97,20 @@ AmqpSpecCompiler >> decodePropertiesSource: c [
 	| qFlags |
 	qFlags := self decodeFlagsFrom: codec.
 '.
-	c
-		propertiesAndMasksDo: [ :f :bitMask | 
-			f domain = 'bit'
-				ifTrue: [ f isReserved
+	aClassDefinition
+		propertiesAndMasksDo: [ :fieldDefinition :bitMask | 
+			fieldDefinition domainType = 'bit'
+				ifTrue: [ fieldDefinition isReserved
 						ifFalse: [ s
-								nextPutAll: '	' , f methodName , ' := (qFlags bitAnd: ' , bitMask asString , ') ~= 0.';
+								nextPutAll: '	' , fieldDefinition methodName , ' := (qFlags bitAnd: ' , bitMask asString , ') ~= 0.';
 								cr
 							]
 					]
 				ifFalse: [ s nextPutAll: '	(qFlags bitAnd: ' , bitMask asString , ') = 0 ifTrue: ['.
-					f isReserved
-						ifFalse: [ s nextPutAll: f methodName , ' := nil' ].
+					fieldDefinition isReserved
+						ifFalse: [ s nextPutAll: fieldDefinition  name lowerCamelCased  , ' := nil' ].
 					s
-						nextPutAll: '] ifFalse: [' , ( self decodeFieldSource: f ) , '].';
+						nextPutAll: '] ifFalse: [' , ( self decodeFieldSource: fieldDefinition ) , '].';
 						cr
 					]
 			].
@@ -155,21 +130,22 @@ AmqpSpecCompiler >> definitionCategory: anObject [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> encodeFieldSource: f [
+AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 
-	^ 'codec next' , f domainName , 'Put: '
+	^ 'codec next' , aFieldDefinition domainType capitalized , 'Put: '
 		,
-			( f isReserved
-				ifTrue: [ self reservedValueForDomain: f domain ]
-				ifFalse: [ f methodName ] ) , '.'
+			( aFieldDefinition isReserved
+				ifTrue: [ self reservedValueForDomain: aFieldDefinition domainType ]
+				ifFalse: [ aFieldDefinition name lowerCamelCased ] ) , '.'
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> encodeMethodSource: m [
+AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 
 	| s bitindex finishbits |
 
 	s := WriteStream with: 'encodeOn: codec
+
 	| bitBuffer |
 '.
 
@@ -181,9 +157,9 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 			]
 	].
 
-	m fields
-		do: [ :f | 
-			f domain = 'bit'
+	aMethodDefinition fields
+		do: [ :fieldDefinition | 
+			fieldDefinition domainType = 'bit'
 				ifTrue: [ bitindex
 						ifNil: [ bitindex := 0.
 							s
@@ -197,10 +173,10 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 								cr.
 							bitindex := 0
 							].
-					f isReserved
+					fieldDefinition isReserved
 						ifFalse: [ s
 								nextPutAll:
-									'	(' , f methodName , ' ifNil: [false])' , ' ifTrue: [bitBuffer := bitBuffer bitOr: '
+									'	(' , fieldDefinition name lowerCamelCased , ' ifNil: [false])' , ' ifTrue: [bitBuffer := bitBuffer bitOr: '
 										, ( 1 bitShift: bitindex ) asString , '].'.
 							s cr
 							].
@@ -209,7 +185,7 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 				ifFalse: [ finishbits value.
 					bitindex := nil.
 					s
-						nextPutAll: '	' , ( self encodeFieldSource: f );
+						nextPutAll: '	' , ( self encodeFieldSource: fieldDefinition );
 						cr
 					]
 			].
@@ -218,187 +194,202 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> encodePropertiesSource: c [
+AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 
-	| s |
+	| source |
 
-	s := WriteStream with: 'encodeOn: codec
+	source := WriteStream with: 'encodeOn: codec
 	| qFlags |
 	qFlags := 0.
 
 '.
-	c
-		propertiesAndMasksDo: [ :f :bitMask | 
-			f isReserved
-				ifFalse: [ f domain = 'bit'
-						ifTrue: [ s
-								nextPutAll: '	' , f methodName , ' ifTrue: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
+	aClassDefinition
+		propertiesAndMasksDo: [ :property :bitMask | 
+			property isReserved
+				ifFalse: [ property domainType = 'bit'
+						ifTrue: [ source
+								nextPutAll: '	' , property name lowerCamelCased , ' ifTrue: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
-						ifFalse: [ s
-								nextPutAll: '	' , f methodName , ' isNil ifFalse: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
+						ifFalse: [ source
+								nextPutAll: '	' , property name lowerCamelCased , ' isNil ifFalse: [qFlags := qFlags bitOr: ' , bitMask asString , '].';
 								cr
 							]
 					]
 			].
-	s
+	source
 		cr;
 		nextPutAll: '	self encodeFlags: qFlags on: codec.';
 		cr;
 		cr.
-	c
+	aClassDefinition
 		propertiesAndMasksDo: [ :f :bitMask | 
 			f isReserved
 				ifFalse: [ f domain = 'bit'
-						ifFalse: [ s
-								nextPutAll: '	' , f methodName , ' isNil ifFalse: [' , ( self encodeFieldSource: f ) , '].';
+						ifFalse: [ source
+								nextPutAll: '	' , f name lowerCamelCased , ' isNil ifFalse: [' , ( self encodeFieldSource: f ) , '].';
 								cr
 							]
 					]
 			].
-	^ s contents
+	^ source contents
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateClass: def [
+AmqpSpecCompiler >> generateClass: aClassDefinition [
 
-	self generateContentProperties: def.
-	def methods valuesDo: [ :each | self generateMethod: each ]
+	self generateContentProperties: aClassDefinition.
+	aClassDefinition methods valuesDo: [ :method | self generateMethod: method ]
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateContentProperties: def [
+AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 
-	| c fs |
+	| class fieldDefinitions |
 
-	def hasProperties
+	aClassDefinition hasProperties
 		ifFalse: [ ^ self ].
-	fs := def contentProperties reject: [ :each | each isReserved ].
-	c := self
+	fieldDefinitions := aClassDefinition contentProperties reject: [ :each | each isReserved ].
+	class := self
 		subclassOf: AmqpProtocolProperties
-		named: def propertiesName
-		instanceVariables: ( fs collect: [ :each | each methodName ] ).
-	fs
-		do: [ :f | 
-			c compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
-			c compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
+		named: prefix , aClassDefinition name upperCamelCased , 'Properties'
+		instanceVariables: ( fieldDefinitions collect: [ :fieldDefinition | fieldDefinition name lowerCamelCased ] ).
+	fieldDefinitions
+		do: [ :fieldDefinition | 
+			class
+				compile: fieldDefinition name lowerCamelCased , ' ^ ' , fieldDefinition name lowerCamelCased
+				classified: 'accessing'.
+			class
+				compile:
+					fieldDefinition name lowerCamelCased , ': aValue ' , fieldDefinition name lowerCamelCased
+						, ' := aValue.'
+				classified: 'accessing'
 			].
-	c compile: 'codecClassId ^ ' , def index asString classified: 'AMQP codec'.
-	c compile: ( self decodePropertiesSource: def ) classified: 'AMQP codec'.
-	c compile: ( self encodePropertiesSource: def ) classified: 'AMQP codec'
+	class compile: 'codecClassId ^ ' , aClassDefinition index asString classified: 'AMQP codec'.
+	class compile: ( self decodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'.
+	class compile: ( self encodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> generateEverything [
 
-	| p pc |
+	| protocol class |
 
-	p := self subclassOf: AmqpProtocol named: '' instanceVariables: #().
-	pc := p class.
+	protocol := self subclassOf: AmqpProtocol named: prefix instanceVariables: #().
+	class := protocol class.
 
-	pc compile: 'portNumber ^' , spec portNumber asString classified: 'AMQP protocol'.
-	pc compile: 'majorVersion ^' , spec majorVersion asString classified: 'AMQP protocol'.
-	pc compile: 'minorVersion ^' , spec minorVersion asString classified: 'AMQP protocol'.
-	pc compile: 'revision ^' , spec revision asString classified: 'AMQP protocol'.
-	pc
+	class compile: 'portNumber ^' , spec portNumber asString classified: 'AMQP protocol'.
+	class compile: 'majorVersion ^' , spec majorVersion asString classified: 'AMQP protocol'.
+	class compile: 'minorVersion ^' , spec minorVersion asString classified: 'AMQP protocol'.
+	class compile: 'revision ^' , spec revision asString classified: 'AMQP protocol'.
+	class
 		compile: 'isObsoleteProtocolVariant ^' , spec isObsoleteProtocolVariant asString
 		classified: 'AMQP protocol'.
 
 	spec constants
-		keysAndValuesDo: [ :name :value | 
-			pc
-				compile: ( AmqpSpecCompiler methodNameFor: name ) , ' ^' , value asString
+		do: [ :constant | 
+			class
+				compile: constant name lowerCamelCased , ' ^' , constant value asString
 				classified: 'AMQP protocol constants'
 			].
 
 	spec classDefinitions valuesDo: [ :def | self generateClass: def ].
-	pc compile: self initializerSource classified: 'class initialization'.
+	class compile: self initializerSource classified: 'class initialization'.
 
 	spec allMethods
 		do: [ :def | 
-			pc
+			class
 				compile:
-					( AmqpSpecCompiler methodNameFor: def classDef name , ' ' , def name , ' method' ) , ' ^ '
-						, ( self classNameFor: def classDef name , ' ' , def name )
+					def classDef name lowerCamelCased , def name upperCamelCased , 'Method' , ' ^ '
+						, ( prefix , def classDef name upperCamelCased , def name upperCamelCased )
 				classified: 'AMQP methods'
 			].
+		
 	spec classDefinitions
-		valuesDo: [ :def | 
-			def hasProperties
-				ifTrue: [ pc
+		valuesDo: [ :classDefinition | 
+			classDefinition hasProperties
+				ifTrue: [ class
 						compile:
-							( AmqpSpecCompiler methodNameFor: def propertiesName , ' class' ) , ' ^ '
-								, ( self classNameFor: def propertiesName )
+							( classDefinition name lowerCamelCased , 'Properties' , 'Class' ) , ' ^ '
+								, ( prefix , classDefinition name upperCamelCased , 'Properties' )
 						classified: 'AMQP content properties'
 					]
 			]
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateMethod: def [
+AmqpSpecCompiler >> generateMethod: aMethodDefinition [
 
-	| c fs |
+	| class fieldDefinitions |
 
-	fs := def fields reject: [ :each | each isReserved ].
-	c := self
+	fieldDefinitions := aMethodDefinition fields
+		reject: [ :fieldDefinition | fieldDefinition isReserved ].
+
+	class := self
 		subclassOf: AmqpProtocolMethod
-		named: def classDef name , ' ' , def name
-		instanceVariables: ( fs collect: [ :each | each methodName ] ).
-	fs
-		do: [ :f | 
-			c compile: f methodName , ' ^ ' , f methodName classified: 'accessing'.
-			c compile: f methodName , ': aValue ' , f methodName , ' := aValue.' classified: 'accessing'
+		named: prefix , aMethodDefinition classDef name upperCamelCased , aMethodDefinition name upperCamelCased
+		instanceVariables: ( ( fieldDefinitions collect: #name ) collect: #lowerCamelCased ).
+
+	fieldDefinitions
+		do: [ :fieldDefinition | 
+			class
+				compile: fieldDefinition name lowerCamelCased , ' ^ ' , fieldDefinition name lowerCamelCased
+				classified: 'accessing'.
+			class
+				compile:
+					fieldDefinition name lowerCamelCased , ': aValue ' , fieldDefinition name lowerCamelCased
+						, ' := aValue.'
+				classified: 'accessing'
 			].
-	c compile: 'codecMethodId ^ ' , def methodId asString classified: 'AMQP codec'.
-	c compile: 'hasContents ^ ' , def hasContents asString classified: 'AMQP codec'.
-	c compile: ( self acceptableResponseClassesSource: def ) classified: 'AMQP codec'.
-	c compile: ( self decodeMethodSource: def ) classified: 'AMQP codec'.
-	c compile: ( self encodeMethodSource: def ) classified: 'AMQP codec'
+	class compile: 'codecMethodId ^ ' , aMethodDefinition methodId asString classified: 'AMQP codec'.
+	class compile: 'hasContents ^ ' , aMethodDefinition hasContents asString classified: 'AMQP codec'.
+	class compile: ( self acceptableResponseClassesSource: aMethodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self decodeMethodSource: aMethodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self encodeMethodSource: aMethodDefinition ) classified: 'AMQP codec'
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> initializerSource [
 
-	| source |
+	^ String
+		streamContents: [ :stream | 
+			stream
+				nextPutAll:
+					'initialize
 
-	source := WriteStream with: 'initialize
 	super initialize.
 '.
-	spec classDefinitions
-		valuesDo: [ :each | 
-			each hasProperties
-				ifTrue: [ source
-						nextPutAll: '	classIds at: ';
-						nextPutAll: each index asString;
+
+			spec classDefinitions
+				valuesDo: [ :classDefinition | 
+					classDefinition hasProperties
+						ifTrue: [ stream
+								nextPutAll: '	classIds at: ';
+								nextPutAll: classDefinition index asString;
+								nextPutAll: ' put: ';
+								nextPutAll: prefix , classDefinition name upperCamelCased , 'Properties';
+								nextPut: $.;
+								nextPut: Character cr
+							]
+					].
+
+			spec allMethods
+				do: [ :each | 
+					stream
+						nextPutAll: '	methodIds at: ';
+						nextPutAll: each methodId asString;
 						nextPutAll: ' put: ';
-						nextPutAll: ( self classNameFor: each propertiesName );
+						nextPutAll: prefix , each classDef name upperCamelCased , each name upperCamelCased;
 						nextPut: $.;
 						nextPut: Character cr
 					]
-			].
-	spec allMethods
-		do: [ :each | 
-			source
-				nextPutAll: '	methodIds at: ';
-				nextPutAll: each methodId asString;
-				nextPutAll: ' put: ';
-				nextPutAll: ( self classNameFor: each classDef name , ' ' , each name );
-				nextPut: $.;
-				nextPut: Character cr
-			].
-	^ source contents
+			]
 ]
 
 { #category : #accessing }
 AmqpSpecCompiler >> prefix [
 
 	^ prefix
-]
-
-{ #category : #accessing }
-AmqpSpecCompiler >> prefix: anObject [
-
-	prefix := anObject
 ]
 
 { #category : #accessing }
@@ -430,20 +421,22 @@ AmqpSpecCompiler >> spec: anObject [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> subclassOf: aSuperClass named: aString instanceVariables: aCollection [
+AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables: aCollection [
 
-	| ivs n c |
+	| instanceVariableNames |
 
-	ivs := WriteStream with: ''.
-	n := self classNameFor: aString.
-	aCollection do: [ :each | ivs nextPutAll: each ] separatedBy: [ ivs space ].
-	c := aSuperClass
-		subclass: n
-		instanceVariableNames: ivs contents
+	instanceVariableNames := String
+		streamContents: [ :stream | 
+			aCollection
+				do: [ :instanceVariableName | stream nextPutAll: instanceVariableName ]
+				separatedBy: [ stream space ]
+			].
+		
+	^ aSuperClass
+		subclass: aClassName
+		instanceVariableNames: instanceVariableNames
 		classVariableNames: ''
-		poolDictionaries: ''
-		category: definitionCategory.
-	^ c
+		package: definitionCategory
 ]
 
 { #category : #accessing }

@@ -2,17 +2,30 @@ Class {
 	#name : #AmqpConnectionBuilder,
 	#superclass : #Object,
 	#instVars : [
-		'credentials',
 		'parameters',
-		'hostname'
+		'hostname',
+		'username',
+		'password'
 	],
 	#category : #'Amqp-Protocol'
 }
 
 { #category : #building }
 AmqpConnectionBuilder >> build [
-	
-	^AmqpConnection to: hostname using: Amqp091.
+
+	^ AmqpConnection
+		to: hostname
+		using: Amqp091
+		with: self credentials
+		parameterizedBy: parameters
+]
+
+{ #category : #building }
+AmqpConnectionBuilder >> credentials [
+
+	^ AmqpPlainCredentials new
+		username: username;
+		password: password
 ]
 
 { #category : #configuring }
@@ -25,11 +38,24 @@ AmqpConnectionBuilder >> hostname: aHostname [
 AmqpConnectionBuilder >> initialize [
 
 	super initialize.
-	credentials := AmqpPlainCredentials new
-		username: 'guest';
-		password: 'guest'.
+	"Initialize default values."
+	username := 'guest'.
+	password := 'guest'.
+	hostname := 'localhost'.
 	parameters := AmqpConnectionParameters new
 		channelMax: 0;
 		frameMax: 131072;
 		heartbeat: 0
+]
+
+{ #category : #configuring }
+AmqpConnectionBuilder >> password: aPassword [
+
+	password := aPassword
+]
+
+{ #category : #configuring }
+AmqpConnectionBuilder >> username: anUsername [
+
+	username := anUsername
 ]

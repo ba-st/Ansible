@@ -10,7 +10,7 @@ BaselineOfLepus >> baseline: spec [
 	<baseline>
 	spec
 		for: #pharo
-		do: [ spec setUpDependencies: spec.
+		do: [ self setUpDependencies: spec.
 
 			spec
 				package: 'Amqp-Protocol' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
@@ -18,15 +18,13 @@ BaselineOfLepus >> baseline: spec [
 				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Base' ];
 				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Base' ];
 				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol' ];
-				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ];
-				package: 'Amqp-Examples'.
+				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
 
 			spec
 				group: 'Deployment' with: #('Amqp-Protocol');
 				group: 'Tests' with: #('Amqp-Tests');
 				group: 'CI' with: #('Tests');
 				group: 'Tools' with: #('Amqp-Tools');
-				group: 'Examples' with: #('Amqp-Examples');
 				group: 'Development' with: #('Tests' 'Tools')
 			]
 ]
@@ -38,7 +36,8 @@ BaselineOfLepus >> projectClass [
 ]
 
 { #category : #initialization }
-BaselineOfLepus >> setUpDependencies: spec [ 
+
+BaselineOfLepus >> setUpDependencies: spec [
 
 	spec
 		baseline: 'XMLParser'

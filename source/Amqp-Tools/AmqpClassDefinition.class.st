@@ -17,7 +17,7 @@ AmqpClassDefinition >> contentProperties [
 { #category : #'as yet unclassified' }
 AmqpClassDefinition >> hasProperties [
 
-	^ self contentProperties isEmpty not
+	^ self contentProperties isNotEmpty
 ]
 
 { #category : #'as yet unclassified' }
@@ -26,7 +26,7 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 	super loadFrom: anXmlNode.
 	methods := Dictionary new.
 	xml
-		tagsNamed: #method
+		elementsAt: #method
 		do: [ :each | 
 			AmqpMethodDefinition new
 				loadFrom: each;
@@ -36,14 +36,14 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 
 	contentProperties := OrderedCollection new.
 	xml
-		tagsNamed: #field
-		childrenDo: [ :each | 
+		elementsAt: #field
+		do: [ :each |  
 			contentProperties
 				add:
 					( AmqpFieldDefinition new
 						loadFrom: each;
 						container: self )
-			]
+			] 
 ]
 
 { #category : #accessing }
@@ -69,15 +69,9 @@ AmqpClassDefinition >> propertiesAndMasksDo: aBlock [
 			]
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpClassDefinition >> propertiesName [
-
-	^ self name , ' properties'
-]
-
 { #category : #accessing }
-AmqpClassDefinition >> resolveUsing: spec [
+AmqpClassDefinition >> resolveDomainUsing: spec [
 
-	methods valuesDo: [ :each | each resolveUsing: spec ].
-	contentProperties do: [ :each | each resolveUsing: spec ]
+	methods valuesDo: [ :each | each resolveDomainUsing: spec ].
+	contentProperties do: [ :each | each resolveDomainUsing: spec ]
 ]

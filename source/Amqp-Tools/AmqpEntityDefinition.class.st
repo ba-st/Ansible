@@ -31,15 +31,9 @@ AmqpEntityDefinition >> installOn: aDictionary [
 AmqpEntityDefinition >> loadFrom: anXmlNode [
 
 	xml := anXmlNode.
-	name := AmqpSpecification normalizeName: ( xml attributeAt: #name ).
+	name := AmqpName from: ( xml attributeAt: #name ).
 	index := xml attributeAt: #index ifAbsent: [ nil ].
 	index ifNotNil: [ index := index asInteger ]
-]
-
-{ #category : #accessing }
-AmqpEntityDefinition >> methodName [
-
-	^ AmqpSpecCompiler methodNameFor: name
 ]
 
 { #category : #accessing }
@@ -60,7 +54,7 @@ AmqpEntityDefinition >> printOn: aStream [
 	super printOn: aStream.
 	aStream
 		space;
-		nextPutAll: name;
+		nextPutAll: name asString;
 		nextPut: $(;
 		nextPutAll: index asString;
 		nextPut: $)
