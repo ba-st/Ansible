@@ -19,12 +19,6 @@ AmqpSpecCompiler class >> joinPieces: strings [
 	^ s contents
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpSpecCompiler class >> methodNameFor: aString [
-
-	^ aString asMethodName
-]
-
 { #category : #accessing }
 AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 
@@ -50,21 +44,11 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> classNameFor: aString [
-
-	^ ( String
-		streamContents: [ :stream | 
-			stream nextPutAll: prefix.
-			aString substrings do: [ :substring | stream nextPutAll: substring capitalized ]
-			] ) asSymbol
-]
-
-{ #category : #accessing }
 AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 
 	^ ( aFieldDefinition isReserved
 		ifTrue: [ '' ]
-		ifFalse: [ '' , aFieldDefinition domainName lowerCamelCased , ' := ' ] ) , 'codec next'
+		ifFalse: [ '' , aFieldDefinition name lowerCamelCased , ' := ' ] ) , 'codec next'
 		, aFieldDefinition domainType capitalized , '.'
 ]
 
@@ -152,15 +136,16 @@ AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 		,
 			( aFieldDefinition isReserved
 				ifTrue: [ self reservedValueForDomain: aFieldDefinition domainType ]
-				ifFalse: [ aFieldDefinition domainName lowerCamelCased ] ) , '.'
+				ifFalse: [ aFieldDefinition name lowerCamelCased ] ) , '.'
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> encodeMethodSource: m [
+AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 
 	| s bitindex finishbits |
 
 	s := WriteStream with: 'encodeOn: codec
+
 	| bitBuffer |
 '.
 
@@ -172,9 +157,9 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 			]
 	].
 
-	m fields
-		do: [ :f | 
-			f domain = 'bit'
+	aMethodDefinition fields
+		do: [ :fieldDefinition | 
+			fieldDefinition domainType = 'bit'
 				ifTrue: [ bitindex
 						ifNil: [ bitindex := 0.
 							s
@@ -188,10 +173,10 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 								cr.
 							bitindex := 0
 							].
-					f isReserved
+					fieldDefinition isReserved
 						ifFalse: [ s
 								nextPutAll:
-									'	(' , f methodName , ' ifNil: [false])' , ' ifTrue: [bitBuffer := bitBuffer bitOr: '
+									'	(' , fieldDefinition name lowerCamelCased , ' ifNil: [false])' , ' ifTrue: [bitBuffer := bitBuffer bitOr: '
 										, ( 1 bitShift: bitindex ) asString , '].'.
 							s cr
 							].
@@ -200,7 +185,7 @@ AmqpSpecCompiler >> encodeMethodSource: m [
 				ifFalse: [ finishbits value.
 					bitindex := nil.
 					s
-						nextPutAll: '	' , ( self encodeFieldSource: f );
+						nextPutAll: '	' , ( self encodeFieldSource: fieldDefinition );
 						cr
 					]
 			].
@@ -319,29 +304,30 @@ AmqpSpecCompiler >> generateEverything [
 						, ( prefix , def classDef name upperCamelCased , def name upperCamelCased )
 				classified: 'AMQP methods'
 			].
+		
 	spec classDefinitions
 		valuesDo: [ :classDefinition | 
 			classDefinition hasProperties
 				ifTrue: [ class
 						compile:
-							( self class methodNameFor: classDefinition propertiesName , ' class' ) , ' ^ '
-								, ( self classNameFor: classDefinition propertiesName )
+							( classDefinition name lowerCamelCased , 'Properties' , 'Class' ) , ' ^ '
+								, ( prefix , classDefinition name upperCamelCased , 'Properties' )
 						classified: 'AMQP content properties'
 					]
 			]
 ]
 
 { #category : #accessing }
-AmqpSpecCompiler >> generateMethod: methodDefinition [
+AmqpSpecCompiler >> generateMethod: aMethodDefinition [
 
 	| class fieldDefinitions |
 
-	fieldDefinitions := methodDefinition fields
+	fieldDefinitions := aMethodDefinition fields
 		reject: [ :fieldDefinition | fieldDefinition isReserved ].
 
 	class := self
 		subclassOf: AmqpProtocolMethod
-		named: prefix , methodDefinition classDef name upperCamelCased , methodDefinition name upperCamelCased
+		named: prefix , aMethodDefinition classDef name upperCamelCased , aMethodDefinition name upperCamelCased
 		instanceVariables: ( ( fieldDefinitions collect: #name ) collect: #lowerCamelCased ).
 
 	fieldDefinitions
@@ -355,11 +341,11 @@ AmqpSpecCompiler >> generateMethod: methodDefinition [
 						, ' := aValue.'
 				classified: 'accessing'
 			].
-	class compile: 'codecMethodId ^ ' , methodDefinition methodId asString classified: 'AMQP codec'.
-	class compile: 'hasContents ^ ' , methodDefinition hasContents asString classified: 'AMQP codec'.
-	class compile: ( self acceptableResponseClassesSource: methodDefinition ) classified: 'AMQP codec'.
-	class compile: ( self decodeMethodSource: methodDefinition ) classified: 'AMQP codec'.
-	class compile: ( self encodeMethodSource: methodDefinition ) classified: 'AMQP codec'
+	class compile: 'codecMethodId ^ ' , aMethodDefinition methodId asString classified: 'AMQP codec'.
+	class compile: 'hasContents ^ ' , aMethodDefinition hasContents asString classified: 'AMQP codec'.
+	class compile: ( self acceptableResponseClassesSource: aMethodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self decodeMethodSource: aMethodDefinition ) classified: 'AMQP codec'.
+	class compile: ( self encodeMethodSource: aMethodDefinition ) classified: 'AMQP codec'
 ]
 
 { #category : #accessing }

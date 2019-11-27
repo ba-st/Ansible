@@ -69,12 +69,6 @@ AmqpClassDefinition >> propertiesAndMasksDo: aBlock [
 			]
 ]
 
-{ #category : #'as yet unclassified' }
-AmqpClassDefinition >> propertiesName [
-
-	^ self name lowerCamelCased, ' properties'
-]
-
 { #category : #accessing }
 AmqpClassDefinition >> resolveDomainUsing: spec [
 
