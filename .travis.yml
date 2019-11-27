@@ -5,7 +5,8 @@ services:
 
 before_script:
   - docker pull rabbitmq:3-alpine
-  - docker run -d --hostname rabbitmq --name roger -p5672:5672 rabbitmq:3-alpine  - docker ps -a
+  - docker run -d --hostname rabbitmq --name roger -p5672:5672 rabbitmq:3-alpine
+  - docker ps -a
 
 os:
   - linux
