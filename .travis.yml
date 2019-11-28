@@ -1,5 +1,7 @@
 language: smalltalk
 
+sudo: required
+
 services:
   - docker
 
@@ -7,6 +9,9 @@ before_script:
   - docker pull rabbitmq:3
   - docker run -d --name rabbitmq-for-tests -p5672:5672 rabbitmq:3
   - docker ps -a
+
+after_failure: 
+  - docker inspect --format='{{.LogPath}}' rabbitmq-for-tests | sudo xargs cat
 
 os:
   - linux
