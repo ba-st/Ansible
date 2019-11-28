@@ -9,6 +9,9 @@ before_script:
   - docker pull rabbitmq:3
   - docker run -d --name rabbitmq-for-tests -p5672:5672 rabbitmq:3
   - docker ps -a
+  - docker exec -it rabbitmq-for-tests bash
+  - rabbitmq-diagnostics check_running
+  - exit
 
 after_failure: 
   - sleep 5         
