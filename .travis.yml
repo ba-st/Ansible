@@ -9,7 +9,7 @@ before_script:
   - docker pull rabbitmq:3
   - docker run -d --name rabbit-tests -p5672:5672 rabbitmq:3
   - docker ps -a
-  - docker exec rabbit-tests rabbitmqctl await_startup
+  - sleep 10
 
 after_failure: 
   - docker inspect --format='{{.LogPath}}' rabbit-tests | sudo xargs cat
