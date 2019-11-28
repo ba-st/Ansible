@@ -11,6 +11,7 @@ before_script:
   - docker ps -a
 
 after_failure: 
+  - sleep 5         
   - docker inspect --format='{{.LogPath}}' rabbitmq-for-tests | sudo xargs cat
 
 os:
