@@ -58,6 +58,35 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType
 ]
 
 { #category : #'tests - support' }
+AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType: anExchangeType to: aRoute [ 
+
+self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+
+			aMessageCollection
+				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
+
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel
+				queueDeclare: ''
+				durable: false
+				exclusive: true
+				autoDelete: false
+				passive: false
+				arguments: nil.
+
+			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
+			self
+				assert: queue method messageCount equals: 0;
+				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
+			]
+]
+
+{ #category : #'tests - support' }
 AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
 	self
@@ -157,6 +186,50 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumeFromExchange: anExchangeName w
 					self
 						assert: messageReceived method exchange equals: anExchangeName;
 						assert: messageReceived method routingKey equals: '';
+						deny: messageReceived method redelivered.
+
+					aBlock value: messageReceived.
+
+					channel basicAck: messageReceived method deliveryTag
+					].
+			process := Process
+				forContext:
+					[ [ [ connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+			process name: aProcessName.
+
+			^ process
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aRouteSet boundToExchange: anExchangeName withType: anExchangeType applying: aBlock [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| process channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+			queue := channel
+				queueDeclare: ''
+				durable: false
+				exclusive: true
+				autoDelete: false
+				passive: false
+				arguments: nil.
+
+			aRouteSet
+				do: [ :route | channel queueBind: queue method queue exchange: anExchangeName routingKey: route ].
+
+			channel
+				consumeFrom: queue method queue
+				applying: [ :messageReceived | 
+					self
+						assert: messageReceived method exchange equals: anExchangeName;
+						assert: ( aRouteSet includes: messageReceived method routingKey );
 						deny: messageReceived method redelivered.
 
 					aBlock value: messageReceived.
@@ -335,6 +408,62 @@ AMQPTest >> testBasicPublishSubscribe [
 	self
 		assert: firstWorkerMessages size equals: 5;
 		assert: secondWorkerMessages size equals: 5
+]
+
+{ #category : #tests }
+AMQPTest >> testRouting [
+
+	| errorLoggerMessages loggerMessages errorLogger secondWorker |
+
+	errorLoggerMessages := OrderedCollection new.
+	loggerMessages := OrderedCollection new.
+
+	errorLogger := self
+		spawnWorkerNamed: 'error_logger'
+		consumingFrom: #('error')
+		boundToExchange: 'direct_logs'
+		withType: 'direct'
+		applying: [ :message | errorLoggerMessages add: message ].
+
+	secondWorker := self
+		spawnWorkerNamed: 'logger'
+		consumingFrom: #('info' 'warning' 'error')
+		boundToExchange: 'direct_logs'
+		withType: 'direct'
+		applying: [ :message | loggerMessages add: message ].
+
+	errorLogger resume.
+	secondWorker resume.
+
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'direct_logs'
+		withType: 'direct'
+		to: 'info'.
+	self
+		publish: #('Log')
+		onExchangeNamed: 'direct_logs'
+		withType: 'direct'
+		to: 'error'.
+	self
+		publish: #('Log' 'Log')
+		onExchangeNamed: 'direct_logs'
+		withType: 'direct'
+		to: 'warning'.
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'direct_logs'
+		withType: 'direct'
+		to: 'info'.
+
+	( Delay forSeconds: 1 ) wait.
+
+	errorLogger terminate.
+	secondWorker terminate.
+
+	self
+		assert: errorLoggerMessages size equals: 1;
+		assert: loggerMessages size equals: 9
 ]
 
 { #category : #'tests - support' }
