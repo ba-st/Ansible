@@ -53,7 +53,7 @@ AmqpChannelHandler >> connection: anObject [
 	connection setChannel: channelNumber to: self
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> dispatchCommand [
 
 	( asyncMap includesKey: currentCommand method class )
@@ -66,14 +66,14 @@ AmqpChannelHandler >> dispatchCommand [
 	self resetState
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> ensureOpen [
 
 	closeReason notNil
 		ifTrue: [ AmqpDisconnectedError signal: 'Channel closed' ]
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> handleBodyFrame: frame [
 
 	( frame isKindOf: AmqpContentBodyFrame )
@@ -83,13 +83,13 @@ AmqpChannelHandler >> handleBodyFrame: frame [
 	self checkBodyCompletion
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> handleFrame: frame [
 
 	self perform: state with: frame
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> handleMethodFrame: frame [
 
 	( frame isKindOf: AmqpMethodFrame )
@@ -101,7 +101,7 @@ AmqpChannelHandler >> handleMethodFrame: frame [
 		ifFalse: [ self dispatchCommand ]
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> handlePropertiesFrame: frame [
 
 	( frame isKindOf: AmqpContentHeaderFrame )
@@ -122,7 +122,7 @@ AmqpChannelHandler >> initialize [
 	self resetState
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #handling }
 AmqpChannelHandler >> internalClose: method [
 
 	closeReason
@@ -132,13 +132,13 @@ AmqpChannelHandler >> internalClose: method [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> mapEvent: evtClass to: receiver selector: aSymbol [
 
 	asyncMap at: evtClass put: receiver -> aSymbol
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> resetState [
 
 	state := #handleMethodFrame:.
@@ -147,13 +147,13 @@ AmqpChannelHandler >> resetState [
 	bodyPieces := nil
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #handling }
 AmqpChannelHandler >> rpc: requestMethod [
 
 	^ connection rpc: requestMethod onChannel: channelNumber
 ]
 
-{ #category : #accessing }
+{ #category : #handling }
 AmqpChannelHandler >> waitForReply: acceptableReplies [
 
 	| i |

@@ -21,13 +21,13 @@ AmqpEntityDefinition >> index: anObject [
 	index := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #building }
 AmqpEntityDefinition >> installOn: aDictionary [
 
 	aDictionary at: name put: self
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #building }
 AmqpEntityDefinition >> loadFrom: anXmlNode [
 
 	xml := anXmlNode.
@@ -48,7 +48,7 @@ AmqpEntityDefinition >> name: anObject [
 	name := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #printing }
 AmqpEntityDefinition >> printOn: aStream [
 
 	super printOn: aStream.

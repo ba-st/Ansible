@@ -9,16 +9,6 @@ Class {
 	#category : #'Amqp-Tools'
 }
 
-{ #category : #'as yet unclassified' }
-AmqpSpecCompiler class >> joinPieces: strings [
-
-	| s |
-
-	s := WriteStream with: ''.
-	strings do: [ :each | s nextPutAll: each ].
-	^ s contents
-]
-
 { #category : #accessing }
 AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 

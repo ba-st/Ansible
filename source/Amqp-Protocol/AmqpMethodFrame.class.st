@@ -8,7 +8,7 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpMethodFrame >> encodeBodyOn: codec [
 
 	codec nextLongPut: methodId.
@@ -39,7 +39,7 @@ AmqpMethodFrame >> methodId: anObject [
 	methodId := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpMethodFrame >> readFrom: conn length: length [
 
 	| codec |

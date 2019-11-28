@@ -33,7 +33,7 @@ AmqpFieldDefinition >> domain: anObject [
 	domain := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpFieldDefinition >> domainName [
 
 	^ domain name
@@ -46,13 +46,13 @@ AmqpFieldDefinition >> domainType [
 	^ domain type
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpFieldDefinition >> isReserved [
 
 	^ reserved
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #building }
 AmqpFieldDefinition >> loadFrom: anXmlNode [
 
 	super loadFrom: anXmlNode.
@@ -62,7 +62,7 @@ AmqpFieldDefinition >> loadFrom: anXmlNode [
 	reserved := ( xml attributeAt: #reserved ) = '1'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #building }
 AmqpFieldDefinition >> resolveDomainUsing: aSpec [
 
 	domain := aSpec resolveDomainUsing: domain

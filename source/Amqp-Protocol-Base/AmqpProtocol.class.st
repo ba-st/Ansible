@@ -8,13 +8,13 @@ Class {
 	#category : #'Amqp-Protocol-Base'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> classForId: classId [
 
 	^ classIds at: classId ifAbsent: [ AmqpProtocolSyntaxError signal: 'Unsupported AMQP class' ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> frameClassFor: typeCode [
 
 	typeCode = self frameMethod
@@ -30,7 +30,7 @@ AmqpProtocol class >> frameClassFor: typeCode [
 	^ nil	"ignored frame kind"
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> initialize [
 
 	super initialize.
@@ -38,37 +38,37 @@ AmqpProtocol class >> initialize [
 	methodIds := Dictionary new
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> isObsoleteProtocolVariant [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> majorVersion [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> methodForId: methodId [
 
 	^ methodIds at: methodId ifAbsent: [ AmqpProtocolSyntaxError signal: 'Unsupported AMQP method' ]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> minorVersion [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> portNumber [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> protocolHeader [
 
 	| stream |
@@ -91,13 +91,13 @@ AmqpProtocol class >> protocolHeader [
 	^ stream contents
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> revision [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpProtocol class >> versionString [
 
 	^ self majorVersion asString , '-' , self minorVersion asString

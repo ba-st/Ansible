@@ -14,13 +14,13 @@ AmqpClassDefinition >> contentProperties [
 	^ contentProperties
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 AmqpClassDefinition >> hasProperties [
 
 	^ self contentProperties isNotEmpty
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #building }
 AmqpClassDefinition >> loadFrom: anXmlNode [
 
 	super loadFrom: anXmlNode.

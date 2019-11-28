@@ -7,7 +7,15 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
+AmqpContentBodyFrame >> encodeBodyOn: codec [
+
+	"do nothing."
+
+	
+]
+
+{ #category : #accessing }
 AmqpContentBodyFrame >> encodedBody [
 
 	^ fragment

@@ -11,7 +11,15 @@ Class {
 	#category : #'Amqp-Protocol'
 }
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
+AmqpProtocolHeaderFrame >> encodeBodyOn: codec [
+
+	"do nothing."
+
+	
+]
+
+{ #category : #accessing }
 AmqpProtocolHeaderFrame >> readFrom: conn length: length [
 
 	| codec |
