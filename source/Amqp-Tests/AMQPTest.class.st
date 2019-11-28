@@ -29,12 +29,41 @@ AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
-
-	| channel queue |
+AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType: anExchangeType [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+
+			aMessageCollection
+				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: '' ].
+
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel
+				queueDeclare: ''
+				durable: false
+				exclusive: true
+				autoDelete: false
+				passive: false
+				arguments: nil.
+
+			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
+			self
+				assert: queue method messageCount equals: 0;
+				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
+
 			channel := connection createChannel.
 			channel queueDeclare: aQueueName.
 
@@ -46,7 +75,6 @@ AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 						routingKey: aQueueName
 						properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
 					].
-
 
 			( Delay forMilliseconds: 100 ) wait.
 			queue := channel queueDeclare: aQueueName.
@@ -87,6 +115,48 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumeFrom: aQueueName applying: aBl
 					self
 						assert: messageReceived method exchange equals: '';
 						assert: messageReceived method routingKey equals: aQueueName;
+						deny: messageReceived method redelivered.
+
+					aBlock value: messageReceived.
+
+					channel basicAck: messageReceived method deliveryTag
+					].
+			process := Process
+				forContext:
+					[ [ [ connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+			process name: aProcessName.
+
+			^ process
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName consumeFromExchange: anExchangeName withType: anExchangeType applying: aBlock [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| process channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+			queue := channel
+				queueDeclare: ''
+				durable: false
+				exclusive: true
+				autoDelete: false
+				passive: false
+				arguments: nil.
+
+			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
+			channel
+				consumeFrom: queue method queue
+				applying: [ :messageReceived | 
+					self
+						assert: messageReceived method exchange equals: anExchangeName;
+						assert: messageReceived method routingKey equals: '';
 						deny: messageReceived method redelivered.
 
 					aBlock value: messageReceived.
@@ -230,6 +300,41 @@ AMQPTest >> testBasicGetWithImplicitAcknowledge [
 
 			self assert: ( channel basicGet: queue method queue ) body isNil
 			]
+]
+
+{ #category : #tests }
+AMQPTest >> testBasicPublishSubscribe [
+
+	| firstWorkerMessages secondWorkerMessages firstWorker secondWorker |
+
+	firstWorkerMessages := OrderedCollection new.
+	secondWorkerMessages := OrderedCollection new.
+
+	firstWorker := self
+		spawnWorkerNamed: 'first_worker'
+		consumeFromExchange: 'logs'
+		withType: 'fanout'
+		applying: [ :message | firstWorkerMessages add: message ].
+
+	secondWorker := self
+		spawnWorkerNamed: 'second_worker'
+		consumeFromExchange: 'logs'
+		withType: 'fanout'
+		applying: [ :message | secondWorkerMessages add: message ].
+
+	firstWorker resume.
+	secondWorker resume.
+
+	self publish: #('Log' 'Log' 'Log' 'Log' 'Log') onExchangeNamed: 'logs' withType: 'fanout'.
+
+	( Delay forSeconds: 1 ) wait.
+
+	firstWorker terminate.
+	secondWorker terminate.
+
+	self
+		assert: firstWorkerMessages size equals: 5;
+		assert: secondWorkerMessages size equals: 5
 ]
 
 { #category : #'tests - support' }
