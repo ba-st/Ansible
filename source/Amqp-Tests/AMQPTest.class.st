@@ -4,6 +4,17 @@ Class {
 	#category : #'Amqp-Tests'
 }
 
+{ #category : #tests }
+AMQPTest >> assertContentsFor: messageReceived [
+
+	self
+		assert: messageReceived body asString equals: 'Hello world!';
+		assert: messageReceived method exchange equals: '';
+		assert: messageReceived method routingKey equals: 'hello';
+		deny: messageReceived method redelivered;
+		assert: messageReceived method messageCount equals: 0
+]
+
 { #category : #'tests - support' }
 AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 
@@ -20,112 +31,114 @@ AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 { #category : #'tests - support' }
 AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
-	| connection channel queue |
-
-	connection := AmqpConnectionBuilder new
-		hostname: 'localhost';
-		build.
-	connection open.
-
-	channel := connection createChannel.
-	channel queueDeclare: aQueueName.
-
-	aMessageCollection
-		do: [ :message | 
-			channel
-				basicPublish: message utf8Encoded
-				exchange: ''
-				routingKey: aQueueName
-				properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-			].
-
-
-	( Delay forMilliseconds: 100 ) wait.
-	queue := channel queueDeclare: aQueueName.
+	| channel queue |
 
 	self
-		assert: queue method messageCount equals: aMessageCollection size;
-		assert: queue method consumerCount equals: 0.
+		withLocalhostConnectionDo: [ :connection | 
+			channel := connection createChannel.
+			channel queueDeclare: aQueueName.
 
-	connection close
+			aMessageCollection
+				do: [ :message | 
+					channel
+						basicPublish: message utf8Encoded
+						exchange: ''
+						routingKey: aQueueName
+						properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
+					].
+
+
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel queueDeclare: aQueueName.
+
+			self
+				assert: queue method messageCount equals: aMessageCollection size;
+				assert: queue method consumerCount equals: 0
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> setUp [
+
+	"Clean up the queues in case any of the previous tests failed."
+
+	super setUp.
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			connection createChannel
+				queueDelete: 'tasks';
+				queueDelete: 'hello'
+			]
 ]
 
 { #category : #'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName consumeFrom: aQueueName applying: aBlock [
 
-	| connection channel process |
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| process channel |
 
-	connection := AmqpConnectionBuilder new
-		hostname: 'localhost';
-		build.
-	connection open.
+			channel := connection createChannel.
+			channel
+				queueDeclare: aQueueName;
+				prefetchCount: 1;
+				consumeFrom: 'tasks'
+					applying: [ :messageReceived | 
+					self
+						assert: messageReceived method exchange equals: '';
+						assert: messageReceived method routingKey equals: aQueueName;
+						deny: messageReceived method redelivered.
 
-	channel := connection createChannel.
-	channel queueDeclare: aQueueName.
+					aBlock value: messageReceived.
 
-	channel prefetchCount: 1.
+					channel basicAck: messageReceived method deliveryTag
+					].
+			process := Process
+				forContext:
+					[ [ [ connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+			process name: aProcessName.
 
-	channel
-		consumeFrom: 'tasks'
-		applying: [ :messageReceived | 
-			self
-				assert: messageReceived method exchange equals: '';
-				assert: messageReceived method routingKey equals: aQueueName;
-				deny: messageReceived method redelivered.
-
-			aBlock value: messageReceived.
-
-			channel basicAck: messageReceived method deliveryTag
-			].
-
-	process := Process
-		forContext:
-			[ [ [ connection waitForEvent ] repeat ]
-				ensure: [ connection close ]
-			] asContext
-		priority: Processor activePriority.
-	process name: aProcessName.
-
-	^ process
+			^ process
+			]
 ]
 
 { #category : #tests }
 AMQPTest >> testBasicConsume [
 
-	| connection channel queue |
-	
+	| channel queue |
+
 	self publish: #('Do it!') onQueueNamed: 'tasks'.
-	
-	connection := AmqpConnectionBuilder new
-		hostname: 'localhost';
-		build.
-	connection open.
-
-	channel := connection createChannel.
-	queue := channel queueDeclare: 'tasks'.
-
-	channel prefetchCount: 1.
-
-	channel
-		consumeFrom: 'tasks'
-		applying: [ :messageReceived | 
-			self
-				assert: messageReceived body asString equals: 'Do it!';
-				assert: messageReceived method exchange equals: '';
-				assert: messageReceived method routingKey equals: 'tasks';
-				deny: messageReceived method redelivered.
-
-			channel basicAck: messageReceived method deliveryTag
-			].
-
-	queue := channel queueDeclare: 'tasks'.
 
 	self
-		assert: queue method messageCount equals: 0;
-		assert: queue method consumerCount equals: 1.
+		withLocalhostConnectionDo: [ :connection | 
+			channel := connection createChannel.
+			queue := channel queueDeclare: 'tasks'.
 
-	channel queueDelete: 'tasks'.
-	connection close
+			channel prefetchCount: 1.
+
+			channel
+				consumeFrom: 'tasks'
+				applying: [ :messageReceived | 
+					self
+						assert: messageReceived body asString equals: 'Do it!';
+						assert: messageReceived method exchange equals: '';
+						assert: messageReceived method routingKey equals: 'tasks';
+						deny: messageReceived method redelivered.
+
+					channel basicAck: messageReceived method deliveryTag
+					].
+
+			queue := channel queueDeclare: 'tasks'.
+
+			self
+				assert: queue method messageCount equals: 0;
+				assert: queue method consumerCount equals: 1.
+
+			channel queueDelete: 'tasks'
+			]
 ]
 
 { #category : #tests }
@@ -147,7 +160,7 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 			( Delay forMilliseconds: ( message body count: [ :char | char = $. ] ) * 500 ) wait.
 			firstWorkerMessages add: message
 			].
-
+		
 	secondWorker := self
 		spawnWorkerNamed: 'second_worker'
 		consumeFrom: 'tasks'
@@ -174,21 +187,11 @@ AMQPTest >> testBasicGet [
 
 	self
 		withQueueNamed: 'hello'
-		declaredOnChannelDo: [ :queue :channel | | messageReceived |			
+		declaredOnChannelDo: [ :queue :channel | 
+			channel basicPublish: 'Hello world!' utf8Encoded exchange: '' routingKey: queue method queue.
 
-			channel
-				basicPublish: 'Hello world!' utf8Encoded
-				exchange: ''
-				routingKey: queue method queue.
-
-			messageReceived := channel basicGet: queue method queue.
-
-			self
-				assert: messageReceived body asString equals: 'Hello world!';
-				assert: messageReceived method exchange equals: '';
-				assert: messageReceived method routingKey equals: queue method queue;
-				deny: messageReceived method redelivered;
-				assert: messageReceived method messageCount equals: 0 ]
+			self assertContentsFor: ( channel basicGet: queue method queue )
+			]
 ]
 
 { #category : #tests }
@@ -203,17 +206,11 @@ AMQPTest >> testBasicGetWithExplicitAcknowledge [
 
 			messageReceived := channel basicGet: queue method queue.
 
-			self
-				assert: messageReceived body asString equals: 'Hello world!';
-				assert: messageReceived method exchange equals: '';
-				assert: messageReceived method routingKey equals: 'hello';
-				deny: messageReceived method redelivered;
-				assert: messageReceived method messageCount equals: 0.
+			self assertContentsFor: messageReceived.
 
 			channel basicAck: messageReceived method deliveryTag.
 
-			messageReceived := channel basicGet: queue method queue.
-			self assert: messageReceived body isNil
+			self assert: ( channel basicGet: queue method queue ) body isNil
 			]
 ]
 
@@ -229,31 +226,43 @@ AMQPTest >> testBasicGetWithImplicitAcknowledge [
 
 			messageReceived := channel basicGet: queue method queue noAck: true.
 
-			self
-				assert: messageReceived body asString equals: 'Hello world!';
-				assert: messageReceived method exchange equals: '';
-				assert: messageReceived method routingKey equals: queue method queue;
-				deny: messageReceived method redelivered;
-				assert: messageReceived method messageCount equals: 0.
+			self assertContentsFor: messageReceived.
 
-			self assert: ( channel basicGet: queue method queue ) body isNil.
-			channel queueDelete: queue method queue
+			self assert: ( channel basicGet: queue method queue ) body isNil
 			]
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock [
+AMQPTest >> withLocalhostConnectionDo: block [
 
-	| connection channel |
+	| connection |
 
 	connection := AmqpConnectionBuilder new
 		hostname: 'localhost';
 		build.
 	connection open.
 
-	channel := connection createChannel.
-	aBlock value: (channel queueDeclare: aQueueName) value: channel.
-	channel queueDelete: aQueueName.
-	
+	block value: connection.
+
 	connection close
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock [
+
+	self withQueueNamed: aQueueName declaredOnChannelDo: aBlock deleteQueueOnReturn: true
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock deleteQueueOnReturn: aBoolean [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel |
+
+			channel := connection createChannel.
+			aBlock value: ( channel queueDeclare: aQueueName ) value: channel.
+			aBoolean
+				ifTrue: [ channel queueDelete: aQueueName ]
+			]
 ]
