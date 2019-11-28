@@ -1,19 +1,30 @@
 language: smalltalk
 
+sudo: required
+
 services:
-  - rabbitmq
+  - docker
+
+before_script:
+  - docker pull rabbitmq:3
+  - docker run -d --name rabbit-tests -p5672:5672 rabbitmq:3
+  - docker ps -a
+  - sleep 10
+
+after_failure: 
+  - docker inspect --format='{{.LogPath}}' rabbit-tests | sudo xargs cat
 
 os:
   - linux
 
 smalltalk:
-  - Pharo32-stable
-  - Pharo64-stable
-  - Pharo32-alpha
-  - Pharo64-alpha
+  - Pharo32-7.0
+  - Pharo64-7.0
+  - Pharo32-8.0
+  - Pharo64-8.0
 
 matrix:
   allow_failures:
-    - smalltalk: Pharo32-alpha
-    - smalltalk: Pharo64-alpha
+    - smalltalk: Pharo32-8.0
+    - smalltalk: Pharo64-8.0
   fash_finish: true
