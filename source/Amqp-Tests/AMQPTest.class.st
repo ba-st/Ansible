@@ -129,7 +129,7 @@ AMQPTest >> setUp [
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> spawnWorkerNamed: aProcessName consumeFrom: aQueueName applying: aBlock [
+AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: aBlock [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -144,48 +144,6 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumeFrom: aQueueName applying: aBl
 					self
 						assert: messageReceived method exchange equals: '';
 						assert: messageReceived method routingKey equals: aQueueName;
-						deny: messageReceived method redelivered.
-
-					aBlock value: messageReceived.
-
-					channel basicAck: messageReceived method deliveryTag
-					].
-			process := Process
-				forContext:
-					[ [ [ connection waitForEvent ] repeat ]
-						ensure: [ connection close ]
-					] asContext
-				priority: Processor activePriority.
-			process name: aProcessName.
-
-			^ process
-			]
-]
-
-{ #category : #'tests - support' }
-AMQPTest >> spawnWorkerNamed: aProcessName consumeFromExchange: anExchangeName withType: anExchangeType applying: aBlock [
-
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			| process channel queue |
-
-			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-			queue := channel
-				queueDeclare: ''
-				durable: false
-				exclusive: true
-				autoDelete: false
-				passive: false
-				arguments: nil.
-
-			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
-			channel
-				consumeFrom: queue method queue
-				applying: [ :messageReceived | 
-					self
-						assert: messageReceived method exchange equals: anExchangeName;
-						assert: messageReceived method routingKey equals: '';
 						deny: messageReceived method redelivered.
 
 					aBlock value: messageReceived.
@@ -229,7 +187,48 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aRouteSet boundToExcha
 				applying: [ :messageReceived | 
 					self
 						assert: messageReceived method exchange equals: anExchangeName;
-						assert: ( aRouteSet includes: messageReceived method routingKey );
+						deny: messageReceived method redelivered.
+
+					aBlock value: messageReceived.
+
+					channel basicAck: messageReceived method deliveryTag
+					].
+			process := Process
+				forContext:
+					[ [ [ connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+			process name: aProcessName.
+
+			^ process
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName consumingFromExchange: anExchangeName withType: anExchangeType applying: aBlock [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| process channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+			queue := channel
+				queueDeclare: ''
+				durable: false
+				exclusive: true
+				autoDelete: false
+				passive: false
+				arguments: nil.
+
+			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
+			channel
+				consumeFrom: queue method queue
+				applying: [ :messageReceived | 
+					self
+						assert: messageReceived method exchange equals: anExchangeName;
+						assert: messageReceived method routingKey equals: '';
 						deny: messageReceived method redelivered.
 
 					aBlock value: messageReceived.
@@ -298,7 +297,7 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 
 	firstWorker := self
 		spawnWorkerNamed: 'first_worker'
-		consumeFrom: 'tasks'
+		consumingFrom: 'tasks'
 		applying: [ :message | 
 			( Delay forMilliseconds: ( message body count: [ :char | char = $. ] ) * 500 ) wait.
 			firstWorkerMessages add: message
@@ -306,7 +305,7 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 		
 	secondWorker := self
 		spawnWorkerNamed: 'second_worker'
-		consumeFrom: 'tasks'
+		consumingFrom: 'tasks'
 		applying: [ :message | 
 			( Delay forMilliseconds: ( message body count: [ :char | char = $. ] ) * 500 ) wait.
 			secondWorkerMessages add: message
@@ -385,13 +384,13 @@ AMQPTest >> testBasicPublishSubscribe [
 
 	firstWorker := self
 		spawnWorkerNamed: 'first_worker'
-		consumeFromExchange: 'logs'
+		consumingFromExchange: 'logs'
 		withType: 'fanout'
 		applying: [ :message | firstWorkerMessages add: message ].
 
 	secondWorker := self
 		spawnWorkerNamed: 'second_worker'
-		consumeFromExchange: 'logs'
+		consumingFromExchange: 'logs'
 		withType: 'fanout'
 		applying: [ :message | secondWorkerMessages add: message ].
 
@@ -464,6 +463,64 @@ AMQPTest >> testRouting [
 	self
 		assert: errorLoggerMessages size equals: 1;
 		assert: loggerMessages size equals: 9
+]
+
+{ #category : #tests }
+AMQPTest >> testTopics [
+
+	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLoffer |
+
+	publicErrorLoggerMessages := OrderedCollection new.
+	anonymousInfoLoggerMessages := OrderedCollection new.
+
+	publicErrorLogger := self
+		spawnWorkerNamed: 'public_error_logger'
+		consumingFrom: #('public.#' '.error')
+		boundToExchange: 'topic_logs'
+		withType: 'topic'
+		applying: [ :message | publicErrorLoggerMessages add: message ].
+
+	anonymousInfoLoffer := self
+		spawnWorkerNamed: 'anonymous_info_logger'
+		consumingFrom: #('anonymous.*' '*.info')
+		boundToExchange: 'topic_logs'
+		withType: 'topic'
+		applying: [ :message | anonymousInfoLoggerMessages add: message ].
+
+	publicErrorLogger resume.
+	anonymousInfoLoffer resume.
+
+	( Delay forSeconds: 1 ) wait.
+
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		withType: 'topic'
+		to: 'anonymous.info'.
+	self
+		publish: #('Log')
+		onExchangeNamed: 'topic_logs'
+		withType: 'topic'
+		to: 'anonymous.error'.
+	self
+		publish: #('Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		withType: 'topic'
+		to: 'public.info'.
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		withType: 'topic'
+		to: 'public.error'.
+
+	( Delay forSeconds: 1 ) wait.
+
+	publicErrorLogger terminate.
+	anonymousInfoLoffer terminate.
+
+	self
+		assert: publicErrorLoggerMessages size equals: 5;
+		assert: anonymousInfoLoggerMessages size equals: 6
 ]
 
 { #category : #'tests - support' }
