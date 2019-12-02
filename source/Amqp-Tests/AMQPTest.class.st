@@ -163,7 +163,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: a
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aRouteSet boundToExchange: anExchangeName withType: anExchangeType applying: aBlock [
+AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToExchangeNamed: anExchangeName of: anExchangeType applying: aBlock [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -206,45 +206,13 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aRouteSet boundToExcha
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> spawnWorkerNamed: aProcessName consumingFromExchange: anExchangeName withType: anExchangeType applying: aBlock [
+AMQPTest >> spawnWorkerNamed: aWorkerName consumingFromExchangeNamed: anExchangeName of: anExchangeType applying: aBlock [
 
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			| process channel queue |
-
-			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-			queue := channel
-				queueDeclare: ''
-				durable: false
-				exclusive: true
-				autoDelete: false
-				passive: false
-				arguments: nil.
-
-			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
-			channel
-				consumeFrom: queue method queue
-				applying: [ :messageReceived | 
-					self
-						assert: messageReceived method exchange equals: anExchangeName;
-						assert: messageReceived method routingKey equals: '';
-						deny: messageReceived method redelivered.
-
-					aBlock value: messageReceived.
-
-					channel basicAck: messageReceived method deliveryTag
-					].
-			process := Process
-				forContext:
-					[ [ [ connection waitForEvent ] repeat ]
-						ensure: [ connection close ]
-					] asContext
-				priority: Processor activePriority.
-			process name: aProcessName.
-
-			^ process
-			]
+	^ self spawnWorkerNamed: aWorkerName
+		  consumingFromAll: #( '' )
+		  boundToExchangeNamed: anExchangeName
+		  of: anExchangeType
+		  applying: aBlock
 ]
 
 { #category : #tests }
@@ -375,7 +343,7 @@ AMQPTest >> testBasicGetWithImplicitAcknowledge [
 ]
 
 { #category : #tests }
-AMQPTest >> testBasicPublishSubscribe [
+AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 
 	| firstWorkerMessages secondWorkerMessages firstWorker secondWorker |
 
@@ -384,14 +352,14 @@ AMQPTest >> testBasicPublishSubscribe [
 
 	firstWorker := self
 		spawnWorkerNamed: 'first_worker'
-		consumingFromExchange: 'logs'
-		withType: 'fanout'
+		consumingFromExchangeNamed: 'logs'
+		of: 'fanout'
 		applying: [ :message | firstWorkerMessages add: message ].
 
 	secondWorker := self
 		spawnWorkerNamed: 'second_worker'
-		consumingFromExchange: 'logs'
-		withType: 'fanout'
+		consumingFromExchangeNamed: 'logs'
+		of: 'fanout'
 		applying: [ :message | secondWorkerMessages add: message ].
 
 	firstWorker resume.
@@ -410,29 +378,29 @@ AMQPTest >> testBasicPublishSubscribe [
 ]
 
 { #category : #tests }
-AMQPTest >> testRouting [
+AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 
-	| errorLoggerMessages loggerMessages errorLogger secondWorker |
+	| errorLoggerMessages loggerMessages errorLogger logger |
 
 	errorLoggerMessages := OrderedCollection new.
 	loggerMessages := OrderedCollection new.
 
 	errorLogger := self
 		spawnWorkerNamed: 'error_logger'
-		consumingFrom: #('error')
-		boundToExchange: 'direct_logs'
-		withType: 'direct'
+		consumingFromAll: #('error')
+		boundToExchangeNamed: 'direct_logs'
+		of: 'direct'
 		applying: [ :message | errorLoggerMessages add: message ].
 
-	secondWorker := self
+	logger := self
 		spawnWorkerNamed: 'logger'
-		consumingFrom: #('info' 'warning' 'error')
-		boundToExchange: 'direct_logs'
-		withType: 'direct'
+		consumingFromAll: #('info' 'warning' 'error')
+		boundToExchangeNamed: 'direct_logs'
+		of: 'direct'
 		applying: [ :message | loggerMessages add: message ].
 
 	errorLogger resume.
-	secondWorker resume.
+	logger resume.
 
 	self
 		publish: #('Log' 'Log' 'Log')
@@ -458,7 +426,7 @@ AMQPTest >> testRouting [
 	( Delay forSeconds: 1 ) wait.
 
 	errorLogger terminate.
-	secondWorker terminate.
+	logger terminate.
 
 	self
 		assert: errorLoggerMessages size equals: 1;
@@ -475,16 +443,16 @@ AMQPTest >> testTopics [
 
 	publicErrorLogger := self
 		spawnWorkerNamed: 'public_error_logger'
-		consumingFrom: #('public.#' '.error')
-		boundToExchange: 'topic_logs'
-		withType: 'topic'
+		consumingFromAll: #('public.#' '.error')
+		boundToExchangeNamed: 'topic_logs'
+		of: 'topic'
 		applying: [ :message | publicErrorLoggerMessages add: message ].
 
 	anonymousInfoLoffer := self
 		spawnWorkerNamed: 'anonymous_info_logger'
-		consumingFrom: #('anonymous.*' '*.info')
-		boundToExchange: 'topic_logs'
-		withType: 'topic'
+		consumingFromAll: #('anonymous.*' '*.info')
+		boundToExchangeNamed: 'topic_logs'
+		of: 'topic'
 		applying: [ :message | anonymousInfoLoggerMessages add: message ].
 
 	publicErrorLogger resume.
