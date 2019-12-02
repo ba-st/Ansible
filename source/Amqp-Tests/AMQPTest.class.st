@@ -429,6 +429,64 @@ AMQPTest >> testRouting [
 		assert: loggerMessages size equals: 9
 ]
 
+{ #category : #tests }
+AMQPTest >> testTopics [
+
+	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLoffer |
+
+	publicErrorLoggerMessages := OrderedCollection new.
+	anonymousInfoLoggerMessages := OrderedCollection new.
+
+	publicErrorLogger := self
+		spawnWorkerNamed: 'public_error_logger'
+		consumingFromAll: #('public.#' '.error')
+		boundToExchange: 'topic_logs'
+		withType: 'topic'
+		applying: [ :message | publicErrorLoggerMessages add: message ].
+
+	anonymousInfoLoffer := self
+		spawnWorkerNamed: 'anonymous_info_logger'
+		consumingFromAll: #('anonymous.*' '*.info')
+		boundToExchange: 'topic_logs'
+		withType: 'topic'
+		applying: [ :message | anonymousInfoLoggerMessages add: message ].
+
+	publicErrorLogger resume.
+	anonymousInfoLoffer resume.
+
+	( Delay forSeconds: 1 ) wait.
+
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		of: 'topic'
+		to: 'anonymous.info'.
+	self
+		publish: #('Log')
+		onExchangeNamed: 'topic_logs'
+		of: topic'
+		to: 'anonymous.error'.
+	self
+		publish: #('Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		of: 'topic'
+		to: 'public.info'.
+	self
+		publish: #('Log' 'Log' 'Log')
+		onExchangeNamed: 'topic_logs'
+		of: 'topic'
+		to: 'public.error'.
+
+	( Delay forSeconds: 1 ) wait.
+
+	publicErrorLogger terminate.
+	anonymousInfoLoffer terminate.
+
+	self
+		assert: publicErrorLoggerMessages size equals: 5;
+		assert: anonymousInfoLoggerMessages size equals: 6
+]
+
 { #category : #'tests - support' }
 AMQPTest >> withLocalhostConnectionDo: block [
 
