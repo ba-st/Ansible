@@ -32,46 +32,10 @@ AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType [
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
-			| channel queue |
-
-			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-
-			aMessageCollection
-				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: '' ].
-
-			( Delay forMilliseconds: 100 ) wait.
-			queue := channel declareQueue: [ :builder | builder beExclusive ].
-
-			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
-			self
-				assert: queue method messageCount equals: 0;
-				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
-			]
-]
-
-{ #category : #'tests - support' }
-AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType to: aRoute [ 
-
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			| channel queue |
-
-			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-
-			aMessageCollection
-				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
-
-			( Delay forMilliseconds: 100 ) wait.
-			queue := channel declareQueue: [ :builder | builder beExclusive ].
-
-			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
-			self
-				assert: queue method messageCount equals: 0;
-				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
-			]
+		publish: aMessageCollection
+		to: ''
+		onExchangeNamed: anExchangeName
+		of: anExchangeType
 ]
 
 { #category : #'tests - support' }
@@ -99,6 +63,29 @@ AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 			self
 				assert: queue method messageCount equals: aMessageCollection size;
 				assert: queue method consumerCount equals: 0
+			]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeName of: anExchangeType [ 
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
+
+			channel := connection createChannel.
+			channel exchangeDeclare: anExchangeName type: anExchangeType.
+
+			aMessageCollection
+				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
+
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel declareQueue: [ :builder | builder beExclusive ].
+
+			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
+			self
+				assert: queue method messageCount equals: 0;
+				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
 			]
 ]
 
@@ -387,24 +374,24 @@ AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 
 	self
 		publish: #('Log' 'Log' 'Log')
+		to: 'info'
 		onExchangeNamed: 'direct_logs'
-		of: 'direct'
-		to: 'info'.
+		of: 'direct'.
 	self
 		publish: #('Log')
+		to: 'error'
 		onExchangeNamed: 'direct_logs'
-		of: 'direct'
-		to: 'error'.
+		of: 'direct'.
 	self
 		publish: #('Log' 'Log')
+		to: 'warning'
 		onExchangeNamed: 'direct_logs'
-		of: 'direct'
-		to: 'warning'.
+		of: 'direct'.
 	self
 		publish: #('Log' 'Log' 'Log')
+		to: 'info'
 		onExchangeNamed: 'direct_logs'
-		of: 'direct'
-		to: 'info'.
+		of: 'direct'.
 
 	( Delay forSeconds: 1 ) wait.
 
@@ -417,7 +404,7 @@ AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 ]
 
 { #category : #tests }
-AMQPTest >> testTopics [
+AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 
 	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLoffer |
 
@@ -445,24 +432,24 @@ AMQPTest >> testTopics [
 
 	self
 		publish: #('Log' 'Log' 'Log')
+		to: 'anonymous.info'
 		onExchangeNamed: 'topic_logs'
-		of: 'topic'
-		to: 'anonymous.info'.
+		of: 'topic'.
 	self
 		publish: #('Log')
+		to: 'anonymous.error'
 		onExchangeNamed: 'topic_logs'
-		of: 'topic'
-		to: 'anonymous.error'.
+		of: 'topic'.
 	self
 		publish: #('Log' 'Log')
+		to: 'public.info'
 		onExchangeNamed: 'topic_logs'
-		of: 'topic'
-		to: 'public.info'.
+		of: 'topic'.
 	self
 		publish: #('Log' 'Log' 'Log')
+		to: 'public.error'
 		onExchangeNamed: 'topic_logs'
-		of: 'topic'
-		to: 'public.error'.
+		of: 'topic'.
 
 	( Delay forSeconds: 1 ) wait.
 
