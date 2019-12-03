@@ -29,7 +29,7 @@ AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType: anExchangeType [
+AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -42,13 +42,7 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType
 				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: '' ].
 
 			( Delay forMilliseconds: 100 ) wait.
-			queue := channel
-				queueDeclare: ''
-				durable: false
-				exclusive: true
-				autoDelete: false
-				passive: false
-				arguments: nil.
+			queue := channel declareQueue: [ :builder | builder beExclusive ].
 
 			channel queueBind: queue method queue exchange: anExchangeName routingKey: ''.
 			self
@@ -58,9 +52,9 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName withType: anExchangeType to: aRoute [ 
+AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType to: aRoute [ 
 
-self
+	self
 		withLocalhostConnectionDo: [ :connection | 
 			| channel queue |
 
@@ -71,13 +65,7 @@ self
 				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
 
 			( Delay forMilliseconds: 100 ) wait.
-			queue := channel
-				queueDeclare: ''
-				durable: false
-				exclusive: true
-				autoDelete: false
-				passive: false
-				arguments: nil.
+			queue := channel declareQueue: [ :builder | builder beExclusive ].
 
 			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
 			self
@@ -171,14 +159,9 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToEx
 
 			channel := connection createChannel.
 			channel exchangeDeclare: anExchangeName type: anExchangeType.
-			queue := channel
-				queueDeclare: ''
-				durable: false
-				exclusive: true
-				autoDelete: false
-				passive: false
-				arguments: nil.
-
+			
+			queue := channel declareQueue: [ :builder | builder beExclusive ].
+			
 			aRouteSet
 				do: [ :route | channel queueBind: queue method queue exchange: anExchangeName routingKey: route ].
 
@@ -365,7 +348,7 @@ AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 	firstWorker resume.
 	secondWorker resume.
 
-	self publish: #('Log' 'Log' 'Log' 'Log' 'Log') onExchangeNamed: 'logs' withType: 'fanout'.
+	self publish: #('Log' 'Log' 'Log' 'Log' 'Log') onExchangeNamed: 'logs' of: 'fanout'.
 
 	( Delay forSeconds: 1 ) wait.
 
@@ -405,22 +388,22 @@ AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 	self
 		publish: #('Log' 'Log' 'Log')
 		onExchangeNamed: 'direct_logs'
-		withType: 'direct'
+		of: 'direct'
 		to: 'info'.
 	self
 		publish: #('Log')
 		onExchangeNamed: 'direct_logs'
-		withType: 'direct'
+		of: 'direct'
 		to: 'error'.
 	self
 		publish: #('Log' 'Log')
 		onExchangeNamed: 'direct_logs'
-		withType: 'direct'
+		of: 'direct'
 		to: 'warning'.
 	self
 		publish: #('Log' 'Log' 'Log')
 		onExchangeNamed: 'direct_logs'
-		withType: 'direct'
+		of: 'direct'
 		to: 'info'.
 
 	( Delay forSeconds: 1 ) wait.
@@ -463,22 +446,22 @@ AMQPTest >> testTopics [
 	self
 		publish: #('Log' 'Log' 'Log')
 		onExchangeNamed: 'topic_logs'
-		withType: 'topic'
+		of: 'topic'
 		to: 'anonymous.info'.
 	self
 		publish: #('Log')
 		onExchangeNamed: 'topic_logs'
-		withType: 'topic'
+		of: 'topic'
 		to: 'anonymous.error'.
 	self
 		publish: #('Log' 'Log')
 		onExchangeNamed: 'topic_logs'
-		withType: 'topic'
+		of: 'topic'
 		to: 'public.info'.
 	self
 		publish: #('Log' 'Log' 'Log')
 		onExchangeNamed: 'topic_logs'
-		withType: 'topic'
+		of: 'topic'
 		to: 'public.error'.
 
 	( Delay forSeconds: 1 ) wait.
