@@ -18,11 +18,12 @@ BaselineOfLepus >> baseline: spec [
 				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Base' ];
 				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Base' ];
 				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol' ];
+				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol' ];
 				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
 
 			spec
 				group: 'Deployment' with: #('Amqp-Protocol');
-				group: 'Tests' with: #('Amqp-Tests');
+				group: 'Tests' with: #('Amqp-Tests' 'Amqp-Protocol-Tests');
 				group: 'CI' with: #('Tests');
 				group: 'Tools' with: #('Amqp-Tools');
 				group: 'Development' with: #('Tests' 'Tools')

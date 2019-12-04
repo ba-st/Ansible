@@ -208,6 +208,15 @@ AmqpChannel >> consumeFrom: queue callback: anObject selector: aSymbol noAck: no
 	^ result method consumerTag
 ]
 
+{ #category : #'Lepus queue building' }
+AmqpChannel >> declareQueue: aBlock [
+
+	| builder |
+
+	builder := AmqpQueueDeclareBuilder for: protocolVersion.
+	^ self rpc: ( builder buildApplying: aBlock )
+]
+
 { #category : #'AMQP exchange management' }
 AmqpChannel >> exchangeDeclare: exchangeName type: typeString [
 
