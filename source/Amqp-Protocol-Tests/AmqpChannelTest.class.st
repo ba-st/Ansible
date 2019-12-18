@@ -28,7 +28,7 @@ AmqpChannelTest >> testDeclareQueue [
 	| channel result |
 
 	channel := connection createChannel.
-	result := channel declareQueue: [ :builder | builder beExclusive ].
+	result := channel declareQueueApplying: [ :builder | builder beExclusive ].
 
 	self
 		assert: result body isNil;
