@@ -144,7 +144,7 @@ AmqpChannel >> closeReason [
 	^ handler closeReason
 ]
 
-{ #category : #'AMQP receiving messages' }
+{ #category : #'Lepus receiving messages' }
 AmqpChannel >> consumeFrom: aQueueName applying: aBlock [
 	
 	^ self consumeFrom: aQueueName callback: aBlock selector: #value:
@@ -208,8 +208,17 @@ AmqpChannel >> consumeFrom: queue callback: anObject selector: aSymbol noAck: no
 	^ result method consumerTag
 ]
 
+{ #category : #'Lepus exchange management' }
+AmqpChannel >> declareExchangeNamed: aName of: aType applying: aBlock [
+
+	| builder |
+
+	builder := AmqpExchangeDeclareBuilder named: aName of: aType for: protocolVersion.
+	^ self rpc: ( builder buildApplying: aBlock )
+]
+
 { #category : #'Lepus queue building' }
-AmqpChannel >> declareQueue: aBlock [
+AmqpChannel >> declareQueueApplying: aBlock [
 
 	| builder |
 

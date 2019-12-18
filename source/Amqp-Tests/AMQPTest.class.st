@@ -74,13 +74,13 @@ AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeNa
 			| channel queue |
 
 			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-
+			channel declareExchangeNamed: anExchangeName of: anExchangeType applying: [:exchange | ].
+			
 			aMessageCollection
 				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
 
 			( Delay forMilliseconds: 100 ) wait.
-			queue := channel declareQueue: [ :builder | builder beExclusive ].
+			queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
 
 			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
 			self
@@ -145,9 +145,8 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToEx
 			| process channel queue |
 
 			channel := connection createChannel.
-			channel exchangeDeclare: anExchangeName type: anExchangeType.
-			
-			queue := channel declareQueue: [ :builder | builder beExclusive ].
+			channel declareExchangeNamed: anExchangeName of: anExchangeType applying: [:exchange | ].
+			queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
 			
 			aRouteSet
 				do: [ :route | channel queueBind: queue method queue exchange: anExchangeName routingKey: route ].
