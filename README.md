@@ -16,7 +16,7 @@
 [![Build Status](https://travis-ci.com/fortizpenaloza/Lepus.svg?branch=release-candidate)](https://travis-ci.com/fortizpenaloza/Lepus)
 [![Coverage Status](https://coveralls.io/repos/github/fortizpenaloza/Lepus/badge.svg?branch=release-candidate)](https://coveralls.io/github/fortizpenaloza/Lepus?branch=release-candidate)
 
-> *[Lepus](https://en.wikipedia.org/wiki/Lepus_(constellation) is a constellation lying just south of the celestial equator. It is located below—immediately south—of Orion (the hunter), and is sometimes represented as a hare being chased by Orion or, alternatively, by Orion's hunting dogs.*
+> *[Lepus](https://en.wikipedia.org/wiki/Lepus_(constellation)) is a constellation lying just south of the celestial equator. It is located below—immediately south—of Orion (the hunter), and is sometimes represented as a hare being chased by Orion or, alternatively, by Orion's hunting dogs.*
 
 ## License
 
