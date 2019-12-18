@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/logos/128x128.png">
  <h1 align="center"><PROJECT_NAME></h1>
   <p align="center">
-   Lepus is a AMQP client library supporting 0-8 and 0-9-1 versions of the protopcol for Smalltalk.
+   Lepus is a AMQP client library for Smalltalk supporting 0-8 and 0-9-1 versions of the protocol.
     <br>
     <a href="docs/"><strong>Explore the docs »</strong></a>
     <br>
