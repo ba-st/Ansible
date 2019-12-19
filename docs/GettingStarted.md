@@ -4,7 +4,7 @@ Let's start preparing our environment, the first thing we will do is install Rab
 
 ## Installing RabbitMQ
 
-To keep the installaton simple we'll use the docker image provided by the Rabbit team on [Docker Hub](https://hub.docker.com/_/rabbitmq). 
+To keep the installation simple we'll use the docker image provided by the Rabbit team on [Docker Hub](https://hub.docker.com/_/rabbitmq). Be sure of having docker installed, open a console and execute the following command:
 
 ` docker run -p 5467:5467 rabbitmq:3-alpine`
 
@@ -25,6 +25,7 @@ See [Installation.md](Installation.md) to learn more about how install Ansible o
 
 Well, we have everything ready to do the tutorials!
 
-AMQP is a programmable protocol and supports several communication schemes, let's illuestrate two of this schemas with simple examples:
+AMQP is a programmable protocol and supports several communication schemes, we'll illustrate two of these schemas with simple examples:
+
 - [Worker queue](WorkerQueue.md)
 - [Publiser - Subscriber](PublisherSubscriber.md)
