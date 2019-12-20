@@ -4,11 +4,11 @@ Work queues allow distributing time-consuming tasks between multiple workers to 
 
 For this tutorial, we will model the task as a dotted string. Each dot represents a degree of complexity therefore, the longer the string, the longer it will take.
 
-This schema is also known as producer/consumer.
+This schema is also known as [producer/consumer](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem).
 
 ## Spawning a bunch of minions
 
-The first thing we will need to create a consumer is to stablish a connection to the broker
+The first thing you need to do is to stablish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
@@ -17,15 +17,15 @@ connection := AmqpConnectionBuilder new
 connection open.
 ````
 
-Then we need to create a channel since every operation performed by a client happens on a channel.
+Then you need to create a channel since every operation performed by a client happens on a channel.
 
 ````Smalltalk
 channel := connection createChannel.
 ````
 
-Channels are logical connections to the broker. Communication on a channel is isolated from communication on other channels sharing the same connection.
+Channels are logical connections to the broker. Communication on a channel is isolated from communication on other channels sharing the same connection. 
 
-On this channel we are going to create an exchange, a queue, and binding between the two:
+On this channel you´re going to create an exchange, a queue, and a binding between this two:
 
 ````Smalltalk
 channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
@@ -33,7 +33,7 @@ result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
 ````
 
-We just bind the exchange, a known address where the producer will send messages, to the queue from where the consumer will take out this messages. Now with the following collaboration, we'll create a subscription to the queue registering a callback that will open an inspector on each received message.
+You just bind the exchange, think of it as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
 
 ````Smalltalk
 channel 
@@ -41,7 +41,7 @@ channel
 	applying: [ :messageReceived | messageReceived inspect ].	
 ````
 
-Last we need to spawn a ~minion~ consumer by addding to the end of the script:
+The last collaboration spawns a ~minion~ consumer by addding to the end of the script:
 
 ````Smalltalk
 minion := Process
