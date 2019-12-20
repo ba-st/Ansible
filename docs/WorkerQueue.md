@@ -8,9 +8,9 @@ For this tutorial, we will model the task as a dotted string. Each dot represent
 
 This schema is also known as [producer/consumer](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem).
 
-## Spawning a bunch of minions
+## A brief review of concepts 
 
-The first thing you need to do is to stablish a connection to the broker
+Let's review AMQP concepts inspecting a consumer setup step-by-step. The first thing you need to do is to stablish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
@@ -43,6 +43,10 @@ channel
 	applying: [ :messageReceived | messageReceived inspect ].	
 ````
 
+We encourage you to read the RabbitMQ excelent documentation.
+
+
+## Spawning consumers
 The last collaboration spawns a ~minion~ consumer by addding to the end of the script:
 
 ````Smalltalk
@@ -58,7 +62,7 @@ minion resume
 
 Here's the complete script, open a new image and on a playground evaluate:
 
-````Smalltalk
+```Smalltalk
 | connection channel result minion |
 
 connection := AmqpConnectionBuilder new
