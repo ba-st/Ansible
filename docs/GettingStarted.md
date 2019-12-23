@@ -28,4 +28,5 @@ Well, we have everything ready to do the tutorials!
 AMQP is a programmable protocol and supports several communication schemes, we'll illustrate two of these schemas with simple examples:
 
 - [Worker queue](WorkerQueue.md)
-- [Publiser - Subscriber](PublisherSubscriber.md)
+- [Publisher - Subscriber](PublisherSubscriber.md)
+- [Routing](Routing.md)
