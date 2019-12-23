@@ -10,7 +10,9 @@ This schema is also known as [producer/consumer](https://en.wikipedia.org/wiki/P
 
 ## A brief review of concepts 
 
-Let's review AMQP concepts inspecting a consumer setup step-by-step. The first thing you need to do is to stablish a connection to the broker
+Let's review AMQP concepts inspecting a consumer setup step-by-step. 
+
+The first thing you need to do is to stablish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
@@ -25,7 +27,7 @@ Then you need to create a channel since every operation performed by a client ha
 channel := connection createChannel.
 ````
 
-Channels are logical connections to the broker. Communication on a channel is isolated from communication on other channels sharing the same connection. 
+Channels are logical connections to the broker. Channels allow to share a connection multiplexing the messages through them; this means communication on a channel is isolated from communication on other channels sharing the same connection. 
 
 On this channel you´re going to create an exchange, a queue, and a binding between this two:
 
@@ -37,17 +39,19 @@ channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
 
 You just bind the exchange, think of it as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
 
+One important thing to notice is that the declare exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
+
 ````Smalltalk
 channel 
 	consumeFrom: result method queue
 	applying: [ :messageReceived | messageReceived inspect ].	
 ````
 
-We encourage you to read the RabbitMQ excelent documentation.
-
+*Note:* The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that you read it if you want to have a better understanding. 
 
 ## Spawning consumers
-The last collaboration spawns a ~minion~ consumer by addding to the end of the script:
+
+You need to add this last collaboration to spawn a ~minion~ consumer to the end of the script:
 
 ````Smalltalk
 minion := Process
@@ -60,7 +64,7 @@ minion := Process
 minion resume 
 ````
 
-Here's the complete script, open a new image and on a playground evaluate:
+Here's the complete script, open a new Pharo image and evaluate it on a Playground
 
 ```Smalltalk
 | connection channel result minion |
@@ -108,7 +112,7 @@ channel basicPublish: '.' utf8Encoded exchange: 'tasks' routingKey: ''.
 channel
 ````
 
-The last line publishes a message to the previously agreed exchange. Yes, we are creating the exchange again. Exchange creation operation will not create a new one if one with that name already exists.
+The last line publishes a message to the previously agreed exchange. Yes, we are creating the exchange again. Exchange creation operation will not create a new one if one with that name already exists. The same applies to other AMQP entities such as queues and bindings. 
 
 ## Running the example
 
