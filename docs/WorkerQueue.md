@@ -10,9 +10,7 @@ This schema is also known as [CompetingConsumers](https://www.enterpriseintegrat
 
 ## A brief review of concepts 
 
-Let's review AMQP concepts by inspecting a consumer setup step-by-step. 
-
-The first thing you need to do is stablish a connection to the broker
+Let's review AMQP concepts by inspecting a consumer setup step-by-step. The first thing you need to do is stablish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
