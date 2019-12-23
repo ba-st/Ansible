@@ -9,6 +9,7 @@ For this tutorial, we will model the task as a dotted string. Each dot represent
 This schema is also known as [CompetingConsumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html)
 
 ## A brief review of concepts 
+## Establishing a connection 
 
 Let's review AMQP concepts by inspecting a consumer setup step-by-step. The first thing you need to do is stablish a connection to the broker
 
@@ -27,43 +28,53 @@ channel := connection createChannel.
 
 Channels are logical connections to the broker. Channels allow sharing a connection by multiplexing the messages through them; this means communication on a channel is isolated from communication on other channels sharing the same connection. 
 
-On this channel you´re going to create an exchange, a queue, and a binding between the two.
+On this channel you´re going to create a queue named `task_queue`
 
 ````Smalltalk
-channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
-result := channel declareQueueApplying: [ :queue | ].
-channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
+channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
+channel prefetchCount: 1.
 ````
 
-Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
+The `channel prefetchCount: 1` implies that RabbitMQ will wait for a worker's previous message ackwoledge before sending it another one. Without this the broker just sends the messages as soon as it recevies them.
 
-One important thing to notice is that the declared exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
+Now with the following collaboration, you'll create a subscription to the queue registering a callback that will simulate processing a task by creating a delay of `n` seconds, where `n` is the number of dots in the message. Then it will open a toast inspector on each received message by the consumer. Finally it will send the acknowledge to the broker.
 
 ````Smalltalk
 channel 
-	consumeFrom: result method queue
-	applying: [ :messageReceived | messageReceived inspect ].	
+	consumeFrom: 'task_queue'
+	applying: [ :messageReceived | | elapsedTime |
+	
+	elapsedTime :=  messageReceived body utf8Decoded count: [ :char | char = $. ].
+	
+	(Delay forSeconds: elapsedTime) wait.
+	self inform: ('<1s> just finished a new task for <2p> seconds'expandMacrosWith: workerName with: elapsedTime).
+	channel basicAck: messageReceived method deliveryTag
+].	
 ````
+If the broker does not receive the acklodge it will requeue the message after ?. Timeout?
 
-## Spawning consumers
+## Spawning workers
 
-You need to add this last collaboration to spawn a ~minion~ consumer to the end of the script:
+You need to add this last collaboration to spawn a ~minion~ worker to the end of the script:
 
 ````Smalltalk
-minion := Process
-	forContext:
-		[ [ [ connection waitForEvent ] repeat ] 
-			ensure: [ connection close ] 
-		] asContext priority: Processor activePriority.
-	minion name: 'Minion'.
-	
-minion resume 
+worker := Process
+		forContext:
+			[ [ [  connection waitForEvent ] repeat ]
+				ensure: [ connection close ]
+			] asContext
+		priority: Processor activePriority.
+
+worker name: workerName.	
+worker resume 
 ````
 
 Here's the complete script, open a new Pharo image and evaluate it on a Playground
 
 ```Smalltalk
-| connection channel result minion |
+| workerName connection channel worker |
+
+workerName := 'Minion #1'.
 
 connection := AmqpConnectionBuilder new
 	hostname: 'localhost';
@@ -71,29 +82,36 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
-result := channel declareQueueApplying: [ :queue | ].
-channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
-channel 
-	consumeFrom: result method queue
-	applying: [ :messageReceived | messageReceived inspect ].	
+channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
+channel prefetchCount: 1.
 
-minion := Process
+channel 
+	consumeFrom: 'task_queue'
+	applying: [ :messageReceived | | elapsedTime |
+	
+	elapsedTime :=  messageReceived body utf8Decoded count: [ :char | char = $. ].
+	
+	(Delay forSeconds: elapsedTime) wait.
+	self inform: ('<1s> just finished a new task for <2p> seconds'expandMacrosWith: workerName with: elapsedTime).
+	channel basicAck: messageReceived method deliveryTag
+].	
+
+worker := Process
 				forContext:
-					[ [ [ connection waitForEvent ] repeat ]
+					[ [ [  connection waitForEvent ] repeat ]
 						ensure: [ connection close ]
 					] asContext
 				priority: Processor activePriority.
-	minion name: 'Minion'.
-	
-minion resume 
+
+worker name: workerName.	
+worker resume 
 ````
 
 At this point probably you noticed you could run this script multiple times in the same image by changing the process name,  but try running it just once and use multiple images for simplicity.
 
 ## Setting up the producer
 
-Open another image with Ansible loaded and in a Playground evaluate the following code:
+Open another image with Ansible loaded and in a Playground evaluate the following code
 
 ````Smalltalk
 | connection channel |
