@@ -10,9 +10,9 @@ This schema is also known as [producer/consumer](https://en.wikipedia.org/wiki/P
 
 ## A brief review of concepts 
 
-Let's review AMQP concepts inspecting a consumer setup step-by-step. 
+Let's review AMQP concepts by inspecting a consumer setup step-by-step. 
 
-The first thing you need to do is to stablish a connection to the broker
+The first thing you need to do is stablish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
@@ -21,7 +21,7 @@ connection := AmqpConnectionBuilder new
 connection open.
 ````
 
-Then you need to create a channel since every operation performed by a client happens on a channel.
+Then you need to create a channel since every operation performed by a client happens on it.
 
 ````Smalltalk
 channel := connection createChannel.
@@ -29,7 +29,7 @@ channel := connection createChannel.
 
 Channels are logical connections to the broker. Channels allow to share a connection multiplexing the messages through them; this means communication on a channel is isolated from communication on other channels sharing the same connection. 
 
-On this channel you´re going to create an exchange, a queue, and a binding between this two:
+On this channel you´re going to create an exchange, a queue, and a binding between the two.
 
 ````Smalltalk
 channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
@@ -37,17 +37,15 @@ result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
 ````
 
-You just bind the exchange, think of it as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
+Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
 
-One important thing to notice is that the declare exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
+One important thing to notice is that the declared exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
 
 ````Smalltalk
 channel 
 	consumeFrom: result method queue
 	applying: [ :messageReceived | messageReceived inspect ].	
 ````
-
-*Note:* The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that you read it if you want to have a better understanding. 
 
 ## Spawning consumers
 
@@ -93,7 +91,7 @@ minion := Process
 minion resume 
 ````
 
-At this point probably you noticed you could run this script multiple times in the same image by changing the process name, but try running it just one and use multiple images for simplicity.
+At this point probably you noticed you could run this script multiple times in the same image by changing the process name,  but try running it just once and use multiple images for simplicity.
 
 ## Setting up the producer
 
