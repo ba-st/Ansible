@@ -1,4 +1,5 @@
 # Worker queue
+(based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html))
 
 ![Diagram of producer/consumer](pc.png)
 
