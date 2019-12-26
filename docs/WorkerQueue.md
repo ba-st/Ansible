@@ -58,7 +58,7 @@ If the broker does not receive the acknowledge it will wait eternally, there is 
 
 ## Spawning workers
 
-You need to add this last collaboration to spawn a ~minion~ worker to the end of the script:
+You need to add this last collaboration to spawn a ~minion~ worker to the end of the script
 
 ````Smalltalk
 worker := Process
@@ -72,7 +72,7 @@ worker name: workerName.
 worker resume 
 ````
 
-Here's the complete script, open a new Pharo image and evaluate it on a Playground
+Here's the complete script
 
 ```Smalltalk
 | workerName connection channel worker |
@@ -110,11 +110,9 @@ worker name: workerName.
 worker resume 
 ````
 
-At this point probably you noticed you could run this script multiple times in the same image by changing the process name,  but try running it just once and use multiple images for simplicity.
-
 ## Setting up the producer
 
-Open another image with Ansible loaded and in a Playground evaluate the following code
+Here's the producer script
 
 ````Smalltalk
 | connection channel |
@@ -133,5 +131,15 @@ The last line publishes a message to the `task_queue`. Yes, we are creating the 
 
 ## Running the example
 
-First, run the consumer script on at least two images and then inspect the producer script in another one and start sending messages on the channel using the inspector by sending `#basicPublish:exchange:routingKey:`
+Open three Pharo images with Ansible loaded. Two will act as workers and the other one as producer. 
+
+On the images acting as worker open a Playground and evaluate the script to spawn a worker. Now, on the third one open a Playground and inspect the producer script. This will send your first message. Inspecting it will open a an inspector of course and from there you could send more messages by sending `#basicPublish:exchange:routingKey:`.
+
+You will se messages like this one on your worker images
+
+
+
+## Next 
+
+You probably you noticed you could run this script multiple times in the same image by changing the process name,  but try running it just once and use multiple images for simplicity.
 
