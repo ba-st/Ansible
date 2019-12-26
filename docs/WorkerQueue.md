@@ -1,11 +1,11 @@
 # Worker queue
 (based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html))
 
-![Diagram of producer/consumer](pc.png)
-
 Work queues allow distributing time-consuming tasks between multiple workers to minimize the time the producer has to wait for it to complete. Tasks are encapsulated as messages and send to the broker. The broker enqueues them and performs a round-robin dispatched to the workers.
 
-For this tutorial, we will model the task as a dotted string. Each dot represents a degree of complexity therefore, the longer the string, the longer it will take.
+![Diagram of producer/consumer](pc.png)
+
+For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e `'...'` is a task taking 3 seconds to complete).
 
 This schema is also known as [CompetingConsumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html)
 
@@ -36,9 +36,9 @@ channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 ````
 
-The `channel prefetchCount: 1` implies that RabbitMQ will wait for a worker's previous message ackwoledge before sending it another one. Without this the broker just sends the messages as soon as it recevies them.
+The `channel prefetchCount: 1` directs RabbitMQ to wait for a worker's acknowledge before sending it another one. Without this, the broker just sends the messages as soon as it receives them without taking into account if the worker ended or not with the last one.
 
-Now with the following collaboration, you'll create a subscription to the queue registering a callback that will simulate processing a task by creating a delay of `n` seconds, where `n` is the number of dots in the message. Then it will open a toast inspector on each received message by the consumer. Finally it will send the acknowledge to the broker.
+Now with the next collaboration, you'll create a subscription to the queue registering a callback that will simulate running a task by creating a delay of `n` seconds, where `n` is the number of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker
 
 ````Smalltalk
 channel 
@@ -52,7 +52,9 @@ channel
 	channel basicAck: messageReceived method deliveryTag
 ].	
 ````
-If the broker does not receive the acklodge it will requeue the message after ?. Timeout?
+
+If the broker does not receive the acknowledge it will wait eternally, there is no timeout. If the connection dies RabbitMQ will re-queue the message and try to send it again.
+
 
 ## Spawning workers
 
@@ -122,12 +124,12 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
+channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel basicPublish: '.' utf8Encoded exchange: 'tasks' routingKey: ''.
 channel
 ````
 
-The last line publishes a message to the previously agreed exchange. Yes, we are creating the exchange again. Exchange creation operation will not create a new one if one with that name already exists. The same applies to other AMQP entities such as queues and bindings. 
+The last line publishes a message to the `task_queue`. Yes, we are creating the queue again. Queue creation operation will not create a new one if one with that name already exists. The same applies to other AMQP entities such as exchanges and bindings. 
 
 ## Running the example
 
