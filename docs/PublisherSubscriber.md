@@ -1,7 +1,7 @@
 # Publish-Subscribe
 (based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
 
-Let's create an example of a publish-subscribe communication pattern by setting up a logging system. To build it we will use two images, the first one will emit log events acting as publisher and in the second one, you'll spawn a couple of subscribers receiving the logs and print them on the transcript.
+Let's create an example of a publish-subscribe communication pattern by setting up a logging system. To build it we will use two images, the first one will emit log events acting as publisher and in the second one, you'll spawn a couple of subscribers receiving the logs and print them on the Transcript.
 
 ![Diagram of publish-subscribe](publish_subscribe.png)
 
@@ -9,7 +9,7 @@ For more information on the pattern see [publish-subsribe](https://www.enterpris
 
 ## Introducing the exchange 
 
-Configuring the connection is very similar to the previous example but we will make some changes that we will explain in detail. From the subscriber code 
+Configuring the connection is very similar to the previous example but we will make some changes that we will explain in detail. From the subscriber code, after creating the channel
 
 ````Smalltalk
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
@@ -20,9 +20,9 @@ In order, these collaborations will create an exchange named `logs`, a queue, an
 
 Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. One important thing to notice is that the declared exchange is of type `fanout`. Essentially, published messages are going to be broadcast to all the binded queues.
 
-## Spawning a subscriber
+## Spawning loggers
 
-This is the complete code for the subscriber
+This is the complete code for spawning a logger
 
 ```Smalltalk
 | loggerName connection channel result logger |
@@ -53,6 +53,8 @@ logger name: loggerName.
 logger resume 
 ```
 
+You could spawn as many as you want, but change the `loggerName` contents to follow the messaging. 
+
 ## Setting up the publisher
 
 On the publisher image open a Playground and copy the following script
@@ -73,7 +75,5 @@ channel
 ```
 
 ## Running the example
-
-
 
 ## Next
