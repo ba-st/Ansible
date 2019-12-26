@@ -3,6 +3,7 @@
 
 Let's create an example of an publish-subscribe communication pattern. We will use two images, the first one will emit log events acting as publisher and in the second one will spawn a couple of subscribers recibing the logs and print them on the transcript.
 
+![Diagram of publish-subscribe](publish_subscribe.png)
 
 For more information on the pattern see [publish-subsribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html) 
 
