@@ -3,11 +3,11 @@
 
 Work queues allow distributing time-consuming tasks between multiple workers to minimize the time the producer has to wait for it to complete. Tasks are encapsulated as messages and send to the broker. The broker enqueues them and performs a round-robin dispatched to the workers.
 
-![Diagram of producer/consumer](worker_queue.png)
+![Diagram of worker queue](worker_queue.png)
 
 For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e `'...'` is a task taking 3 seconds to complete).
 
-This schema is also known as [CompetingConsumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html)
+This schema is also known as [Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html)
 
 ## A brief review of concepts 
 ## Establishing a connection 
