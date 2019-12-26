@@ -36,9 +36,9 @@ channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 ````
 
-The `channel prefetchCount: 1` directs RabbitMQ to wait for a worker's acknowledge before sending it another one. Without this, the broker just sends the messages as soon as it receives them without taking into account if the worker ended or not with the last one.
+The `channel prefetchCount: 1` directs RabbitMQ to wait for a worker's acknowledge before sending it another one. Without this, the broker just sends the messages as soon as it receives them without taking into account if the worker ended with the last one.
 
-Now with the next collaboration, you'll create a subscription to the queue registering a callback that will simulate running a task by creating a delay of `n` seconds, where `n` is the number of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker
+Now you'll create a subscription to the queue registering a callback that will simulate running a task by creating a delay of `n` seconds, where `n` is the amount of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker
 
 ````Smalltalk
 channel 
