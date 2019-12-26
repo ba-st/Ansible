@@ -141,5 +141,5 @@ After each message sent you should see a toast like this one on one your worker 
 
 ## Next 
 
-Let's learn another integration pattern, discover [publiser-subscriber](PublisherSubscriber.md) communication pattern with Ansible!
+Let's learn another integration pattern, discover [publisher-subscriber](PublisherSubscriber.md) communication pattern with Ansible!
 
