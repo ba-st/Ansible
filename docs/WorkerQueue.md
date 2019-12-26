@@ -135,9 +135,9 @@ Open three Pharo images with Ansible loaded. Two will act as workers and the oth
 
 On the images acting as worker open a Playground and evaluate the script to spawn a worker. Now, on the third one open a Playground and inspect the producer script. This will send your first message. Inspecting it will open a an inspector of course and from there you could send more messages by sending `#basicPublish:exchange:routingKey:`.
 
-You will se messages like this one on your worker images
+After each message sent you should see a toast like this one on one your worker images
 
-
+![Message received toast](worker_queue_message_received_toast.png)
 
 ## Next 
 
