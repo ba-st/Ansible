@@ -141,5 +141,5 @@ After each message sent you should see a toast like this one on one your worker 
 
 ## Next 
 
-You probably you noticed you could run this script multiple times in the same image by changing the process name,  but try running it just once and use multiple images for simplicity.
+Let's learn another integration pattern, discover [publiser-subscriber](PublisherSubscriber.md) communication pattern with Ansible!
 
