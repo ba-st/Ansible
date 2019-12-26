@@ -3,7 +3,7 @@
 
 Work queues allow distributing time-consuming tasks between multiple workers to minimize the time the producer has to wait for it to complete. Tasks are encapsulated as messages and send to the broker. The broker enqueues them and performs a round-robin dispatched to the workers.
 
-![Diagram of producer/consumer](pc.png)
+![Diagram of producer/consumer](worker_queue.png)
 
 For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e `'...'` is a task taking 3 seconds to complete).
 
@@ -125,7 +125,7 @@ connection open.
 
 channel := connection createChannel.
 channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
-channel basicPublish: '.' utf8Encoded exchange: 'tasks' routingKey: ''.
+channel basicPublish: '.' utf8Encoded exchange: '' routingKey: 'task_queue'.
 channel
 ````
 
