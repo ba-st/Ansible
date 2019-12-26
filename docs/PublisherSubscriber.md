@@ -1,98 +1,76 @@
 # Publish-Subscribe
 (based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
 
-Let's create an example of an publish-subscribe communication pattern. We will use two images, the first one will emit log events acting as publisher and in the second one will spawn a couple of subscribers recibing the logs and print them on the transcript.
+Let's create an example of a publish-subscribe communication pattern by setting up a logging system. To build it we will use two images, the first one will emit log events acting as publisher and in the second one, you'll spawn a couple of subscribers receiving the logs and print them on the transcript.
 
 ![Diagram of publish-subscribe](publish_subscribe.png)
 
 For more information on the pattern see [publish-subsribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html) 
 
-In our logging system every running copy of the receiver program will get the messages. That way we'll be able to run one receiver and direct the logs to disk; and at the same time we'll be able to run another receiver and see the logs on the screen.
-
-Essentially, published log messages are going to be broadcast to all the receivers.
-
-
 ## Introducing the exchange 
 
-The setting up of subscriber looks a lot like the worker in the previous example
+Configuring the connection is very similar to the previous example but we will make some changes that we will explain in detail. From the subscriber code 
 
-Let's review AMQP concepts by inspecting a consumer setup step-by-step.
+````Smalltalk
+channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
+queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
+channel queueBind: queue method queue exchange: 'logs' routingKey: ''.
+````
+In order, these collaborations will create an exchange named `logs`, a queue, and a binding between the two.
+
+Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. One important thing to notice is that the declared exchange is of type `fanout`. Essentially, published messages are going to be broadcast to all the binded queues.
+
+## Spawning a subscriber
+
+This is the complete code for the subscriber
 
 ```Smalltalk
+| loggerName connection channel result logger |
+
+loggerName := 'File logger #1'.
+
 connection := AmqpConnectionBuilder new
 	hostname: 'localhost';
 	build.
 connection open.
 
 channel := connection createChannel.
-```
-
-On this channel you´re going to create an exchange, a queue, and a binding between the two.
-
-````Smalltalk
-channel declareExchangeNamed: 'logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
-````
-
-Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
-
-One important thing to notice is that the declared exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
-
-````Smalltalk
 channel 
 	consumeFrom: result method queue
-	applying: [ :messageReceived | messageReceived inspect ].	
-````
+	applying: [ :messageReceived | Transcript show: ('<1s> just received <2p><n>' expandMacrosWith: loggerName with: messageReceived body utf8Decoded) ].	
 
-## Subscriber
-
-The subscriber code
-
-```Smalltalk
-| connection  channel queue | 
-
-connection := AmqpConnectionBuilder new
-	hostname: 'localhost';
-	build.
-connection open.
-
-	channel := connection createChannel.
-	channel declareExchangeNamed: 'billy' of: 'fanout' applying: [:a | ].
-
-	queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
-	channel queueBind: queue method queue exchange: 'billy' routingKey: ''.
-
-	channel
-				consumeFrom: queue method queue
-				applying: [ :messageReceived | messageReceived inspect ].	
+logger := Process
+	forContext:
+		[ [ [  connection waitForEvent ] repeat ]
+			ensure: [ connection close ]
+		] asContext
+	priority: Processor activePriority.
+logger name: loggerName.
 	
-"] ensure: [ connection close ]"
+logger resume 
 ```
 
 ## Setting up the publisher
 
-On the publisher image open a Playground and run the following code.
-
+On the publisher image open a Playground and copy the following script
 
 ```smalltalk
-| connection |
+| connection channel result |
 
 connection := AmqpConnectionBuilder new
 	hostname: 'localhost';
 	build.
 connection open.
 
-[ | channel queue | 
-	channel := connection createChannel.
-	channel declareExchangeNamed: 'billy' of: 'fanout' applying: [:b | ].
-	"channel exchangeDeclare: 'billy' type: 'fanout'."
+channel := connection createChannel.
+channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 
-	channel basicPublish: 'de los smashing pumkins' utf8Encoded exchange: 'billy' routingKey: ''.	
-	
-] ensure: [ connection close ]
+channel basicPublish: 'Message #1' utf8Encoded exchange: 'logs' routingKey: ''.	
+channel
 ```
-
 
 ## Running the example
 
