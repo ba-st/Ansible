@@ -5,19 +5,25 @@ This communication pattern allows send messages to an specfic route.
 
 ![Diagram of routing](routing.png)
 
-On this tutorial, you'll refine the logging example you did on [PublishSubscribe.md] by sending selectively some of the log messages to a specific error logger. 
+On this tutorial, you'll refine the logging example you did on [previoulsy](PublishSubscribe.md) by sending selectively some of the log messages to a specific error logger. 
 
 Log messages have a severity: `info`, `warning` or `error`.
 
 ## Direct exchange
 
-At the code level the changes are minor, you will create a exchange of type `direct` instead of `fanout`. A direct exchange send messages to the queues whose binding key is equal to the routing key of the message.
+At the code level changes are minor, you will create an exchange of type `direct` instead of `fanout`. A direct exchange sends messages to the queues whose binding key is equal to the routing key of the message.
+
+```Smalltalk
+channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+result := channel declareQueueApplying: [ :queue | ].
+channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
+```
 
 And you'll be using the severity labels as binding keys! 
 
-## Logging just errors messages to the Transcript
+## Logging all messasges to the Transcript
 
-This is the complete code for spawning a logger that will receive error messages and post it to the Transcript
+This is the complete code for spawning a logger that will post every message to the Transcript
 
 ```Smalltalk
 | connection channel result logger |
@@ -28,12 +34,20 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
-channel queueBind: result method queue exchange: 'logs' routingKey: ''.
+
+#('info' 'warning' 'error') do: [ :severity |
+	channel queueBind: result method queue exchange: 'better_logs' routingKey: severity.
+]
+
 channel 
 	consumeFrom: result method queue
-	applying: [ :messageReceived | Transcript show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ].	
+	applying: [ :messageReceived | 
+		Transcript show: ('[<1s] <2s><n>' 
+			expandMacrosWith: messageReceived routingKey 
+			with: messageReceived body utf8Decoded) 
+	].	
 
 logger := Process
 				forContext:
@@ -46,7 +60,15 @@ logger name: 'Transcript logger'.
 logger resume 
 ```
 
-## Receiveing notifications on every message
+Notice that the queue was bound to every severity
+
+```Smalltalk 
+#('info' 'warning' 'error') do: [ :severity |
+	channel queueBind: result method queue exchange: 'better_logs' routingKey: severity.
+]
+```
+
+## Error notifier
 
 This is the complete code for spawning a process that will pop up a toast notification on every log message received
 
@@ -59,12 +81,18 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
-channel queueBind: result method queue exchange: 'logs' routingKey: ''.
+channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
+
 channel 
 	consumeFrom: result method queue
-	applying: [ :messageReceived | self inform: 'A log message has arrived!' ].		
+	applying: [ :messageReceived | 
+		GrowlMorph 
+			openWithLabel: 'Error'
+			contents: 'A log message has arrived!' 
+			backgroundColor: Color red
+			labelColor: Color black ].		
 
 logger := Process
 				forContext:
@@ -72,42 +100,11 @@ logger := Process
 						ensure: [ connection close ]
 					] asContext
 				priority: Processor activePriority.
-logger name: 'Transcript logger'.
+logger name: 'Error notifier'.
 	
 logger resume 
 ```
 
 ## Producing logs
 
-## Consumer
-
-On this channel you´re going to create an exchange, a queue, and a binding between the two.
-
-````Smalltalk
-channel declareExchangeNamed: 'tasks' of: 'direct' applying: [:exchange | ].
-result := channel declareQueueApplying: [ :queue | ].
-channel queueBind: result method queue exchange: 'tasks' routingKey: ''.
-````
-
-Binding the exchange can be interpreted as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
-
-One important thing to notice is that the declared exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
-
-````Smalltalk
-channel 
-	consumeFrom: result method queue
-	applying: [ :messageReceived | messageReceived inspect ].	
-````
-
-
-You just bind the exchange, think of it as a known address where the producer will send messages, to the queue from where the consumer will take out the messages. Now with the following collaboration, you'll create a subscription to the queue registering a callback that will open an inspector on each received message by the consumer.
-
-One important thing to notice is that the declare exchange is of type `direct`. This configures the exchange to send messages to the queues whose binding key exactly matches the routing key of the message.
-
-````Smalltalk
-channel 
-	consumeFrom: result method queue
-	applying: [ :messageReceived | messageReceived inspect ].	
-````
-
-*Note:* The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that you read it if you want to have a better understanding. 
+Logs are produce in similar way 
