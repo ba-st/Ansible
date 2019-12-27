@@ -39,7 +39,7 @@ result := channel declareQueueApplying: [ :queue | ].
 
 #('info' 'warning' 'error') do: [ :severity |
 	channel queueBind: result method queue exchange: 'better_logs' routingKey: severity.
-]
+].
 
 channel 
 	consumeFrom: result method queue
