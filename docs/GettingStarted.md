@@ -1,6 +1,6 @@
 # Getting started with Ansible
 
-Ansible implements two of the major versions of the AMQP. AMQP is a programmable protocol and supports several communication schemes, we'll illustrate a few of this patterns with a set of tutorials.
+**Ansible** implements two of the major versions of the AMQP. AMQP is a programmable protocol and supports several communication schemes, we'll illustrate a few of this patterns with a set of tutorials.
 
 Let's start preparing our environment, the first thing you'll do is install RabbitMQ. We have chosen RabbitMQ as our messaging broker since it was designed with AMQP 0-9-1 as its central protocol.
 
@@ -23,9 +23,9 @@ Metacello new
 	load.
 ```
 
-Save and close this image, we will be using it 
+Save and close this image, you'll use it to perform the tutorials. 
 
-See [Installation.md](Installation.md) to learn more about how install Ansible on your image or how to use it as dependency of your project.
+See [Installation.md](Installation.md) to learn more about how install **Ansible** on your image or how to use it as dependency of your project.
 
 Well, we have everything ready to do the tutorials!
 
@@ -33,8 +33,9 @@ Well, we have everything ready to do the tutorials!
 
 The tutorials are intended to be read in order and are inspired by those in the [Get Started](https://www.rabbitmq.com/getstarted.html) of the official documentation. They are not a rewrite but rather my interpretation. 
 
-**Note:** The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding.
+**Note:** The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding. They also provide this [great tool](http://tryrabbitmq.com) to help you explore diferent communcation patterns.
 
 1. [Worker queue](WorkerQueue.md)
 2. [Publish - Subscribe](PublishSubscribe.md)
 3. [Routing](Routing.md)
+
