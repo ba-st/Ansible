@@ -132,7 +132,7 @@ In image acting as producer, open a Playground and inspect the script to produce
 
 While sending messages the subscriber's Transcript will look like this
 
-[Logger in action](routing_transcript_logger.gif)
+![Logger in action](routing_transcript_logger.gif)
 
 
 And everytime you send a message with `error` routing key you also will see this notification 
