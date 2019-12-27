@@ -10,7 +10,6 @@ For this tutorial, you'll model tasks as a dotted string, where each dot represe
 This schema is also known as [Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html)
 
 ## A brief review of concepts 
-## Establishing a connection 
 
 Let's review AMQP concepts by inspecting a consumer setup step-by-step. The first thing you need to do is stablish a connection to the broker
 
