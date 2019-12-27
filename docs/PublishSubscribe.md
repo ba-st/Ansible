@@ -110,7 +110,7 @@ channel
 
 ## Running the example
 
-Ok, use two Pharo images to isolate de pusbliser from de consumers. On the first evaluate on diferent Playgroundsthe scripts of the Transcript logger and the logger notifier. Do not forget to open the Transcript!
+Use two Pharo images to isolate de publisher from de consumers. On the first one evaluate, on diferent Playgrounds, the scripts for the Transcript logger and for logger notifier. And do not forget to open the Transcript!
 
 In another image, open a Playground and inspect the producer script, use the inspector to send more messages like you did on the previuos tutorial.
 
