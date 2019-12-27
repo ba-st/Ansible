@@ -29,7 +29,7 @@ Notice that the declared exchange is of type `fanout`, meaning published message
 
 ## Logging to the Transcript
 
-This is the complete code for spawning a logger that will receive log messages and post it to the Transcript
+Running this script will spawn a logger that will post every message to the Transcript
 
 ```Smalltalk
 | connection channel result logger |
@@ -43,6 +43,7 @@ channel := connection createChannel.
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
+
 channel 
 	consumeFrom: result method queue
 	applying: [ :messageReceived | Transcript show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ].	
@@ -60,7 +61,7 @@ logger resume
 
 ## Receiveing notifications
 
-This is the complete code for spawning a process that will pop up a toast notification on every log message received
+Here's the script to spawn a process that will pop up a toast notification on every log message received
 
 ```Smalltalk
 | connection channel result logger |
@@ -74,6 +75,7 @@ channel := connection createChannel.
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
+
 channel 
 	consumeFrom: result method queue
 	applying: [ :messageReceived | self inform: 'A log message has arrived!' ].		
@@ -88,6 +90,8 @@ logger name: 'Transcript logger'.
 	
 logger resume 
 ```
+
+It only differ in what callback they register. 
 
 ## Producing logs
 
