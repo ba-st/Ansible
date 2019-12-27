@@ -29,12 +29,10 @@ Notice that the declared exchange is of type `fanout`, meaning published message
 
 ## Logging to the Transcript
 
-This is the complete code for spawning a logger
+This is the complete code for spawning a logger that will receive log messages and post it to the Transcript
 
 ```Smalltalk
-| loggerName connection channel result logger |
-
-loggerName := 'File logger #1'.
+| connection channel result logger |
 
 connection := AmqpConnectionBuilder new
 	hostname: 'localhost';
@@ -47,24 +45,53 @@ result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
 channel 
 	consumeFrom: result method queue
-	applying: [ :messageReceived | Transcript show: ('<1s> just received <2p><n>' expandMacrosWith: loggerName with: messageReceived body utf8Decoded) ].	
+	applying: [ :messageReceived | Transcript show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ].	
 
 logger := Process
-	forContext:
-		[ [ [  connection waitForEvent ] repeat ]
-			ensure: [ connection close ]
-		] asContext
-	priority: Processor activePriority.
-logger name: loggerName.
+				forContext:
+					[ [ [  connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+logger name: 'Transcript logger'.
 	
 logger resume 
 ```
 
-You could spawn as many as you want, but change the `loggerName` contents to follow the messaging. 
+## Receiveing notifications
 
-## Setting up the publisher
+This is the complete code for spawning a process that will pop up a toast notification on every log message received
 
-On the publisher image open a Playground and copy the following script
+```Smalltalk
+| connection channel result logger |
+
+connection := AmqpConnectionBuilder new
+	hostname: 'localhost';
+	build.
+connection open.
+
+channel := connection createChannel.
+channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
+result := channel declareQueueApplying: [ :queue | ].
+channel queueBind: result method queue exchange: 'logs' routingKey: ''.
+channel 
+	consumeFrom: result method queue
+	applying: [ :messageReceived | self inform: 'A log message has arrived!' ].		
+
+logger := Process
+				forContext:
+					[ [ [  connection waitForEvent ] repeat ]
+						ensure: [ connection close ]
+					] asContext
+				priority: Processor activePriority.
+logger name: 'Transcript logger'.
+	
+logger resume 
+```
+
+## Producing logs
+
+This is the script to produce log entries. Unlike the previous tutorial, you'll be publishing messages to the exchange, not directly to a queue
 
 ```smalltalk
 | connection channel result |
@@ -77,10 +104,13 @@ connection open.
 channel := connection createChannel.
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 
-channel basicPublish: 'Message #1' utf8Encoded exchange: 'logs' routingKey: ''.	
+channel basicPublish: '2014-10-31 13:11:10.8458 [Info] Service started up' utf8Encoded exchange: 'logs' routingKey: ''.	
 channel
 ```
 
 ## Running the example
+
+Ok, we will be using two Pharo images. Let's open two Playgrounds and the Transcript in the one actins as the loggers and copy and evaluate the 
+
 
 ## Next
