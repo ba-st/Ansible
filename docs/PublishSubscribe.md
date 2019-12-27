@@ -110,17 +110,19 @@ channel
 
 ## Running the example
 
-Ok, we will be using two Pharo images. Let's open two Playgrounds and the Transcript in the one actins as the loggers and copy and evaluate the 
+Ok, use two Pharo images to isolate de pusbliser from de consumers. On the first evaluate on diferent Playgroundsthe scripts of the Transcript logger and the logger notifier. Do not forget to open the Transcript!
 
-On every message sent on the subscriber's imagage Transcript you'll see a new line being added
+In another image, open a Playground and inspect the producer script, use the inspector to send more messages like you did on the previuos tutorial.
+
+After sending a couple of messages the subscriber's Transcript will look like this
 
 ![Transcript with received messages](publish_subscribe_message_received_transcript.png)
 
-Also, you'll recive a notification like this one
+Also, you'll recive a notification like this one for every message 
 
 ![Message received toast](publish_subscribe_message_received_toast.png)
 
 
 ## Next 
 
-On the next tutorial learn how to refine this example, let's learn the basics of [routing](Routing.md).
+On the next tutorial learn how to refine this example, go ahead to learn the basics of [routing](Routing.md).
