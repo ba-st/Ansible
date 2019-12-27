@@ -44,7 +44,7 @@ result := channel declareQueueApplying: [ :queue | ].
 channel 
 	consumeFrom: result method queue
 	applying: [ :messageReceived | 
-		Transcript show: ('[<1s] <2s><n>' 
+		Transcript show: ('<2s> [<1s>]<n>' 
 			expandMacrosWith: messageReceived routingKey 
 			with: messageReceived body utf8Decoded) 
 	].	
@@ -68,9 +68,9 @@ Notice that the queue was bound to every severity
 ]
 ```
 
-## Error notifier
+## Building an error notifier
 
-This is the complete code for spawning a process that will pop up a toast notification on every log message received
+This is the complete code for spawning a process that will pop up a toast notification on every error message sent. As you may see following the queue creation there's just a binding using the `error` key.
 
 ```Smalltalk
 | connection channel result logger |
@@ -107,4 +107,24 @@ logger resume
 
 ## Producing logs
 
-Logs are produce in similar way 
+This is the script to produce log entries, do not forget to add the severity as routing key
+
+```Smalltalk
+| connection channel result |
+
+connection := AmqpConnectionBuilder new
+	hostname: 'localhost';
+	build.
+connection open.
+
+channel := connection createChannel.
+channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+
+channel basicPublish: '2014-10-31 13:11:10.8458 Service started up' utf8Encoded exchange: 'better_logs' routingKey: 'info'.	
+channel
+```
+
+## Running the example
+
+
+
