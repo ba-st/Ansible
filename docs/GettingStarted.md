@@ -36,7 +36,7 @@ The tutorials are intended to be read in order and are inspired by those in the 
 AMQP is a programmable protocol and supports several communication schemes, we'll illustrate two of these schemas with simple examples:
 
 1. [Worker queue](WorkerQueue.md)
-2. [Publisher - Subscriber](PublisherSubscriber.md)
+2. [Publishe - Subscribe](PublishSubscribe.md)
 3. [Routing](Routing.md)
 
 ## Final words
