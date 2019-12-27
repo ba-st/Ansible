@@ -91,7 +91,7 @@ logger name: 'Transcript logger'.
 logger resume 
 ```
 
-It only differ in what callback they register. 
+It only differ in the callback it registers. 
 
 ## Producing logs
 
@@ -114,15 +114,17 @@ channel
 
 ## Running the example
 
-Use two Pharo images to isolate de publisher from de consumers. On the first one evaluate, on diferent Playgrounds, the scripts for the Transcript logger and for logger notifier. And do not forget to open the Transcript!
+Open two Ansible images to isolate de publisher from de consumers. 
 
-In another image, open a Playground and inspect the producer script, use the inspector to send more messages like you did on the previuos tutorial.
+On one evaluate, on diferent Playgrounds, the scripts for spawning the logger and the notifier. And do not forget to open the Transcript!
+
+In the other image, inspect in a Playground the producer script. Use the inspector on the channel to send more messages like you did on the previuos tutorial.
 
 After sending a couple of messages the subscriber's Transcript will look like this
 
 ![Transcript with received messages](publish_subscribe_message_received_transcript.png)
 
-Also, you'll recive a notification like this one for every message 
+Also, you'll receive a notification for every message  like this one 
 
 ![Message received toast](publish_subscribe_message_received_toast.png)
 
