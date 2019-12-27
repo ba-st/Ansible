@@ -126,8 +126,16 @@ channel
 
 ## Running the example
 
-![Logger in action](routing_transcript_logger.gif)
+Evaluate the scripts in two different Pharo images. On the subcriber image evaluate, on diferent Playgrounds, the scripts for the Transcript logger and error notifier. Open the Transcript.
 
+In image acting as producer, open a Playground and inspect the script to produce log messages, use the inspector to send more messages sending the `#basicPublish:exhange:routingKey` message to the inspected channel.
+
+While sending messages the subscriber's Transcript will look like this
+
+[Logger in action](routing_transcript_logger.gif)
+
+
+And everytime you send a message with `error` routing key you also will see this notification 
 
 ![Error notification](routing_error_notifier.png)
 
