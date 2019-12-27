@@ -21,7 +21,7 @@ channel queueBind: result method queue exchange: 'better_logs' routingKey: 'erro
 
 And you'll be using the severity labels as binding keys! 
 
-## Logging all messasges to the Transcript
+## Logging to the Transcript
 
 This is the complete code for spawning a logger that will post every message to the Transcript
 
