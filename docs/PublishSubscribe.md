@@ -112,5 +112,19 @@ channel
 
 Ok, we will be using two Pharo images. Let's open two Playgrounds and the Transcript in the one actins as the loggers and copy and evaluate the 
 
+On every message sent on the subscriber's imagage Transcript you'll see a new line being added
+![Transcript with received messages](publish_subscribe_message_received_transcript.png)
 
-## Next
+Also, you'll recive a notification like this one
+![Message received toast](publish_subscribe_message_received_toast.png)
+
+
+## Next 
+
+Let's learn another integration pattern, discover [publisher-subscriber](PublisherSubscriber.md) communication pattern with Ansible!
+
+
+
+## Next 
+
+Let's learn another integration pattern, discover [publisher-subscriber](PublisherSubscriber.md) communication pattern with Ansible!
