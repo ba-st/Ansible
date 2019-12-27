@@ -45,7 +45,7 @@ channel
 	consumeFrom: result method queue
 	applying: [ :messageReceived | 
 		Transcript show: ('<2s> [<1s>]<n>' 
-			expandMacrosWith: messageReceived routingKey 
+			expandMacrosWith: messageReceived method routingKey 
 			with: messageReceived body utf8Decoded) 
 	].	
 
