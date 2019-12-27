@@ -1,9 +1,11 @@
 # Publish-Subscribe
 (based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
 
-Let's create an example of a publish-subscribe communication pattern by setting up a logging system. To build it we will use two images, the first one will emit log events acting as publisher and in the second one, you'll spawn a couple of subscribers receiving the logs and print them on the Transcript.
+This communication pattern allows sending the same message to more than one receiver. 
 
 ![Diagram of publish-subscribe](publish_subscribe.png)
+
+For this tutorial you'll set up a logging system with two subscribers, one will receive the log messages and print them on the Transcript and the other one will open a toast indicating that a new log message arrived.
 
 For more information on the pattern see [publish-subsribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html) 
 
