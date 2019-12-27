@@ -1,6 +1,6 @@
 # Routing 
 
-On this tutorial you'll refine the logging example you did on [PublisherSubscriber.md] by sending selectively some of the log messages to an specific error logger.
+On this tutorial you'll refine the logging example you did on [PublishSubscribe.md] by sending selectively some of the log messages to an specific error logger. Not all receivers will receive all the messages.
 
 ## Consumer
 
