@@ -126,5 +126,9 @@ channel
 
 ## Running the example
 
+![Logger in action](routing_transcript_logger.gif)
+
+
+![Error notification](routing_error_notifier.png)
 
 
