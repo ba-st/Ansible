@@ -2,7 +2,7 @@
 
 ## Basic Installation
 
-You can load **Lepus** evaluating:
+You can load **Ansible** evaluating:
 ```smalltalk
 Metacello new
 	baseline: 'Lepus';
@@ -13,7 +13,7 @@ Metacello new
 
 ## Using as dependency
 
-In order to include **Lepus** as part of your project, you should reference the package in your product baseline:
+In order to include **Ansible** as part of your project, you should reference the package in your product baseline:
 
 ```smalltalk
 setUpDependencies: spec
