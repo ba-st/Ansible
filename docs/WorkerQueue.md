@@ -57,7 +57,7 @@ If the broker does not receive the acknowledge it will wait eternally, there is 
 
 ## Spawning workers
 
-You need to add this last collaboration to spawn a ~minion~ worker to the end of the script
+You need to add this last collaboration to the end of the script to spawn a worker process
 
 ````Smalltalk
 worker := Process
@@ -130,11 +130,13 @@ The last line publishes a message to the `task_queue`. Yes, we are creating the 
 
 ## Running the example
 
-Open three Pharo images with Ansible loaded. Two will act as workers and the other one as producer. 
+Open three Ansible images. Two will act as workers and the other one as producer. 
 
-On the images acting as worker open a Playground and evaluate the script to spawn a worker. Now, on the third one open a Playground and inspect the producer script. This will send your first message. Inspecting it will open a an inspector of course and from there you could send more messages by sending `#basicPublish:exchange:routingKey:`.
+On the images acting as worker open a Playground and evaluate the corresponding script. Now, on the third one open a Playground, copy and inspect the producer script. This will send your first message. 
 
-After each message sent you should see a toast like this one on one your worker images
+Since you inspected the script, an inspector on a instance of channel will open. To send more messages to the workers send  `#basicPublish:exchange:routingKey:` to it. 
+
+After each message sent you should see a toast notification on one your worker image, not on both. It will look like this
 
 ![Message received toast](worker_queue_message_received_toast.png)
 
