@@ -31,9 +31,9 @@ Well, we have everything ready to do the tutorials!
 
 ## Tutorials
 
-The tutorials are intended to be read in order and are inspired by those in the [official documentation](https://www.rabbitmq.com/documentation.html). They are not a rewrite but rather my interpretation. Moreover, we strongly recommend that you read it as it has much more depth in each of the topics.
+The tutorials are intended to be read in order and are inspired by those in the [Get Started](https://www.rabbitmq.com/getstarted.html) of the official documentation. They are not a rewrite but rather my interpretation. 
 
-*Note:* The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding. 
+**Note:** The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding.
 
 1. [Worker queue](WorkerQueue.md)
 2. [Publish - Subscribe](PublishSubscribe.md)
