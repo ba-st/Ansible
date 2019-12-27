@@ -1,5 +1,7 @@
 # Getting started with Ansible
 
+Ansible implements two of the major versions of the AMQP. AMQP is a programmable protocol and supports several communication schemes, we'll illustrate a few of this patterns with a set of tutorials.
+
 Let's start preparing our environment, the first thing you'll do is install RabbitMQ. We have chosen RabbitMQ as our messaging broker since it was designed with AMQP 0-9-1 as its central protocol.
 
 ## Installing RabbitMQ
@@ -33,11 +35,6 @@ The tutorials are intended to be read in order and are inspired by those in the 
 
 *Note:* The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding. 
 
-AMQP is a programmable protocol and supports several communication schemes, we'll illustrate two of these schemas with simple examples:
-
 1. [Worker queue](WorkerQueue.md)
 2. [Publish - Subscribe](PublishSubscribe.md)
 3. [Routing](Routing.md)
-
-## Final words
-
