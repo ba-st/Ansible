@@ -35,7 +35,7 @@ channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 ````
 
-The `channel prefetchCount: 1` directs RabbitMQ to wait for a worker's acknowledge before sending it another one. Without this, the broker just sends the messages as soon as it receives them without taking into account if the worker ended with the last one.
+The `channel prefetchCount: 1` directs RabbitMQ to wait for an acknowledge of the last message before sending another to the worker. Without this, the broker will send the messages to the woeker as soon as they enter the queue. It will do so regardless of whether the worker is ready to receive more messages.
 
 Now you'll create a subscription to the queue registering a callback that will simulate running a task by creating a delay of `n` seconds, where `n` is the amount of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker
 
