@@ -1,6 +1,6 @@
 # Getting started with Ansible
 
-**Ansible** implements two of the major versions of the [AMQP](http://www.amqp.org) messaging prototol (AMQP-0-8 and AMQP-0-9-0).
+**Ansible** implements two of the major versions of the [AMQP](http://www.amqp.org) messaging prototol (AMQP 0-8 and AMQP 0-9-0).
 
 AMQP is a programmable protocol allowing several messaging patterns, you'll learn a few of this patterns with a set of tutorials.
 
