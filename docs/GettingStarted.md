@@ -1,6 +1,8 @@
 # Getting started with Ansible
 
-**Ansible** implements two of the major versions of the AMQP. AMQP is a programmable protocol allowing several messaging patterns, you'll learn a few of this patterns with a set of tutorials.
+**Ansible** implements two of the major versions of the [AMQP](http://www.amqp.org) messaging prototol (AMQP-0-8 and AMQP-0-9-0).
+
+AMQP is a programmable protocol allowing several messaging patterns, you'll learn a few of this patterns with a set of tutorials.
 
 Let's start preparing our environment, the first thing you'll do is install RabbitMQ. We have chosen RabbitMQ as our messaging broker since it was designed with AMQP 0-9-1 as its central protocol.
 
