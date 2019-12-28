@@ -27,7 +27,7 @@ Save and close this image, you'll use it to perform the tutorials.
 
 See [Installation.md](Installation.md) to learn more about how install **Ansible** on your image or how to use it as dependency of your project.
 
-Well, we have everything ready to do the tutorials!
+Well, you've everything ready to do the tutorials!
 
 ## Tutorials
 
