@@ -1,5 +1,5 @@
 # Routing 
-(based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-four-python.html))
+(based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-four-python.html))
 
 This communication pattern allows send messages to an specfic route. 
 
