@@ -1,7 +1,7 @@
 # Publish-Subscribe
-(based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
+(based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
 
-This communication pattern allows sending the same message to more than one receiver. 
+This messaging pattern allows sending the same message to more than one receiver. 
 
 ![Diagram of publish-subscribe](publish_subscribe.png)
 
@@ -11,9 +11,9 @@ For more information on the pattern see [publish-subsribe](https://www.enterpris
 
 ## Introducing the exchange 
 
-Simply an exchange receives messages from producers y pushes them to queues. It will be configured to know what to do with a message according to its type.
+An exchange simply receives messages from producers and pushes them to queues.  It is configured to know what to do with a message according to its type.
 
-Let's examine part of one of the logger's code, after creating the channel now you'll see 
+Let's examine part of the logger code from the previous tutorial, after the channel creation we have
 
 ````Smalltalk
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
@@ -91,7 +91,7 @@ logger name: 'Transcript logger'.
 logger resume 
 ```
 
-It only differ in the callback it registers. 
+See that they only differ in the callback they register.
 
 ## Producing logs
 
@@ -114,11 +114,11 @@ channel
 
 ## Running the example
 
-Open two Ansible images to isolate de publisher from de consumers. 
+Open two Ansible images to isolate the publisher from the consumers. 
 
-On one evaluate, on diferent Playgrounds, the scripts for spawning the logger and the notifier. And do not forget to open the Transcript!
+On one evaluate, in diferent Playgrounds, the scripts for spawning the logger and the notifier. Don't forget to open the Transcript!
 
-In the other image, inspect in a Playground the producer script. Use the inspector on the channel to send more messages like you did on the previuos tutorial.
+On the other image, inspect in a Playground the producer script. Use the inspector on the channel to send more messages like you did in the previous tutorial.
 
 After sending a couple of messages the subscriber's Transcript will look like this
 
@@ -131,4 +131,4 @@ Also, you'll receive a notification for every message  like this one
 
 ## Next 
 
-On the next tutorial learn how to refine this example, go ahead to learn the basics of [routing](Routing.md).
+In the next tutorial you'll learn how to refine this example, go ahead to learn the basics of [routing](Routing.md).
