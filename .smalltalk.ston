@@ -1,7 +1,7 @@
 SmalltalkCISpec {
   #loading : [
     SCIMetacelloLoadSpec {
-      #baseline : 'Lepus',
+      #baseline : 'Ansible',
       #directory : 'source',
       #load : [ 'CI' ],
       #platforms : [ #pharo ]

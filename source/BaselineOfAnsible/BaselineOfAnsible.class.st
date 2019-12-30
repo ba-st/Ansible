@@ -1,11 +1,11 @@
 Class {
-	#name : #BaselineOfLepus,
+	#name : #BaselineOfAnsible,
 	#superclass : #BaselineOf,
-	#category : #BaselineOfLepus
+	#category : #BaselineOfAnsible
 }
 
 { #category : #baselines }
-BaselineOfLepus >> baseline: spec [
+BaselineOfAnsible >> baseline: spec [
 
 	<baseline>
 	spec
@@ -31,13 +31,13 @@ BaselineOfLepus >> baseline: spec [
 ]
 
 { #category : #accessing }
-BaselineOfLepus >> projectClass [
+BaselineOfAnsible >> projectClass [
 
 	^ MetacelloCypressBaselineProject
 ]
 
 { #category : #initialization }
-BaselineOfLepus >> setUpDependencies: spec [
+BaselineOfAnsible >> setUpDependencies: spec [
 
 	spec
 		baseline: 'XMLParser'

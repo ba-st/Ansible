@@ -6,15 +6,15 @@
     <a href="docs/"><strong>Explore the docs »</strong></a>
     <br>
     <br>
-    <a href="https://github.com/fortizpenaloza/Lepus/issues/new?labels=Type%3A+Defect">Report a defect</a>
+    <a href="https://github.com/ba-st/Ansible/issues/new?labels=Type%3A+Defect">Report a defect</a>
     |
-    <a href="https://github.com/fortizpenaloza/Lepus/issues/new?labels=Type%3A+Feature">Request feature</a>
+    <a href="https://github.com/ba-st/Ansible/issues/new?labels=Type%3A+Feature">Request feature</a>
   </p>
 </p>
 
-[![GitHub release](https://img.shields.io/github/release/fortizpenaloza/Lepus.svg)](https://github.com/fortizpenalozaa/Lepus/releases/latest)
-[![Build Status](https://travis-ci.com/fortizpenaloza/Lepus.svg?branch=release-candidate)](https://travis-ci.com/fortizpenaloza/Lepus)
-[![Coverage Status](https://coveralls.io/repos/github/fortizpenaloza/Lepus/badge.svg?branch=release-candidate)](https://coveralls.io/github/fortizpenaloza/Lepus?branch=release-candidate)
+[![GitHub release](https://img.shields.io/github/release/ba-st/Ansible.svg)](https://github.com/ba-st/Ansible/releases/latest)
+[![Build Status](https://travis-ci.com/ba-st/Ansible.svg?branch=release-candidate)](https://travis-ci.com/ba-st/Ansible)
+[![Coverage Status](https://coveralls.io/repos/github/ba-st/Ansible/badge.svg?branch=release-candidate)](https://coveralls.io/github/ba-st/Ansible?branch=release-candidate)
 
 >*An [ansible](https://en.wikipedia.org/wiki/Ansible) is a fictional device capable of near-instantaneus communication. It can send and receive message to and from a corresponding device over any distance or obstable whatsover with no delay even betwenn star systems.*
 
@@ -27,7 +27,7 @@
 
 - Download the latest [Pharo 32](https://get.pharo.org/) or [64 bits VM](https://get.pharo.org/64/).
 - Download a ready to use image from the [release page](https://github.com/ba-st/Ansible/releases/latest)
-- Explore the [documentation](docs/). [Getting Started](docs/GettingStarted.md) is a good place to start 😉
+- [Getting Started](docs/GettingStarted.md) is a good place to start 😉
 
 ## Installation
 

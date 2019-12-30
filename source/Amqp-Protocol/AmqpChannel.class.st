@@ -144,7 +144,7 @@ AmqpChannel >> closeReason [
 	^ handler closeReason
 ]
 
-{ #category : #'Lepus receiving messages' }
+{ #category : #'Ansible receiving messages' }
 AmqpChannel >> consumeFrom: aQueueName applying: aBlock [
 	
 	^ self consumeFrom: aQueueName callback: aBlock selector: #value:
@@ -208,7 +208,7 @@ AmqpChannel >> consumeFrom: queue callback: anObject selector: aSymbol noAck: no
 	^ result method consumerTag
 ]
 
-{ #category : #'Lepus exchange management' }
+{ #category : #'Ansible exchange management' }
 AmqpChannel >> declareExchangeNamed: aName of: aType applying: aBlock [
 
 	| builder |
@@ -217,7 +217,7 @@ AmqpChannel >> declareExchangeNamed: aName of: aType applying: aBlock [
 	^ self rpc: ( builder buildApplying: aBlock )
 ]
 
-{ #category : #'Lepus queue building' }
+{ #category : #'Ansible queue building' }
 AmqpChannel >> declareQueueApplying: aBlock [
 
 	| builder |
