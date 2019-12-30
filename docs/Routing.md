@@ -1,11 +1,11 @@
 # Routing 
 (based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-four-python.html))
 
-This communication pattern allows send messages to an specfic route. 
+This communication pattern allows sending messages to a specific route. 
 
 ![Diagram of routing](routing.png)
 
-On this tutorial, you'll refine the logging example you did on [previoulsy](PublishSubscribe.md) by sending selectively some of the log messages to a specific error logger. 
+In this tutorial, you'll refine the logging example you did [previously](PublishSubscribe.md) by selectively sending some of the log messages to a specific error logger. 
 
 Log messages have a severity: `info`, `warning` or `error`.
 
@@ -19,7 +19,7 @@ result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
 ```
 
-And you'll be using the severity labels as binding keys! 
+You'll be using the severity labels as binding keys.
 
 ## Logging to the Transcript
 
@@ -70,7 +70,7 @@ Notice that the queue was bound to every severity
 
 ## Building an error notifier
 
-This is the complete code for spawning a process that will pop up a toast notification on every error message sent. As you may see following the queue creation there's just a binding using the `error` key.
+This is the complete code for spawning a process that will pop up a toast notification on every error message sent. You can see that just after creating the queue, the only change is a binding to the `error` key. Only that one.
 
 ```Smalltalk
 | connection channel result logger |
@@ -126,9 +126,9 @@ channel
 
 ## Running the example
 
-Evaluate the scripts in two different Pharo images. On the subcriber image evaluate, on diferent Playgrounds, the scripts for the Transcript logger and error notifier. Open the Transcript.
+Evaluate the scripts in two different Pharo images. On the subcriber image evaluate, in different Playgrounds, the scripts for the Transcript logger and error notifier. Open the Transcript.
 
-In image acting as producer, open a Playground and inspect the script to produce log messages, use the inspector to send more messages sending the `#basicPublish:exhange:routingKey` message to the inspected channel.
+In the image acting as producer, open a Playground and inspect the script to produce log messages, use the inspector to send more messages sending the `#basicPublish:exhange:routingKey` message to the inspected channel.
 
 While sending messages the subscriber's Transcript will look like this
 
