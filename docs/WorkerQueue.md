@@ -1,17 +1,17 @@
 # Worker queue
-(based on the [offical python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html))
+(based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html))
 
-Work queues allow distributing time-consuming tasks between multiple workers to minimize the time the producer has to wait for it to complete. Tasks are encapsulated as messages and send to the broker. The broker enqueues them and performs a round-robin dispatched to the workers.
+Work queues allow distributing time-consuming tasks between multiple workers to minimize the time the producer has to wait for them to complete. Tasks are encapsulated as messages and send to the broker. The broker enqueues them and performs a round-robin dispatched to the workers.
 
 ![Diagram of worker queue](worker_queue.png)
 
-For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e `'...'` is a task taking 3 seconds to complete).
+For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e. `'...'` is a task taking 3 seconds to complete).
 
 This schema is also known as [Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html).
 
 ## A brief review of concepts 
 
-Let's review AMQP concepts by inspecting a consumer setup step-by-step. The first thing you need to do is stablish a connection to the broker
+Let's review AMQP concepts by inspecting a consumer setup step-by-step. The first thing you need to do is establish a connection to the broker
 
 ````Smalltalk
 connection := AmqpConnectionBuilder new
