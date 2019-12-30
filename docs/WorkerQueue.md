@@ -5,7 +5,7 @@ Work queues allow distributing time-consuming tasks between multiple workers to 
 
 ![Diagram of worker queue](worker_queue.png)
 
-For this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e. `'...'` is a task taking 3 seconds to complete).
+In this tutorial, you'll model tasks as a dotted string, where each dot represents a degree of complexity, therefore the longer the string, the longer it will take (i.e. `'...'` is a task taking 3 seconds to complete).
 
 This schema is also known as [Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html).
 
