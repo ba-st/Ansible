@@ -33,6 +33,11 @@
 
 To load the project in a Pharo image or declare it as a dependency of your project follow this [instructions](docs/Installation.md).
 
+Acknowledgements
+
+- To @tonyg the author of the [Squeak version](http://www.squeaksource.com/AMQP).
+- To @gstn-caruso for porting it to Cuis. See https://github.com/Cuis-Smalltalk/AMQP. 
+
 ## Contributing
 
 Check the [Contribution Guidelines](CONTRIBUTING.md)
