@@ -27,7 +27,7 @@
 
 - Download the latest [Pharo 32](https://get.pharo.org/) or [64 bits VM](https://get.pharo.org/64/).
 - Download a ready to use image from the [release page](https://github.com/ba-st/Ansible/releases/latest)
-- Explore the [documentation](docs/)
+- Explore the [documentation](docs/). [Getting Started](docs/GettingStarted.md) is a good place to start 😉
 
 ## Installation
 
