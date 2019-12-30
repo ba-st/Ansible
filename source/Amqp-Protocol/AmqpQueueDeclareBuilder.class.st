@@ -51,3 +51,9 @@ AmqpQueueDeclareBuilder >> initializeFor: aProtocolVersion [
 	passive := false.
 	arguments := nil
 ]
+
+{ #category : #configuring }
+AmqpQueueDeclareBuilder >> name: aQueueName [ 
+	
+	queueName := aQueueName
+]

@@ -247,7 +247,7 @@ AmqpConnection >> open [
 	| protocol response |
 
 	codec := AmqpCodec new.
-	codec stream: ( SocketStream on: socket ).
+	codec stream: ( SocketStream on: socket ) noTimeout.
 	codec stream binary.
 	protocol := self protocolClass.
 	codec stream nextPutAll: protocol protocolHeader.
