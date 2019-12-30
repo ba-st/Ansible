@@ -12,7 +12,7 @@ To keep the installation simple use the docker image provided by the RabbitMQ te
 
 ` docker run -p 5467:5467 rabbitmq:3-alpine`
 
-This should have started up a RabbitMQ server listening on the default port.
+This starts up a RabbitMQ server listening on the default port.
 
 ## Installing Ansible
 
@@ -29,15 +29,15 @@ Save and close this image, you'll use it to perform the tutorials.
 
 See [Installation.md](Installation.md) to learn more about how install **Ansible** on your image or how to use it as dependency of your project.
 
-Well, you've everything ready to do the tutorials!
+That's it! You are ready to start with the tutorials.
 
 ## Tutorials
 
 The tutorials are intended to be read in order and are inspired by those in the [Get Started](https://www.rabbitmq.com/getstarted.html) of the official documentation. They are not a rewrite but rather my interpretation. 
 
-**Note:** The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend that read it to get a complete understanding. They also provide this [great tool](http://tryrabbitmq.com) to help you explore diferent communcation patterns.
-
 1. [Worker queue](WorkerQueue.md)
 2. [Publish - Subscribe](PublishSubscribe.md)
 3. [Routing](Routing.md)
+
+**Note:** The [official documentation](https://www.rabbitmq.com/documentation.html) is very good and covers each of these topics in great detail. We recommend reading it to get a complete understanding. They also provide this [great tool](http://tryrabbitmq.com) to help you explore diferent messaging patterns.
 
