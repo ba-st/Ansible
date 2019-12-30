@@ -20,24 +20,24 @@ connection := AmqpConnectionBuilder new
 connection open.
 ````
 
-Then you need to create a channel since every operation performed by a client happens on it
+Then you need to create a channel, as it is required by all operations performed by a client
 
 ````Smalltalk
 channel := connection createChannel.
 ````
 
-Channels are logical connections to the broker. Channels allow sharing a connection by multiplexing the messages through them; this means communication on a channel is isolated from communication on other channels sharing the same connection
+Channels are logical connections to the broker. Channels allow sharing a connection by multiplexing the messages through them; this means communication on a channel is isolated from communication on other channels sharing the same connection.
 
-On this channel you´re going to create a queue named `task_queue`
+On this channel you're going to create a queue named `task_queue`
 
 ````Smalltalk
 channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 ````
 
-The `channel prefetchCount: 1` directs RabbitMQ to wait for an acknowledge of the last message before sending another to the worker. Without this, the broker will send the messages to the woeker as soon as they enter the queue. It will do so regardless of whether the worker is ready to receive more messages.
+The `channel prefetchCount: 1` directs RabbitMQ to wait for an acknowledge of the last message before sending another to the worker. Without this, the broker will send the messages to the worker as soon as they enter the queue (regardless of whether the worker is ready to receive more messages).
 
-Now you'll create a subscription to the queue registering a callback that will simulate running a task by creating a delay of `n` seconds, where `n` is the amount of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker
+Now you'll create a subscription to the queue. First you a register a callback, which will simulate running a task by creating a delay of n seconds, where n is the amount of dots in the message. It will open a toast message for each received message by the consumer showing the time it took, and it will send the acknowledge to the broker.
 
 ````Smalltalk
 channel 
@@ -52,7 +52,7 @@ channel
 ].	
 ````
 
-If the broker does not receive the acknowledge it will wait eternally, there is no timeout. If the connection dies RabbitMQ will re-queue the message and try to send it again.
+If the broker does not receive the acknowledge it will wait forever since there is no timeout. If the connection dies RabbitMQ will re-queue the message and try to send it again.
 
 
 ## Spawning workers
@@ -71,7 +71,7 @@ worker name: workerName.
 worker resume 
 ````
 
-Here's the complete script
+That's it! Here you can check the complete script with all the steps described.
 
 ```Smalltalk
 | workerName connection channel worker |
@@ -130,17 +130,17 @@ The last line publishes a message to the `task_queue`. Yes, we are creating the 
 
 ## Running the example
 
-Open three Ansible images. Two will act as workers and the other one as producer. 
+Open three Ansible images. Two will act as workers and the last one as producer. 
 
-On the images acting as worker open a Playground and evaluate the corresponding script. Now, on the third one open a Playground, copy and inspect the producer script. This will send your first message. 
+On the images acting as worker open a Playground and evaluate the corresponding script. Now, on the third one inspect the producer script on a Playground. This will send your first message. 
 
 Since you inspected the script, an inspector on a instance of channel will open. To send more messages to the workers send  `#basicPublish:exchange:routingKey:` to it. 
 
-After each message sent you should see a toast notification on one your worker image, not on both. It will look like this
+After each message sent you should see a toast notification on one your worker images, not on both. It will look like this
 
 ![Message received toast](worker_queue_message_received_toast.png)
 
 ## Next 
 
-Let's learn another integration pattern, discover [publish-subscribe](PublishSubscribe.md) messaging pattern with Ansible!
+Let's learn another integration pattern, discover the [publish-subscribe](PublishSubscribe.md) messaging pattern with Ansible!
 
