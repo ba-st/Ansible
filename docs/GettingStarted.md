@@ -1,14 +1,14 @@
 # Getting started with Ansible
 
-**Ansible** implements two of the major versions of the [AMQP](http://www.amqp.org) messaging prototol (AMQP 0-8 and AMQP 0-9-0).
+**Ansible** implements two of the major versions of the [AMQP](http://www.amqp.org) messaging prototol: AMQP 0-8 and AMQP 0-9-0.
 
-AMQP is a programmable protocol allowing several messaging patterns, you'll learn a few of this patterns with a set of tutorials.
+AMQP is a programmable protocol allowing several messaging patterns, you'll learn some of those patterns with a set of tutorials.
 
 Let's start preparing our environment, the first thing you'll do is install RabbitMQ. We have chosen RabbitMQ as our messaging broker since it was designed with AMQP 0-9-1 as its central protocol.
 
 ## Installing RabbitMQ
 
-To keep the installation simple use the docker image provided by the RabbitMQ team on [Docker Hub](https://hub.docker.com/_/rabbitmq). Be sure of having docker installed, open a console and execute the following command:
+To keep the installation simple use the docker image provided by the RabbitMQ team on [Docker Hub](https://hub.docker.com/_/rabbitmq). You have to make sure you have [docker installed(https://docs.docker.com/install/), open a console and execute the following command:
 
 ` docker run -p 5467:5467 rabbitmq:3-alpine`
 
