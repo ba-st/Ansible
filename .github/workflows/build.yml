@@ -4,11 +4,6 @@ on:
   pull_request:
   push:
 
-services:
-  rabbitmq:
-    image: rabbitmq3
-    ports: 
-      - 5672:5672
 
 jobs:
   build:
@@ -17,6 +12,11 @@ jobs:
       matrix:
         smalltalk: [ Pharo64-8.0, Pharo64-7.0, Pharo32-7.0, Pharo32-6.1 ]
     name: ${{ matrix.smalltalk }}
+    services:
+      rabbitmq:
+        image: rabbitmq:latest
+        ports: 
+          - 5672:5672
     steps:
       - uses: actions/checkout@v2
       - uses: ba-st-actions/setup-smalltalkCI@v1.0.0
