@@ -4,8 +4,14 @@ on:
   pull_request:
   push:
 
+services:
+  rabbitmq:
+    image: rabbitmq3
+    ports: 
+      - 5672:5672
+
 jobs:
-   build:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,9 +19,6 @@ jobs:
     name: ${{ matrix.smalltalk }}
     steps:
       - uses: actions/checkout@v2
-      - uses: nijel/rabbitmq-action@v1.0.0
-        with:
-           rabbitmq version: '3-latest'
       - uses: ba-st-actions/setup-smalltalkCI@v1.0.0
         with:
           smalltalk-version: ${{ matrix.smalltalk }}
