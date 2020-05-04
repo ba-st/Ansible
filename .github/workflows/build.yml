@@ -16,7 +16,8 @@ jobs:
       rabbitmq:
         image: rabbitmq:latest
         ports: 
-          - 5672:5672
+          - 5672
+        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v2
       - uses: ba-st-actions/setup-smalltalkCI@v1.0.0
