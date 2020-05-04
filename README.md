@@ -1,5 +1,5 @@
-<p align="center"><img src="assets/logos/128x128.png">
- <h1 align="center"><PROJECT_NAME></h1>
+<p align="center"><img src="assets/logos/96x96.png">
+ <h1 align="center">Ansible</h1>
   <p align="center">
    Ansible is a AMQP client library for Smalltalk supporting 0-8 and 0-9-1 versions of the protocol.
     <br>
@@ -41,3 +41,6 @@ To load the project in a Pharo image or declare it as a dependency of your proje
 ## Contributing
 
 Check the [Contribution Guidelines](CONTRIBUTING.md)
+
+---
+<small><a href="https://icons8.com/icon/13724/chat">Ansible icon by Icons8</a></small>
