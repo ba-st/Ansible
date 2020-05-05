@@ -13,8 +13,8 @@
 </p>
 
 [![GitHub release](https://img.shields.io/github/release/ba-st/Ansible.svg)](https://github.com/ba-st/Ansible/releases/latest)
-[![Build Status](https://travis-ci.com/ba-st/Ansible.svg?branch=release-candidate)](https://travis-ci.com/ba-st/Ansible)
-[![Coverage Status](https://coveralls.io/repos/github/ba-st/Ansible/badge.svg?branch=release-candidate)](https://coveralls.io/github/ba-st/Ansible?branch=release-candidate)
+[![Build Status](https://github.com/ba-st/Ansible/workflow/Build/badge.svg?branch=release-candidate)](https://github.com/ba-st/Ansible/actions?query=workflow%3Build)
+[![Coverage Status](https://codecov.io/gh/ba-st/Ansible/coverage.svg?branch=release-candidate)](https://coveralls.io/github/ba-st/Ansible?branch=release-candidate)
 
 >*An [ansible](https://en.wikipedia.org/wiki/Ansible) is a fictional device capable of near-instantaneus communication. It can send and receive message to and from a corresponding device over any distance or obstable whatsover with no delay even betwenn star systems.*
 
