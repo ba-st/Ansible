@@ -10,7 +10,7 @@ Let's start preparing our environment, the first thing you'll do is install Rabb
 
 To keep the installation simple use the docker image provided by the RabbitMQ team on [Docker Hub](https://hub.docker.com/_/rabbitmq). You have to make sure you have [docker installed(https://docs.docker.com/install/), open a console and execute the following command:
 
-` docker run -p 5467:5467 rabbitmq:3-alpine`
+` docker run -p 5672:5672 rabbitmq:3-alpine`
 
 This starts up a RabbitMQ server listening on the default port.
 
