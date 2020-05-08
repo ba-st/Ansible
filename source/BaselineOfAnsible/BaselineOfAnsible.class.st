@@ -6,28 +6,30 @@ Class {
 
 { #category : #baselines }
 BaselineOfAnsible >> baseline: spec [
-
 	<baseline>
 	spec
 		for: #pharo
 		do: [ self setUpDependencies: spec.
-
 			spec
-				package: 'Amqp-Protocol-Core' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
-				package: 'Amqp-Protocol-Common';
-				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Common' ];
-				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Common' ];
-				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol-Common' ];
-				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol-Core' ];
-				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
-
+				package: 'Ansible-Protocol-Core'
+					with: [ spec requires: #('Ansible-Protocol-091' 'Ansible-Protocol-08') ];
+				package: 'Ansible-Protocol-Common';
+				package: 'Ansible-Protocol-08'
+					with: [ spec requires: 'Ansible-Protocol-Common' ];
+				package: 'Ansible-Protocol-091'
+					with: [ spec requires: 'Ansible-Protocol-Common' ];
+				package: 'Ansible-Tests'
+					with: [ spec requires: 'Ansible-Protocol-Common' ];
+				package: 'Ansible-Protocol-Tests'
+					with: [ spec requires: 'Ansible-Protocol-Core' ];
+				package: 'Ansible-Tools'
+					with: [ spec requires: 'XMLParser-Core' ].
 			spec
-				group: 'Deployment' with: #('Amqp-Protocol-Common');
-				group: 'Tests' with: #('Amqp-Tests' 'Amqp-Protocol-Tests');
+				group: 'Deployment' with: #('Ansible-Protocol-Common');
+				group: 'Tests' with: #('Ansible-Tests' 'Ansible-Protocol-Tests');
 				group: 'CI' with: #('Tests');
-				group: 'Tools' with: #('Amqp-Tools');
-				group: 'Development' with: #('Tests' 'Tools')
-			]
+				group: 'Tools' with: #('Ansible-Tools');
+				group: 'Development' with: #('Tests' 'Tools') ]
 ]
 
 { #category : #accessing }
