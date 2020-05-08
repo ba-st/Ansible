@@ -6,10 +6,10 @@ You can load **Ansible** evaluating:
 ```smalltalk
 Metacello new
 	baseline: 'Ansible';
-	repository: 'github://fortizpenaloza/Ansible:<DEFAULT_BRANCH>/source';
+	repository: 'github://ba-st/Ansible:release-candidate/source';
 	load.
 ```
->  Change `<DEFAULT_BRANCH>` to some released version if you want a pinned version
+>  Change `release-candidate` to some released version if you want a pinned version
 
 ## Using as dependency
 
@@ -21,7 +21,7 @@ setUpDependencies: spec
 	spec
 		baseline: 'Ansible'
 			with: [ spec
-				repository: 'github://fortizpenaloza/Ansible:v{XX}/source';
+				repository: 'github://ba-st/Ansible:v{XX}/source';
 				loads: #('Deployment') ];
 		import: 'Ansible'.
 ```
