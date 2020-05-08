@@ -13,16 +13,16 @@ BaselineOfAnsible >> baseline: spec [
 		do: [ self setUpDependencies: spec.
 
 			spec
-				package: 'Amqp-Protocol' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
-				package: 'Amqp-Protocol-Base';
-				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Base' ];
-				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Base' ];
-				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol' ];
-				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol' ];
+				package: 'Amqp-Protocol-Common' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
+				package: 'Amqp-Protocol-Core';
+				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Core' ];
+				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Core' ];
+				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol-Common' ];
+				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol-Common' ];
 				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
 
 			spec
-				group: 'Deployment' with: #('Amqp-Protocol');
+				group: 'Deployment' with: #('Amqp-Protocol-Common');
 				group: 'Tests' with: #('Amqp-Tests' 'Amqp-Protocol-Tests');
 				group: 'CI' with: #('Tests');
 				group: 'Tools' with: #('Amqp-Tools');
