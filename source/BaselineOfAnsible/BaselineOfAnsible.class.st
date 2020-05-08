@@ -13,12 +13,12 @@ BaselineOfAnsible >> baseline: spec [
 		do: [ self setUpDependencies: spec.
 
 			spec
-				package: 'Amqp-Protocol-Common' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
-				package: 'Amqp-Protocol-Core';
-				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Core' ];
-				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Core' ];
+				package: 'Amqp-Protocol-Core' with: [ spec requires: #('Amqp-Protocol-091' 'Amqp-Protocol-08') ];
+				package: 'Amqp-Protocol-Common';
+				package: 'Amqp-Protocol-08' with: [ spec requires: 'Amqp-Protocol-Common' ];
+				package: 'Amqp-Protocol-091' with: [ spec requires: 'Amqp-Protocol-Common' ];
 				package: 'Amqp-Tests' with: [ spec requires: 'Amqp-Protocol-Common' ];
-				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol-Common' ];
+				package: 'Amqp-Protocol-Tests' with: [ spec requires: 'Amqp-Protocol-Core' ];
 				package: 'Amqp-Tools' with: [ spec requires: 'XMLParser-Core' ].
 
 			spec
