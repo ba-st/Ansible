@@ -38,8 +38,8 @@ To load the project in a Pharo image or declare it as a dependency of your proje
 
 ## Acknowledgements
 
-- To @tonyg the author of the [Squeak version](http://www.squeaksource.com/AMQP).
-- To @gstn-caruso for porting it to Cuis. See https://github.com/Cuis-Smalltalk/AMQP. 
+- To [Tony Garnock-Jones](https://github.com/tonyg) the author of the [Squeak version](http://www.squeaksource.com/AMQP).
+- To [Gastón Caruso](https://github.com/gstn-caruso) for porting it to Cuis. See https://github.com/Cuis-Smalltalk/AMQP. 
 
 ## Contributing
 
