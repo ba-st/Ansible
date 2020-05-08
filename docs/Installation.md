@@ -5,8 +5,8 @@
 You can load **Ansible** evaluating:
 ```smalltalk
 Metacello new
-	baseline: 'Lepus';
-	repository: 'github://fortizpenaloza/Lepus:<DEFAULT_BRANCH>/source';
+	baseline: 'Ansible';
+	repository: 'github://fortizpenaloza/Ansible:<DEFAULT_BRANCH>/source';
 	load.
 ```
 >  Change `<DEFAULT_BRANCH>` to some released version if you want a pinned version
@@ -19,11 +19,11 @@ In order to include **Ansible** as part of your project, you should reference th
 setUpDependencies: spec
 
 	spec
-		baseline: 'Lepus'
+		baseline: 'Ansible'
 			with: [ spec
-				repository: 'github://fortizpenaloza/Lepus:v{XX}/source';
+				repository: 'github://fortizpenaloza/Ansible:v{XX}/source';
 				loads: #('Deployment') ];
-		import: 'Lepus'.
+		import: 'Ansible'.
 ```
 > Replace `{XX}` with the version you want to depend on
 
@@ -34,7 +34,7 @@ baseline: spec
 	spec
 		for: #common
 		do: [ self setUpDependencies: spec.
-			spec package: 'My-Package' with: [ spec requires: #('Lepus') ] ]
+			spec package: 'My-Package' with: [ spec requires: #('Ansible') ] ]
 ```
 
 ## Provided groups
