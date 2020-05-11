@@ -14,7 +14,7 @@ BaselineOfAnsible >> baseline: spec [
 				setUpDependencies: spec;
 				setUpPackages: spec.
 			spec
-				group: 'Deployment' with: #('Deployment-08 Deployment-091');
+				group: 'Deployment' with: #('Deployment-08' 'Deployment-091');
 				group: 'CI' with: #('Tests');
 				group: 'Tools' with: #('Ansible-Tools');
 				group: 'Development' with: #('Tests' 'Tools')
