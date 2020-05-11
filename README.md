@@ -14,7 +14,7 @@
 
 [![GitHub release](https://img.shields.io/github/release/ba-st/Ansible.svg)](https://github.com/ba-st/Ansible/releases/latest)
 [![Build Status](https://github.com/ba-st/Ansible/workflows/Build/badge.svg?branch=release-candidate)](https://github.com/ba-st/Ansible/actions?query=workflow%3ABuild)
-[![Coverage Status](https://codecov.io/gh/ba-st/Ansible/coverage.svg?branch=release-candidate)](https://coveralls.io/github/ba-st/Ansible?branch=release-candidate)
+[![Coverage Status](https://codecov.io/gh/ba-st/Ansible/coverage.svg?branch=release-candidate)](https://codecov.io/gh/ba-st/Ansible/branch/release-candidate)
 [![Pharo 6.1](https://img.shields.io/badge/Pharo-6.1-informational)](https://pharo.org)
 [![Pharo 7.0](https://img.shields.io/badge/Pharo-7.0-informational)](https://pharo.org)
 [![Pharo 8.0](https://img.shields.io/badge/Pharo-8.0-informational)](https://pharo.org)
