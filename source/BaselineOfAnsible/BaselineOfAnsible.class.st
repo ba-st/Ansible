@@ -15,7 +15,6 @@ BaselineOfAnsible >> baseline: spec [
 				setUpPackages: spec.
 			spec
 				group: 'Deployment' with: #('Deployment-08 Deployment-091');
-				group: 'Tests' with: #('Ansible-Tests' 'Ansible-Protocol-Tests');
 				group: 'CI' with: #('Tests');
 				group: 'Tools' with: #('Ansible-Tools');
 				group: 'Development' with: #('Tests' 'Tools')
@@ -45,14 +44,16 @@ BaselineOfAnsible >> setUpPackages: spec [
 		package: 'Ansible-Protocol-08' with: [ spec requires: 'Ansible-Protocol-Common' ];
 		group: 'Deployment-08' with: 'Ansible-Protocol-08';
 		package: 'Ansible-Protocol-091' with: [ spec requires: 'Ansible-Protocol-Common' ];
-		group: 'Deployment-091' with: [ spec requires: 'Ansible-Protocol-091' ];
-		
+		group: 'Deployment-091' with: 'Ansible-Protocol-091';
+
 		package: 'Ansible-Protocol-Core';
 		group: 'Deployment-08' with: 'Ansible-Protocol-Core';
 		group: 'Deployment-091' with: 'Ansible-Protocol-Core';
-		
+
 		package: 'Ansible-Tests' with: [ spec requires: 'Ansible-Protocol-Core' ];
+		group: 'Tests' with: 'Ansible-Tests';
 		package: 'Ansible-Protocol-Tests' with: [ spec requires: 'Ansible-Protocol-Core' ];
+		group: 'Tests' with: 'Ansible-Protocol-Tests';
 		
 		package: 'Ansible-Tools' with: [ spec requires: 'XMLParser-Core' ]
 ]
