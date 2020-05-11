@@ -46,8 +46,9 @@ BaselineOfAnsible >> setUpPackages: spec [
 		package: 'Ansible-Protocol-091' with: [ spec requires: 'Ansible-Protocol-Common' ];
 		group: 'Deployment-091' with: 'Ansible-Protocol-091';
 
-		package: 'Ansible-Protocol-Core';
+		package: 'Ansible-Protocol-Core' with: [ spec requires: 'Ansible-Protocol-08' ];
 		group: 'Deployment-08' with: 'Ansible-Protocol-Core';
+		package: 'Ansible-Protocol-Core' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Deployment-091' with: 'Ansible-Protocol-Core';
 
 		package: 'Ansible-Tests' with: [ spec requires: 'Ansible-Protocol-Core' ];
