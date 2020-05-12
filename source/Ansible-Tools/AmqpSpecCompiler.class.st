@@ -15,21 +15,40 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 	^ String
 		streamContents: [ :stream | 
 			stream
-				nextPutAll:
-					'acceptableResponseClasses
-	^ {
-'.
-			methodDefinition responses
-				do: [ :response | 
-					stream
-						tab;
-						nextPutAll: prefix;
-						nextPutAll: methodDefinition classDef name upperCamelCased;
-						nextPutAll: response upperCamelCased ;
-						nextPut: $.;
-						cr
-					].
-			stream nextPutAll: '	}'
+				nextPutAll: 'acceptableResponseClasses';
+				space;
+				nextPutAll: '^'.
+
+			methodDefinition response
+				ifEmpty: [ stream nextPutAll: '#()' ]
+				ifNotEmpty: [ :responses | 
+					stream nextPutAll: 'Array'.
+
+					responses
+						do: [ :response | 
+							stream
+								space;
+								nextPutAll: 'with:';
+								nextPutAll: prefix;
+								nextPutAll: methodDefinition classDef name upperCamelCased;
+								nextPutAll: response upperCamelCased
+							]
+					]
+			]
+]
+
+{ #category : #'code generation' }
+AmqpSpecCompiler >> applyFormatting [
+
+	( RBPackageEnvironment packageName: definitionCategory )
+		classesDo: [ :class | 
+			class
+				methodsDo: [ :method | 
+					| formattedCode |
+
+					formattedCode := BIConfigurableFormatter format: method ast.
+					class compile: formattedCode
+					]
 			]
 ]
 
@@ -135,7 +154,6 @@ AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 	| s bitindex finishbits |
 
 	s := WriteStream with: 'encodeOn: codec
-
 	| bitBuffer |
 '.
 
@@ -260,7 +278,7 @@ AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 	class compile: ( self encodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'
 ]
 
-{ #category : #accessing }
+{ #category : #'code generation' }
 AmqpSpecCompiler >> generateEverything [
 
 	| protocol class |
@@ -406,7 +424,7 @@ AmqpSpecCompiler >> spec [
 AmqpSpecCompiler >> spec: anObject [
 
 	spec := anObject.
-	definitionCategory := 'Amqp-Protocol-' , spec versionString.
+	definitionCategory := 'Ansible-Protocol-' , spec versionString.
 	prefix := 'Amqp' , spec versionString
 ]
 
@@ -429,11 +447,15 @@ AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables:
 		package: definitionCategory
 ]
 
-{ #category : #accessing }
+{ #category : #'code generation' }
 AmqpSpecCompiler >> wipePackage [
 
 	( self confirm: 'Are you sure you want to erase all classes in package ' , definitionCategory , '?' )
 		ifFalse: [ ^ self ].
-	( Class allSubInstances select: [ :each | each category = definitionCategory ] )
-		do: [ :each | each removeFromSystem ]
+
+	( RBPackageEnvironment packageName: definitionCategory )
+		classesDo: [ :class | 
+			class isObsolete
+				ifFalse: [ class removeFromSystem ]
+			]
 ]
