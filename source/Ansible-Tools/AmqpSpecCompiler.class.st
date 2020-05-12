@@ -19,7 +19,7 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 				space;
 				nextPutAll: '^'.
 
-			methodDefinition response
+			methodDefinition responses
 				ifEmpty: [ stream nextPutAll: '#()' ]
 				ifNotEmpty: [ :responses | 
 					stream nextPutAll: 'Array'.
