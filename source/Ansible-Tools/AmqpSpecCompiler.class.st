@@ -17,7 +17,7 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 			stream
 				nextPutAll: 'acceptableResponseClasses';
 				space;
-				nextPutAll: '^'.
+				nextPut: $^.
 
 			methodDefinition responses
 				ifEmpty: [ stream nextPutAll: '#()' ]
@@ -64,37 +64,49 @@ AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 { #category : #accessing }
 AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 
-	| stream bitindex |
+	^ String
+		streamContents: [ :stream | 
+			| bitindex |
 
-	stream := WriteStream with: 'decodeFrom: codec
-	| bitBuffer |
-'.
-	bitindex := nil.
-	aMethodDefinition fields
-		do: [ :fieldDefinition | 
-			fieldDefinition domainType = 'bit'
-				ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
-					bitindex >= 8
-						ifTrue: [ bitindex := 0 ].
-					bitindex = 0
-						ifTrue: [ stream
-								nextPutAll: '	bitBuffer := codec nextOctet.';
-								cr
-							].
-					fieldDefinition isReserved
-						ifFalse: [ stream
-								nextPutAll: '	' , fieldDefinition name lowerCamelCased , ' := (bitBuffer bitAnd: ' , ( 1 bitShift: bitindex ) asString , ') ~= 0.'.
-							stream cr
-							].
-					bitindex := bitindex + 1
-					]
-				ifFalse: [ bitindex := nil.
-					stream
-						nextPutAll: '	' , ( self decodeFieldSource: fieldDefinition );
+			stream
+				nextPutAll: 'decodeFrom: codec';
+				cr.
+
+			aMethodDefinition fields
+				detect: [ :fieldDefinition | fieldDefinition domainType = 'bit' ]
+				ifFound: [ stream
+						nextPutAll: '| bitBuffer |';
 						cr
+					].
+
+			bitindex := nil.
+			aMethodDefinition fields
+				do: [ :fieldDefinition | 
+					fieldDefinition domainType = 'bit'
+						ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
+							bitindex >= 8
+								ifTrue: [ bitindex := 0 ].
+							bitindex = 0
+								ifTrue: [ stream
+										nextPutAll: '	bitBuffer := codec nextOctet.';
+										cr
+									].
+							fieldDefinition isReserved
+								ifFalse: [ stream
+										nextPutAll:
+											'	' , fieldDefinition name lowerCamelCased , ' := (bitBuffer bitAnd: '
+												, ( 1 bitShift: bitindex ) asString , ') ~= 0.'.
+									stream cr
+									].
+							bitindex := bitindex + 1
+							]
+						ifFalse: [ bitindex := nil.
+							stream
+								nextPutAll: '	' , ( self decodeFieldSource: fieldDefinition );
+								cr
+							]
 					]
-			].
-	^ stream contents
+			]
 ]
 
 { #category : #accessing }
