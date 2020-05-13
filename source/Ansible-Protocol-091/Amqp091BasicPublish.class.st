@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicPublish >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }

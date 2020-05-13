@@ -12,7 +12,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicQos >> acceptableResponseClasses [
 
-	^ {Amqp091BasicQosOk}
+	^ Array with: Amqp091BasicQosOk
 ]
 
 { #category : #'AMQP codec' }

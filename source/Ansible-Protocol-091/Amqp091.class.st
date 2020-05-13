@@ -309,59 +309,59 @@ Amqp091 class >> initialize [
 
 	super initialize.
 	classIds at: 60 put: Amqp091BasicProperties.
-	methodIds at: 2621461 put: Amqp091ExchangeDeleteOk.
-	methodIds at: 2621450 put: Amqp091ExchangeDeclare.
-	methodIds at: 2621451 put: Amqp091ExchangeDeclareOk.
-	methodIds at: 2621460 put: Amqp091ExchangeDelete.
-	methodIds at: 3932200 put: Amqp091BasicPublish.
-	methodIds at: 3932220 put: Amqp091BasicDeliver.
-	methodIds at: 3932240 put: Amqp091BasicAck.
-	methodIds at: 3932170 put: Amqp091BasicQos.
-	methodIds at: 3932232 put: Amqp091BasicGetEmpty.
-	methodIds at: 3932271 put: Amqp091BasicRecoverOk.
-	methodIds at: 3932181 put: Amqp091BasicConsumeOk.
-	methodIds at: 3932250 put: Amqp091BasicReject.
-	methodIds at: 3932230 put: Amqp091BasicGet.
-	methodIds at: 3932191 put: Amqp091BasicCancelOk.
-	methodIds at: 3932231 put: Amqp091BasicGetOk.
-	methodIds at: 3932180 put: Amqp091BasicConsume.
-	methodIds at: 3932270 put: Amqp091BasicRecover.
-	methodIds at: 3932210 put: Amqp091BasicReturn.
-	methodIds at: 3932260 put: Amqp091BasicRecoverAsync.
-	methodIds at: 3932171 put: Amqp091BasicQosOk.
-	methodIds at: 3932190 put: Amqp091BasicCancel.
-	methodIds at: 1310731 put: Amqp091ChannelOpenOk.
 	methodIds at: 1310741 put: Amqp091ChannelFlowOk.
-	methodIds at: 1310730 put: Amqp091ChannelOpen.
-	methodIds at: 1310761 put: Amqp091ChannelCloseOk.
-	methodIds at: 1310740 put: Amqp091ChannelFlow.
 	methodIds at: 1310760 put: Amqp091ChannelClose.
-	methodIds at: 3276821 put: Amqp091QueueBindOk.
-	methodIds at: 3276851 put: Amqp091QueueUnbindOk.
-	methodIds at: 3276840 put: Amqp091QueueDelete.
-	methodIds at: 3276831 put: Amqp091QueuePurgeOk.
-	methodIds at: 3276811 put: Amqp091QueueDeclareOk.
+	methodIds at: 1310731 put: Amqp091ChannelOpenOk.
+	methodIds at: 1310730 put: Amqp091ChannelOpen.
+	methodIds at: 1310740 put: Amqp091ChannelFlow.
+	methodIds at: 1310761 put: Amqp091ChannelCloseOk.
+	methodIds at: 2621461 put: Amqp091ExchangeDeleteOk.
+	methodIds at: 2621451 put: Amqp091ExchangeDeclareOk.
+	methodIds at: 2621450 put: Amqp091ExchangeDeclare.
+	methodIds at: 2621460 put: Amqp091ExchangeDelete.
+	methodIds at: 655411 put: Amqp091ConnectionCloseOk.
+	methodIds at: 655410 put: Amqp091ConnectionClose.
+	methodIds at: 655370 put: Amqp091ConnectionStart.
+	methodIds at: 655380 put: Amqp091ConnectionSecure.
+	methodIds at: 655401 put: Amqp091ConnectionOpenOk.
+	methodIds at: 655400 put: Amqp091ConnectionOpen.
+	methodIds at: 655381 put: Amqp091ConnectionSecureOk.
+	methodIds at: 655371 put: Amqp091ConnectionStartOk.
+	methodIds at: 655391 put: Amqp091ConnectionTuneOk.
+	methodIds at: 655390 put: Amqp091ConnectionTune.
 	methodIds at: 3276850 put: Amqp091QueueUnbind.
-	methodIds at: 3276820 put: Amqp091QueueBind.
+	methodIds at: 3276811 put: Amqp091QueueDeclareOk.
+	methodIds at: 3276851 put: Amqp091QueueUnbindOk.
 	methodIds at: 3276830 put: Amqp091QueuePurge.
+	methodIds at: 3276831 put: Amqp091QueuePurgeOk.
 	methodIds at: 3276810 put: Amqp091QueueDeclare.
+	methodIds at: 3276821 put: Amqp091QueueBindOk.
 	methodIds at: 3276841 put: Amqp091QueueDeleteOk.
-	methodIds at: 5898250 put: Amqp091TxSelect.
-	methodIds at: 5898251 put: Amqp091TxSelectOk.
+	methodIds at: 3276820 put: Amqp091QueueBind.
+	methodIds at: 3276840 put: Amqp091QueueDelete.
 	methodIds at: 5898270 put: Amqp091TxRollback.
 	methodIds at: 5898271 put: Amqp091TxRollbackOk.
 	methodIds at: 5898261 put: Amqp091TxCommitOk.
+	methodIds at: 5898251 put: Amqp091TxSelectOk.
 	methodIds at: 5898260 put: Amqp091TxCommit.
-	methodIds at: 655380 put: Amqp091ConnectionSecure.
-	methodIds at: 655401 put: Amqp091ConnectionOpenOk.
-	methodIds at: 655370 put: Amqp091ConnectionStart.
-	methodIds at: 655371 put: Amqp091ConnectionStartOk.
-	methodIds at: 655411 put: Amqp091ConnectionCloseOk.
-	methodIds at: 655410 put: Amqp091ConnectionClose.
-	methodIds at: 655390 put: Amqp091ConnectionTune.
-	methodIds at: 655391 put: Amqp091ConnectionTuneOk.
-	methodIds at: 655381 put: Amqp091ConnectionSecureOk.
-	methodIds at: 655400 put: Amqp091ConnectionOpen
+	methodIds at: 5898250 put: Amqp091TxSelect.
+	methodIds at: 3932260 put: Amqp091BasicRecoverAsync.
+	methodIds at: 3932270 put: Amqp091BasicRecover.
+	methodIds at: 3932171 put: Amqp091BasicQosOk.
+	methodIds at: 3932231 put: Amqp091BasicGetOk.
+	methodIds at: 3932220 put: Amqp091BasicDeliver.
+	methodIds at: 3932200 put: Amqp091BasicPublish.
+	methodIds at: 3932170 put: Amqp091BasicQos.
+	methodIds at: 3932190 put: Amqp091BasicCancel.
+	methodIds at: 3932180 put: Amqp091BasicConsume.
+	methodIds at: 3932232 put: Amqp091BasicGetEmpty.
+	methodIds at: 3932240 put: Amqp091BasicAck.
+	methodIds at: 3932250 put: Amqp091BasicReject.
+	methodIds at: 3932181 put: Amqp091BasicConsumeOk.
+	methodIds at: 3932210 put: Amqp091BasicReturn.
+	methodIds at: 3932230 put: Amqp091BasicGet.
+	methodIds at: 3932191 put: Amqp091BasicCancelOk.
+	methodIds at: 3932271 put: Amqp091BasicRecoverOk
 ]
 
 { #category : #'AMQP protocol constants' }

@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicCancelOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -34,15 +34,11 @@ Amqp091BasicCancelOk >> consumerTag: aValue [
 { #category : #'AMQP codec' }
 Amqp091BasicCancelOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	consumerTag := codec nextShortstr
 ]
 
 { #category : #'AMQP codec' }
 Amqp091BasicCancelOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortstrPut: consumerTag
 ]

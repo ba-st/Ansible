@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ConnectionOpen >> acceptableResponseClasses [
 
-	^ {Amqp091ConnectionOpenOk}
+	^ Array with: Amqp091ConnectionOpenOk
 ]
 
 { #category : #'AMQP codec' }

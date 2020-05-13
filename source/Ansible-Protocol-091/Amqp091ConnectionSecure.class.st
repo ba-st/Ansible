@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ConnectionSecure >> acceptableResponseClasses [
 
-	^ {Amqp091ConnectionSecureOk}
+	^ Array with: Amqp091ConnectionSecureOk
 ]
 
 { #category : #accessing }
@@ -34,15 +34,11 @@ Amqp091ConnectionSecure >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091ConnectionSecure >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	challenge := codec nextLongstr
 ]
 
 { #category : #'AMQP codec' }
 Amqp091ConnectionSecure >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextLongstrPut: challenge
 ]

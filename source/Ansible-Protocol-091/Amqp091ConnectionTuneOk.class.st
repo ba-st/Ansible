@@ -12,7 +12,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ConnectionTuneOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #accessing }
@@ -36,8 +36,6 @@ Amqp091ConnectionTuneOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091ConnectionTuneOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	channelMax := codec nextShort.
 	frameMax := codec nextLong.
 	heartbeat := codec nextShort
@@ -45,8 +43,6 @@ Amqp091ConnectionTuneOk >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091ConnectionTuneOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortPut: channelMax.
 	codec nextLongPut: frameMax.

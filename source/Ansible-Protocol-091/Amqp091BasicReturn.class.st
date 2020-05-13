@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicReturn >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -25,8 +25,6 @@ Amqp091BasicReturn >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091BasicReturn >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	replyCode := codec nextShort.
 	replyText := codec nextShortstr.
 	exchange := codec nextShortstr.
@@ -35,8 +33,6 @@ Amqp091BasicReturn >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091BasicReturn >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortPut: replyCode.
 	codec nextShortstrPut: replyText.

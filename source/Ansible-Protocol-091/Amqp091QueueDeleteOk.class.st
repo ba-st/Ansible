@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueueDeleteOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -22,15 +22,11 @@ Amqp091QueueDeleteOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091QueueDeleteOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	messageCount := codec nextLong
 ]
 
 { #category : #'AMQP codec' }
 Amqp091QueueDeleteOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextLongPut: messageCount
 ]

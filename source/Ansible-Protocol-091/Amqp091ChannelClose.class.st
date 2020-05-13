@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ChannelClose >> acceptableResponseClasses [
 
-	^ {Amqp091ChannelCloseOk}
+	^ Array with: Amqp091ChannelCloseOk
 ]
 
 { #category : #accessing }
@@ -37,8 +37,6 @@ Amqp091ChannelClose >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091ChannelClose >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	replyCode := codec nextShort.
 	replyText := codec nextShortstr.
 	classId := codec nextShort.
@@ -47,8 +45,6 @@ Amqp091ChannelClose >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091ChannelClose >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortPut: replyCode.
 	codec nextShortstrPut: replyText.

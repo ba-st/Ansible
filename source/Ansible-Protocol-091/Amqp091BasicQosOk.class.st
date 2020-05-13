@@ -7,7 +7,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicQosOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -19,15 +19,11 @@ Amqp091BasicQosOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091BasicQosOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	
 ]
 
 { #category : #'AMQP codec' }
 Amqp091BasicQosOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	
 ]

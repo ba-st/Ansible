@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueuePurgeOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -22,15 +22,11 @@ Amqp091QueuePurgeOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091QueuePurgeOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	messageCount := codec nextLong
 ]
 
 { #category : #'AMQP codec' }
 Amqp091QueuePurgeOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextLongPut: messageCount
 ]

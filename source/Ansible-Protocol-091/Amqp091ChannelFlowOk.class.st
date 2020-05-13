@@ -10,7 +10,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ChannelFlowOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #accessing }
