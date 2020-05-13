@@ -7,7 +7,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091TxCommitOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -19,15 +19,11 @@ Amqp091TxCommitOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091TxCommitOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	
 ]
 
 { #category : #'AMQP codec' }
 Amqp091TxCommitOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	
 ]

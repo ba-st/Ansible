@@ -11,7 +11,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicCancel >> acceptableResponseClasses [
 
-	^ {Amqp091BasicCancelOk}
+	^ Array with: Amqp091BasicCancelOk
 ]
 
 { #category : #'AMQP codec' }

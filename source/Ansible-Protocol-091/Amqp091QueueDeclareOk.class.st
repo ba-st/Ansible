@@ -12,7 +12,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueueDeclareOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -36,8 +36,6 @@ Amqp091QueueDeclareOk >> consumerCount: aValue [
 { #category : #'AMQP codec' }
 Amqp091QueueDeclareOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	queue := codec nextShortstr.
 	messageCount := codec nextLong.
 	consumerCount := codec nextLong
@@ -45,8 +43,6 @@ Amqp091QueueDeclareOk >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091QueueDeclareOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortstrPut: queue.
 	codec nextLongPut: messageCount.

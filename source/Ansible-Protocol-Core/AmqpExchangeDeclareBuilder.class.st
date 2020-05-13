@@ -5,7 +5,6 @@ Class {
 		'name',
 		'type',
 		'durable',
-		'autoDelete',
 		'passive',
 		'arguments',
 		'protocolVersion'
@@ -29,7 +28,6 @@ AmqpExchangeDeclareBuilder >> buildApplying: aBlock [
 		type: type;
 		passive: passive;
 		durable: durable;
-		autoDelete: autoDelete;
 		arguments: arguments
 ]
 
@@ -41,7 +39,6 @@ AmqpExchangeDeclareBuilder >> initializeNamed: aName of: aType for: aProtocolVer
 	type := aType.
 	"Initialize default values."
 	durable := false.
-	autoDelete := false.
 	passive := false.
 	arguments := nil
 ]

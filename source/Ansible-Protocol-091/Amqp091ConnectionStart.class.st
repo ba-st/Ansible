@@ -14,7 +14,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ConnectionStart >> acceptableResponseClasses [
 
-	^ {Amqp091ConnectionStartOk}
+	^ Array with: Amqp091ConnectionStartOk
 ]
 
 { #category : #'AMQP codec' }
@@ -35,8 +35,6 @@ Amqp091ConnectionStart >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091ConnectionStart >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextOctetPut: versionMajor.
 	codec nextOctetPut: versionMinor.

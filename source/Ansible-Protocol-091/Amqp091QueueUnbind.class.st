@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueueUnbind >> acceptableResponseClasses [
 
-	^ {Amqp091QueueUnbindOk}
+	^ Array with: Amqp091QueueUnbindOk
 ]
 
 { #category : #accessing }
@@ -37,8 +37,6 @@ Amqp091QueueUnbind >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091QueueUnbind >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	codec nextShort.
 	queue := codec nextShortstr.
 	exchange := codec nextShortstr.
@@ -48,8 +46,6 @@ Amqp091QueueUnbind >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091QueueUnbind >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortPut: 0.
 	codec nextShortstrPut: queue.

@@ -15,21 +15,40 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 	^ String
 		streamContents: [ :stream | 
 			stream
-				nextPutAll:
-					'acceptableResponseClasses
-	^ {
-'.
+				nextPutAll: 'acceptableResponseClasses';
+				space;
+				nextPut: $^.
+
 			methodDefinition responses
-				do: [ :response | 
-					stream
-						tab;
-						nextPutAll: prefix;
-						nextPutAll: methodDefinition classDef name upperCamelCased;
-						nextPutAll: response upperCamelCased ;
-						nextPut: $.;
-						cr
-					].
-			stream nextPutAll: '	}'
+				ifEmpty: [ stream nextPutAll: '#()' ]
+				ifNotEmpty: [ :responses | 
+					stream nextPutAll: 'Array'.
+
+					responses
+						do: [ :response | 
+							stream
+								space;
+								nextPutAll: 'with:';
+								nextPutAll: prefix;
+								nextPutAll: methodDefinition classDef name upperCamelCased;
+								nextPutAll: response upperCamelCased
+							]
+					]
+			]
+]
+
+{ #category : #'code generation' }
+AmqpSpecCompiler >> applyFormatting [
+
+	( RBPackageEnvironment packageName: definitionCategory )
+		classesDo: [ :class | 
+			class
+				methodsDo: [ :method | 
+					| formattedCode |
+
+					formattedCode := BIConfigurableFormatter format: method ast.
+					class compile: formattedCode
+					]
 			]
 ]
 
@@ -45,37 +64,48 @@ AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 { #category : #accessing }
 AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 
-	| stream bitindex |
+	^ String
+		streamContents: [ :stream | 
+			| bitindex |
 
-	stream := WriteStream with: 'decodeFrom: codec
-	| bitBuffer |
-'.
-	bitindex := nil.
-	aMethodDefinition fields
-		do: [ :fieldDefinition | 
-			fieldDefinition domainType = 'bit'
-				ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
-					bitindex >= 8
-						ifTrue: [ bitindex := 0 ].
-					bitindex = 0
-						ifTrue: [ stream
-								nextPutAll: '	bitBuffer := codec nextOctet.';
-								cr
-							].
-					fieldDefinition isReserved
-						ifFalse: [ stream
-								nextPutAll: '	' , fieldDefinition name lowerCamelCased , ' := (bitBuffer bitAnd: ' , ( 1 bitShift: bitindex ) asString , ') ~= 0.'.
-							stream cr
-							].
-					bitindex := bitindex + 1
-					]
-				ifFalse: [ bitindex := nil.
-					stream
-						nextPutAll: '	' , ( self decodeFieldSource: fieldDefinition );
+			stream
+				nextPutAll: 'decodeFrom: codec';
+				cr.
+
+			aMethodDefinition fields
+				detect: [ :fieldDefinition | fieldDefinition domainType = 'bit' ]
+				ifFound: [ stream
+						nextPutAll: '| bitBuffer |';
 						cr
+					].
+
+			bitindex := nil.
+			aMethodDefinition fields
+				do: [ :fieldDefinition | 
+					fieldDefinition domainType = 'bit'
+						ifTrue: [ bitindex ifNil: [ bitindex := 0 ].
+							bitindex >= 8
+								ifTrue: [ bitindex := 0 ].
+							bitindex = 0
+								ifTrue: [ stream
+										nextPutAll: 'bitBuffer := codec nextOctet.';
+										cr
+									].
+							fieldDefinition isReserved
+								ifFalse: [ stream
+										nextPutAll: fieldDefinition name lowerCamelCased;
+										nextPutAll: (' := (bitBuffer bitAnd: <1p>) ~= 0.' expandMacrosWith: ( 1 bitShift: bitindex ) );
+										cr
+									].
+							bitindex := bitindex + 1
+							]
+						ifFalse: [ bitindex := nil.
+							stream
+								nextPutAll: ( self decodeFieldSource: fieldDefinition );
+								cr
+							]
 					]
-			].
-	^ stream contents
+			]
 ]
 
 { #category : #accessing }
@@ -132,55 +162,63 @@ AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 { #category : #accessing }
 AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 
-	| s bitindex finishbits |
+	| bitindex finishbits |
 
-	s := WriteStream with: 'encodeOn: codec
+	^ String
+		streamContents: [ :stream | 
+			stream
+				nextPutAll: 'encodeOn: codec';
+				cr.
 
-	| bitBuffer |
-'.
 
-	bitindex := nil.
-	finishbits := [ bitindex notNil
-		ifTrue: [ s
-				nextPutAll: '	codec nextOctetPut: bitBuffer.';
-				cr
-			]
-	].
+			aMethodDefinition fields
+				detect: [ :fieldDefinition | fieldDefinition domainType = 'bit' ]
+				ifFound: [ stream
+						nextPutAll: '| bitBuffer |';
+						cr
+					].
 
-	aMethodDefinition fields
-		do: [ :fieldDefinition | 
-			fieldDefinition domainType = 'bit'
-				ifTrue: [ bitindex
-						ifNil: [ bitindex := 0.
-							s
-								nextPutAll: '	bitBuffer := 0.';
-								cr
-							].
-					bitindex >= 8
-						ifTrue: [ finishbits value.
-							s
-								nextPutAll: '	bitBuffer := 0.';
-								cr.
-							bitindex := 0
-							].
-					fieldDefinition isReserved
-						ifFalse: [ s
-								nextPutAll:
-									'	(' , fieldDefinition name lowerCamelCased , ' ifNil: [false])' , ' ifTrue: [bitBuffer := bitBuffer bitOr: '
-										, ( 1 bitShift: bitindex ) asString , '].'.
-							s cr
-							].
-					bitindex := bitindex + 1
-					]
-				ifFalse: [ finishbits value.
-					bitindex := nil.
-					s
-						nextPutAll: '	' , ( self encodeFieldSource: fieldDefinition );
+			bitindex := nil.
+			finishbits := [ bitindex notNil
+				ifTrue: [ stream
+						nextPutAll: 'codec nextOctetPut: bitBuffer.';
 						cr
 					]
 			].
-	finishbits value.
-	^ s contents
+
+			aMethodDefinition fields
+				do: [ :fieldDefinition | 
+					fieldDefinition domainType = 'bit'
+						ifTrue: [ bitindex
+								ifNil: [ bitindex := 0.
+									stream
+										nextPutAll: 'bitBuffer := 0.';
+										cr
+									].
+							bitindex >= 8
+								ifTrue: [ finishbits value.
+									stream
+										nextPutAll: 'bitBuffer := 0.';
+										cr.
+									bitindex := 0
+									].
+							fieldDefinition isReserved
+								ifFalse: [ stream
+										nextPutAll: ( '(<1s> ifNil: [false])' expandMacrosWith: fieldDefinition name lowerCamelCased );
+										nextPutAll: ( ' ifTrue: [bitBuffer := bitBuffer bitOr: <1p>].' expandMacrosWith: ( 1 bitShift: bitindex ) );
+										cr
+									].
+							bitindex := bitindex + 1
+							]
+						ifFalse: [ finishbits value.
+							bitindex := nil.
+							stream
+								nextPutAll: ( self encodeFieldSource: fieldDefinition );
+								cr
+							]
+					].
+			finishbits value
+			]
 ]
 
 { #category : #accessing }
@@ -260,7 +298,7 @@ AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 	class compile: ( self encodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'
 ]
 
-{ #category : #accessing }
+{ #category : #'code generation' }
 AmqpSpecCompiler >> generateEverything [
 
 	| protocol class |
@@ -406,7 +444,7 @@ AmqpSpecCompiler >> spec [
 AmqpSpecCompiler >> spec: anObject [
 
 	spec := anObject.
-	definitionCategory := 'Amqp-Protocol-' , spec versionString.
+	definitionCategory := 'Ansible-Protocol-' , spec versionString.
 	prefix := 'Amqp' , spec versionString
 ]
 
@@ -429,11 +467,15 @@ AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables:
 		package: definitionCategory
 ]
 
-{ #category : #accessing }
+{ #category : #'code generation' }
 AmqpSpecCompiler >> wipePackage [
 
 	( self confirm: 'Are you sure you want to erase all classes in package ' , definitionCategory , '?' )
 		ifFalse: [ ^ self ].
-	( Class allSubInstances select: [ :each | each category = definitionCategory ] )
-		do: [ :each | each removeFromSystem ]
+
+	( RBPackageEnvironment packageName: definitionCategory )
+		classesDo: [ :class | 
+			class isObsolete
+				ifFalse: [ class removeFromSystem ]
+			]
 ]

@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091ConnectionStartOk >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #accessing }
@@ -37,8 +37,6 @@ Amqp091ConnectionStartOk >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091ConnectionStartOk >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	clientProperties := codec nextTable.
 	mechanism := codec nextShortstr.
 	response := codec nextLongstr.
@@ -47,8 +45,6 @@ Amqp091ConnectionStartOk >> decodeFrom: codec [
 
 { #category : #'AMQP codec' }
 Amqp091ConnectionStartOk >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextTablePut: clientProperties.
 	codec nextShortstrPut: mechanism.

@@ -7,7 +7,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicGetEmpty >> acceptableResponseClasses [
 
-	^ {}
+	^ #()
 ]
 
 { #category : #'AMQP codec' }
@@ -19,15 +19,11 @@ Amqp091BasicGetEmpty >> codecMethodId [
 { #category : #'AMQP codec' }
 Amqp091BasicGetEmpty >> decodeFrom: codec [
 
-	| bitBuffer |
-
 	codec nextShortstr
 ]
 
 { #category : #'AMQP codec' }
 Amqp091BasicGetEmpty >> encodeOn: codec [
-
-	| bitBuffer |
 
 	codec nextShortstrPut: nil
 ]

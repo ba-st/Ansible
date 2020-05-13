@@ -14,7 +14,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueueBind >> acceptableResponseClasses [
 
-	^ {Amqp091QueueBindOk}
+	^ Array with: Amqp091QueueBindOk
 ]
 
 { #category : #accessing }

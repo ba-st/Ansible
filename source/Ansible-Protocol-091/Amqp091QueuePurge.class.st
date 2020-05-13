@@ -11,7 +11,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueuePurge >> acceptableResponseClasses [
 
-	^ {Amqp091QueuePurgeOk}
+	^ Array with: Amqp091QueuePurgeOk
 ]
 
 { #category : #'AMQP codec' }

@@ -11,8 +11,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicGet >> acceptableResponseClasses [
 
-	^ {Amqp091BasicGetEmpty.
-	Amqp091BasicGetOk}
+	^ Array with: Amqp091BasicGetOk with: Amqp091BasicGetEmpty
 ]
 
 { #category : #'AMQP codec' }

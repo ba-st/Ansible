@@ -13,7 +13,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091QueueDelete >> acceptableResponseClasses [
 
-	^ {Amqp091QueueDeleteOk}
+	^ Array with: Amqp091QueueDeleteOk
 ]
 
 { #category : #'AMQP codec' }

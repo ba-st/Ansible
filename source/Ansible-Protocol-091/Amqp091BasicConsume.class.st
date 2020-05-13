@@ -16,7 +16,7 @@ Class {
 { #category : #'AMQP codec' }
 Amqp091BasicConsume >> acceptableResponseClasses [
 
-	^ {Amqp091BasicConsumeOk}
+	^ Array with: Amqp091BasicConsumeOk
 ]
 
 { #category : #accessing }
