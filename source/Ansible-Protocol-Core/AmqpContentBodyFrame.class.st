@@ -34,7 +34,7 @@ AmqpContentBodyFrame >> fragment: anObject [
 ]
 
 { #category : #accessing }
-AmqpContentBodyFrame >> readFrom: conn length: length [
+AmqpContentBodyFrame >> readFrom: connection length: length [
 
-	fragment := conn codec stream next: length
+	fragment := connection codec next: length
 ]

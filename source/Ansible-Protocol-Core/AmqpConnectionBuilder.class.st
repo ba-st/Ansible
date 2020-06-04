@@ -5,7 +5,8 @@ Class {
 		'parameters',
 		'hostname',
 		'username',
-		'password'
+		'password',
+		'protocol'
 	],
 	#category : #'Ansible-Protocol-Core'
 }
@@ -13,14 +14,16 @@ Class {
 { #category : #building }
 AmqpConnectionBuilder >> build [
 
+	protocol ifNil: [ Error signal: 'Protocol must be configured' ].
+
 	^ AmqpConnection
 		to: hostname
-		using: Amqp091
+		using: protocol
 		with: self credentials
 		parameterizedBy: parameters
 ]
 
-{ #category : #building }
+{ #category : #'private-accessing' }
 AmqpConnectionBuilder >> credentials [
 
 	^ AmqpPlainCredentials new
@@ -38,7 +41,7 @@ AmqpConnectionBuilder >> hostname: aHostname [
 AmqpConnectionBuilder >> initialize [
 
 	super initialize.
-	"Initialize default values."
+	
 	username := 'guest'.
 	password := 'guest'.
 	hostname := 'localhost'.
@@ -52,6 +55,12 @@ AmqpConnectionBuilder >> initialize [
 AmqpConnectionBuilder >> password: aPassword [
 
 	password := aPassword
+]
+
+{ #category : #configuring }
+AmqpConnectionBuilder >> protocol: aProtocol [
+
+	protocol := aProtocol
 ]
 
 { #category : #configuring }

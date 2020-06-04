@@ -40,12 +40,12 @@ AmqpMethodFrame >> methodId: anObject [
 ]
 
 { #category : #accessing }
-AmqpMethodFrame >> readFrom: conn length: length [
+AmqpMethodFrame >> readFrom: connection length: length [
 
 	| codec |
 
-	codec := conn codec.
+	codec := connection codec.
 	methodId := codec nextLong.
-	method := ( conn protocolClass methodForId: methodId ) new.
+	method := ( connection protocolClass methodForId: methodId ) new.
 	method decodeFrom: codec
 ]

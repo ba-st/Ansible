@@ -38,13 +38,13 @@ AmqpFrame >> encodeOn: codec [
 { #category : #accessing }
 AmqpFrame >> encodedBody [
 
-	| s c |
+	| stream codec |
 
-	s := WriteStream with: ByteArray new.
-	c := AmqpCodec new stream: s.
-	self encodeBodyOn: c.
-	c flush.
-	^ s contents
+	stream := WriteStream with: ByteArray new.
+	codec := AmqpCodec on: stream.
+	self encodeBodyOn: codec.
+	codec flush.
+	^ stream contents
 ]
 
 { #category : #accessing }
@@ -60,7 +60,7 @@ AmqpFrame >> frameType: anObject [
 ]
 
 { #category : #accessing }
-AmqpFrame >> readFrom: conn length: length [
+AmqpFrame >> readFrom: connection length: length [
 
 	self subclassResponsibility
 ]

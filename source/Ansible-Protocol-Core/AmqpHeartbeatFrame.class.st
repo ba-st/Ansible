@@ -13,7 +13,7 @@ AmqpHeartbeatFrame >> encodeBodyOn: codec [
 ]
 
 { #category : #accessing }
-AmqpHeartbeatFrame >> readFrom: conn length: length [
+AmqpHeartbeatFrame >> readFrom: connection length: length [
 
 	length = 0
 		ifFalse: [ AmqpProtocolSyntaxError signal: 'Illegal heartbeat frame from server' ]
