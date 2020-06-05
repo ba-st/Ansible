@@ -20,12 +20,14 @@ AmqpProtocolHeaderFrame >> encodeBodyOn: codec [
 ]
 
 { #category : #accessing }
-AmqpProtocolHeaderFrame >> readFrom: conn length: length [
+AmqpProtocolHeaderFrame >> readFrom: connection length: length [
 
 	| codec |
+	
+	length inspect.
 
 	"length is four bytes big-endian: $P followed by the first three bytes of the version spec."
-	codec := conn codec.
+	codec := connection codec.
 	( length digitAt: 4 ) = $P asciiValue
 		ifFalse: [ AmqpProtocolSyntaxError signal: 'Invalid AMQP protocol version header' ].
 	transportVersion := length digitAt: 3.

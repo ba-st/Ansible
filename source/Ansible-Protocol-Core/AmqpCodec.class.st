@@ -7,19 +7,37 @@ Class {
 	#category : #'Ansible-Protocol-Core'
 }
 
+{ #category : #'instance creation' }
+AmqpCodec class >> on: aStream [
+
+	^ self new initializeOn: aStream
+]
+
 { #category : #streaming }
 AmqpCodec >> flush [
 
 	stream flush
 ]
 
+{ #category : #initialization }
+AmqpCodec >> initializeOn: aStream [
+
+	stream := aStream
+]
+
 { #category : #streaming }
+AmqpCodec >> next: length [
+
+	^ stream next: length
+]
+
+{ #category : #decoding }
 AmqpCodec >> nextBoolean [
 
 	^ self nextOctet bitAnd: 1
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextLong [
 
 	| v |
@@ -31,7 +49,7 @@ AmqpCodec >> nextLong [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextLongPut: v [
 
 	v ifNil: [ ^ self nextLongPut: 0 ].
@@ -39,7 +57,7 @@ AmqpCodec >> nextLongPut: v [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextLonglong [
 
 	| v |
@@ -55,7 +73,7 @@ AmqpCodec >> nextLonglong [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextLonglongPut: v [
 
 	v ifNil: [ ^ self nextLonglongPut: 0 ].
@@ -63,19 +81,19 @@ AmqpCodec >> nextLonglongPut: v [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextLongstr [
 
 	^ self nextLongstrBytes asString
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextLongstrBytes [
 
 	^ stream next: self nextLong
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextLongstrPut: v [
 
 	v
@@ -87,13 +105,13 @@ AmqpCodec >> nextLongstrPut: v [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextOctet [
 
 	^ stream next
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextOctetPut: v [
 
 	v ifNil: [ ^ self nextOctetPut: 0 ].
@@ -101,6 +119,12 @@ AmqpCodec >> nextOctetPut: v [
 ]
 
 { #category : #streaming }
+AmqpCodec >> nextPutAll: aCollection [
+
+	stream nextPutAll: aCollection
+]
+
+{ #category : #decoding }
 AmqpCodec >> nextShort [
 
 	| v |
@@ -110,7 +134,7 @@ AmqpCodec >> nextShort [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextShortPut: v [
 
 	v ifNil: [ ^ self nextShortPut: 0 ].
@@ -118,13 +142,13 @@ AmqpCodec >> nextShortPut: v [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextShortstr [
 
 	^ ( stream next: self nextOctet ) asString
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextShortstrPut: v [
 
 	v
@@ -136,48 +160,48 @@ AmqpCodec >> nextShortstrPut: v [
 	^ v
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextTable [
 
-	| buf d key type val |
+	| buffer table key type value |
 
-	buf := self nextLongstrBytes.
-	d := Dictionary new.
+	buffer := self nextLongstrBytes.
+	table := Dictionary new.
 	self
-		withStream: buf readStream
+		withStream: buffer readStream
 		during: [ [ stream peek notNil ]
 				whileTrue: [ key := self nextShortstr.
 					type := self nextOctet.
-					val := self nextTableValue: type.
-					d at: key put: val
+					value := self nextTableValue: type.
+					table at: key put: value
 					]
 			].
-	^ d
+	^ table
 ]
 
-{ #category : #streaming }
-AmqpCodec >> nextTablePut: d [
+{ #category : #encoding }
+AmqpCodec >> nextTablePut: table [
 
-	| s |
+	| buffer |
 
-	d
+	table
 		ifNil: [ self nextLongPut: 0.
-			^ d
+			^ table
 			].
-	s := WriteStream on: ByteArray new.
+	buffer := WriteStream on: ByteArray new.
 	self
-		withStream: s
-		during: [ d
-				keysAndValuesDo: [ :key :val | 
+		withStream: buffer
+		during: [ table
+				keysAndValuesDo: [ :key :value | 
 					self nextShortstrPut: key.
-					self nextTableValuePut: val
+					self nextTableValuePut: value
 					]
 			].
-	self nextLongstrPut: s contents.
-	^ d
+	self nextLongstrPut: buffer contents.
+	^ table
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextTableValue: type [
 
 	type = $S asciiValue
@@ -200,7 +224,7 @@ AmqpCodec >> nextTableValue: type [
 	AmqpProtocolSyntaxError signal: 'Unsupported AMQP table field type'
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextTableValuePut: val [
 
 	( val isKindOf: ScaledDecimal )
@@ -232,13 +256,13 @@ AmqpCodec >> nextTableValuePut: val [
 	AmqpProtocolSyntaxError signal: 'Unsupported AMQP table field value'
 ]
 
-{ #category : #streaming }
+{ #category : #decoding }
 AmqpCodec >> nextTimestamp [
 
 	^ ( DateAndTime year: 1970 day: 1 ) + self nextLonglong seconds
 ]
 
-{ #category : #streaming }
+{ #category : #encoding }
 AmqpCodec >> nextTimestampPut: v [
 
 	v
@@ -253,12 +277,6 @@ AmqpCodec >> nextTimestampPut: v [
 AmqpCodec >> stream [
 
 	^ stream
-]
-
-{ #category : #accessing }
-AmqpCodec >> stream: anObject [
-
-	stream := anObject
 ]
 
 { #category : #streaming }

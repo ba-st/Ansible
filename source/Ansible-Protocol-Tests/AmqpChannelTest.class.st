@@ -11,6 +11,7 @@ Class {
 AmqpChannelTest >> setUp [
 
 	connection := AmqpConnectionBuilder new
+		protocol: Amqp091;
 		hostname: 'localhost';
 		build.
 	connection open

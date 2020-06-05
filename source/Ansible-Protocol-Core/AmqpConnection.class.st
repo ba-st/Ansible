@@ -11,7 +11,8 @@ Class {
 		'closeReason',
 		'channels',
 		'nextChannel',
-		'protocolClass'
+		'protocolClass',
+		'heartbeatSender'
 	],
 	#category : #'Ansible-Protocol-Core'
 }
@@ -35,19 +36,21 @@ AmqpConnection class >> to: aHostname using: aProtocolVersion with: connectionCr
 { #category : #'connection-handling' }
 AmqpConnection >> close [
 
-	| c |
+	| connectionClose |
 
 	isOpen
 		ifTrue: [ isOpen := false.
-			c := self protocolClass connectionCloseMethod new
+			connectionClose := self protocolClass connectionCloseMethod new
 				replyCode: self protocolClass replySuccess;
 				replyText: 'Normal shutdown';
 				classId: 0;
 				methodId: 0.
-			self rpc: c onChannel: 0.
-			self internalClose: c
+			self rpc: connectionClose onChannel: 0.
+			self internalClose: connectionClose
 			].
+	heartbeatSender stop.
 	socket close
+	
 ]
 
 { #category : #'connection-handling' }
@@ -60,12 +63,6 @@ AmqpConnection >> closeReason [
 AmqpConnection >> codec [
 
 	^ codec
-]
-
-{ #category : #accessing }
-AmqpConnection >> codec: anObject [
-
-	codec := anObject
 ]
 
 { #category : #'connection-handling' }
@@ -82,12 +79,6 @@ AmqpConnection >> createChannel [
 AmqpConnection >> credentials [
 
 	^ credentials
-]
-
-{ #category : #accessing }
-AmqpConnection >> credentials: anObject [
-
-	credentials := anObject
 ]
 
 { #category : #'connection-handling' }
@@ -116,15 +107,16 @@ AmqpConnection >> handleConnectionClose: cmd [
 { #category : #'connection-handling' }
 AmqpConnection >> hardClose [
 
-	| c |
+	| connectionClose |
 
 	isOpen
 		ifTrue: [ isOpen := false.
-			c := self protocolClass connectionCloseMethod new
+			connectionClose := self protocolClass connectionCloseMethod new
 				replyCode: self protocolClass internalError;
 				replyText: 'Abnormal disconnection'.
-			self internalClose: c
+			self internalClose: connectionClose
 			].
+	heartbeatSender stop.		
 	socket close
 ]
 
@@ -152,6 +144,12 @@ AmqpConnection >> initialize [
 ]
 
 { #category : #initialization }
+AmqpConnection >> initializeHeartbeatSender [
+
+	heartbeatSender := AmqpHeartbeatSender keepingOpen: self
+]
+
+{ #category : #initialization }
 AmqpConnection >> initializeTo: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
 	protocolClass := aProtocolVersion.
@@ -162,10 +160,11 @@ AmqpConnection >> initializeTo: aHostname using: aProtocolVersion with: connecti
 	credentials := connectionCredentials.
 	parameters := connectionParameters.
 
-	self initialize
+	self initialize.
+	self initializeHeartbeatSender.
 ]
 
-{ #category : #'connection-handling' }
+{ #category : #'private-opening' }
 AmqpConnection >> installChannel0 [
 
 	| channel |
@@ -192,11 +191,9 @@ AmqpConnection >> mainLoopCycle [
 	frame := self nextFrame.
 	frame
 		ifNil: [ self hardClose.
-			^ self
-			].
-	( frame isKindOf: AmqpHeartbeatFrame )
-		ifTrue: [ self sendFrame: frame ]
-		ifFalse: [ ( channels at: frame channelNumber ) handleFrame: frame ]
+			^ self ].
+	(frame isKindOf: AmqpHeartbeatFrame)
+		ifFalse: [ (channels at: frame channelNumber) handleFrame: frame ]
 ]
 
 { #category : #'connection-handling' }
@@ -222,21 +219,22 @@ AmqpConnection >> nextChannel [
 { #category : #'connection-handling' }
 AmqpConnection >> nextFrame [
 
-	| type channel length fc f |
+	| typeCode channel length frameType frame |
 
-	[ type := codec nextOctet.
-	type ifNil: [ ^ nil ].
+	[ 
+	typeCode := codec nextOctet.
+	typeCode ifNil: [ ^ nil ].
 	channel := codec nextShort.
 	length := codec nextLong.
-	fc := self protocolClass frameClassFor: type.
-	fc notNil
-		ifTrue: [ f := fc new.
-			f frameType: type.
-			f channelNumber: channel.
-			f readFrom: self length: length.
+	frameType := self protocolClass frameClassFor: typeCode.
+	frameType notNil
+		ifTrue: [ frame := frameType new.
+			frame frameType: typeCode.
+			frame channelNumber: channel.
+			frame readFrom: self length: length.
 			codec nextOctet = self protocolClass frameEnd
 				ifFalse: [ AmqpProtocolSyntaxError signal: 'Missing frame end marker' ].
-			^ f
+			^ frame
 			]
 	] repeat
 ]
@@ -244,51 +242,33 @@ AmqpConnection >> nextFrame [
 { #category : #opening }
 AmqpConnection >> open [
 
-	| protocol response |
+	codec := AmqpCodec
+		on:
+			((SocketStream on: socket)
+				noTimeout;
+				binary;
+				yourself).
 
-	codec := AmqpCodec new.
-	codec stream: ( SocketStream on: socket ) noTimeout.
-	codec stream binary.
-	protocol := self protocolClass.
-	codec stream nextPutAll: protocol protocolHeader.
-	codec flush.
-	response := credentials responseFor: self nextFrame method.
-	response
-		ifNil: [ AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
 	self
-		sendMethod:
-			( protocol connectionStartOkMethod new
-				clientProperties:
-					( Dictionary new
-						at: 'product' put: 'RabbitMQ Smalltalk';
-						yourself );
-				mechanism: response key;
-				response: response value )
-		onChannel: 0.
-	credentials := nil.
-	parameters applyServerSettings: self nextFrame method.
-	self
-		sendMethod:
-			( protocol connectionTuneOkMethod new
-				channelMax: parameters channelMax;
-				frameMax: parameters frameMax;
-				heartbeat: parameters heartbeat )
-		onChannel: 0.
+		sendProtocolHeader;
+		startConnection;
+		tuneConnection;
+		openConnection.
+
+	heartbeatSender startBeatingEvery: parameters heartbeat
+]
+
+{ #category : #'private-opening' }
+AmqpConnection >> openConnection [
+
+
 	self installChannel0.
-	self rpc: ( protocol connectionOpenMethod new virtualHost: virtualHost ) onChannel: 0.
-	isOpen := true
-]
 
-{ #category : #accessing }
-AmqpConnection >> parameters [
-
-	^ parameters
-]
-
-{ #category : #accessing }
-AmqpConnection >> parameters: anObject [
-
-	parameters := anObject
+	self
+		rpc: (self protocolClass connectionOpenMethod new virtualHost: virtualHost)
+		onChannel: 0.
+		
+	isOpen := true.
 ]
 
 { #category : #'connection-handling' }
@@ -328,18 +308,18 @@ AmqpConnection >> rpc: requestMethod onChannel: channelNumber [
 ]
 
 { #category : #'connection-handling' }
-AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: pos onChannel: channelNumber [
+AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: aStartingPosition onChannel: aChannelNumber [
 
-	| pieceLen |
+	| length |
 
-	pieceLen := aByteArray size min: parameters frameMax - 8.	"Seven bytes of header, plus one byte of footer."
+	length := aByteArray size min: parameters frameMax - 8.	"Seven bytes of header, plus one byte of footer."
 	self
 		sendFrame:
 			( AmqpContentBodyFrame new
 				frameType: protocolClass frameBody;
-				channelNumber: channelNumber;
-				fragment: ( aByteArray copyFrom: pos to: pos + pieceLen - 1 ) ).
-	^ pos + pieceLen
+				channelNumber: aChannelNumber;
+				fragment: ( aByteArray copyFrom: aStartingPosition to: aStartingPosition + length - 1 ) ).
+	^ aStartingPosition + length
 ]
 
 { #category : #'connection-handling' }
@@ -389,22 +369,58 @@ AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray o
 	codec flush
 ]
 
-{ #category : #accessing }
-AmqpConnection >> setChannel: n to: aChannelHandler [
+{ #category : #'private-opening' }
+AmqpConnection >> sendProtocolHeader [
 
-	channels at: n put: aChannelHandler
+	codec nextPutAll: self protocolClass protocolHeader.
+	codec flush
+]
+
+{ #category : #accessing }
+AmqpConnection >> setChannel: aChannelNumber to: aChannelHandler [
+
+	channels at: aChannelNumber put: aChannelHandler
+]
+
+{ #category : #'private-opening' }
+AmqpConnection >> startConnection [
+
+	| response |
+
+	response := credentials responseFor: self nextFrame method.
+	response
+		ifNil: [ AmqpDisconnectedError
+				signal: 'No acceptable SASL mechanism for the given credentials' ].
+	self
+		sendMethod:
+			(self protocolClass connectionStartOkMethod new
+				clientProperties:
+					(Dictionary new
+						at: 'product' put: 'RabbitMQ Smalltalk';
+						yourself);
+				mechanism: response key;
+				response: response value)
+		onChannel: 0.
+	credentials := nil
+]
+
+{ #category : #'private-opening' }
+AmqpConnection >> tuneConnection [
+
+	parameters applyServerSettings: self nextFrame method.
+	self
+		sendMethod:
+			(self protocolClass connectionTuneOkMethod new
+				channelMax: parameters channelMax;
+				frameMax: parameters frameMax;
+				heartbeat: parameters heartbeat)
+		onChannel: 0
 ]
 
 { #category : #accessing }
 AmqpConnection >> virtualHost [
 
 	^ virtualHost
-]
-
-{ #category : #accessing }
-AmqpConnection >> virtualHost: anObject [
-
-	virtualHost := anObject
 ]
 
 { #category : #'connection-handling' }
