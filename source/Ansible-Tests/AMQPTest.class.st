@@ -468,7 +468,87 @@ AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 ]
 
 { #category : #tests }
-AMQPTest >> testPublisherSubscriberUsingHeadersExchange [
+AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAllProperties [
+
+	| exchangeName sourceAtarget1InfoMessages sourceBInfoMessages errorMessages loggers |
+	
+	exchangeName := 'headers_logs'.
+	sourceAtarget1InfoMessages := OrderedCollection new.
+	sourceBInfoMessages := OrderedCollection new.
+	errorMessages := OrderedCollection new.
+	loggers := OrderedCollection new.
+	
+	loggers 
+		add: (self
+			spawnWorkerNamed: 'source_A_target_1_info_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'source' put: 'A';
+					at: 'target' put: '1';
+					at: 'level' put: 'info';
+					yourself)
+			applying: [ :message | sourceAtarget1InfoMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'source_B_info_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'source' put: 'B';
+					at: 'level' put: 'info';
+					yourself)
+			applying: [ :message | sourceBInfoMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'error_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'level' put: 'error';
+					yourself)
+			applying: [ :message | errorMessages add: message ]).
+
+	loggers do: #resume.
+	(Delay forSeconds: 1) wait.
+
+	#('info' 'warning' 'error') do: [ :level |
+		#($A $B) do: [ :sourceIdentifier | 
+			#($1 $2) do: [ :targetIdentifier | | fullIdentifier |
+				fullIdentifier := self sourceIdentifiedBy: sourceIdentifier and: targetIdentifier.
+				self
+					publish: (Array with: (self messageAs: level from: sourceIdentifier to: targetIdentifier))
+					with: (Dictionary 
+						with: 'source' -> sourceIdentifier asString
+						with: 'target' -> targetIdentifier asString
+						with: 'level' -> level)
+					onHeadersExchangeNamed: exchangeName ] ] ].
+		
+	(Delay forSeconds: 1) wait.
+	loggers do: #terminate.
+	
+	self
+		assert: sourceAtarget1InfoMessages 
+			has: 1 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $1));	
+		assert: sourceBInfoMessages 
+			has: 2 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $B to: $1)
+					with: (self messageAs: 'info' from: $B to: $2));
+		assert: errorMessages 
+			has: 4
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'error' from: $A to: $1)
+					with: (self messageAs: 'error' from: $A to: $2)
+					with: (self messageAs: 'error' from: $B to: $1)
+					with: (self messageAs: 'error' from: $B to: $2))
+]
+
+{ #category : #tests }
+AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAnyProperty [
 
 	| exchangeName sourceAtarget1InfoMessages sourceAtarget1ErrorMessages sourceAtarget2AllMessages sourceBtarget1AllMessages loggers |
 	
@@ -535,33 +615,30 @@ AMQPTest >> testPublisherSubscriberUsingHeadersExchange [
 	
 	self
 		assert: sourceAtarget1InfoMessages 
-		has: 1 
-		messagesAndAreEqualsTo: (
-			OrderedCollection 
-				with: (self messageAs: 'info' from: $A to: $1)).
-	self			
+			has: 1 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $1));	
 		assert: sourceAtarget1ErrorMessages 
-		has: 2 
-		messagesAndAreEqualsTo: (
-			OrderedCollection 
-				with: (self messageAs: 'warning' from: $A to: $1)
-				with: (self messageAs: 'error' from: $A to: $1)).
-	self
+			has: 2 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'warning' from: $A to: $1)
+					with: (self messageAs: 'error' from: $A to: $1));
 		assert: sourceAtarget2AllMessages 
-		has: 3 
-		messagesAndAreEqualsTo: (
-			OrderedCollection 
-				with: (self messageAs: 'info' from: $A to: $2)
-				with: (self messageAs: 'warning' from: $A to: $2)
-				with: (self messageAs: 'error' from: $A to: $2)).
-	self
+			has: 3 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $2)
+					with: (self messageAs: 'warning' from: $A to: $2)
+					with: (self messageAs: 'error' from: $A to: $2));
 		assert: sourceBtarget1AllMessages 
-		has: 3 
-		messagesAndAreEqualsTo: (
-			OrderedCollection 
-				with: (self messageAs: 'info' from: $B to: $1)
-				with: (self messageAs: 'warning' from: $B to: $1)
-				with: (self messageAs: 'error' from: $B to: $1))
+			has: 3 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $B to: $1)
+					with: (self messageAs: 'warning' from: $B to: $1)
+					with: (self messageAs: 'error' from: $B to: $1))
 ]
 
 { #category : #tests }
