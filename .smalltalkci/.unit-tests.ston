@@ -2,14 +2,15 @@ SmalltalkCISpec {
   #loading : [
     SCIMetacelloLoadSpec {
       #baseline : 'Ansible',
-      #directory : 'source',
+      #directory : '../source',
       #load : [ 'CI' ],
-      #platforms : [ #pharo ]
-    } 
-  ], 
+      #platforms : [  #pharo ]
+    }
+  ],
   #testing : {
     #coverage : {
-      #packages : [ 'Ansible*' ]
+      #packages : [ 'Ansible*' ],
+      #format: #lcov
     }
   }
 }
