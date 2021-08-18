@@ -4,7 +4,16 @@ Class {
 	#category : #'Ansible-Tests'
 }
 
-{ #category : #tests }
+{ #category : #'tests - asserting' }
+AMQPTest >> assert: aMessageCollection has: anAmount messagesAndAreEqualsTo: anOrderedCollection [
+
+	self
+		assert: aMessageCollection size equals: anAmount;
+		assertCollection: (aMessageCollection collect: [ :message | message body asString ])
+			hasSameElements: anOrderedCollection
+]
+
+{ #category : #'tests - asserting' }
 AMQPTest >> assertContentsFor: messageReceived [
 
 	self
@@ -26,6 +35,16 @@ AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 		assert: queue method messageCount equals: 0;
 		assert: queue method consumerCount equals: 0.
 	^ queue
+]
+
+{ #category : #'tests - accessing' }
+AMQPTest >> messageAs: aLevelDescription from: aSourceIdentifier to: aTargetIdentifier [
+
+	^ (WriteStream on: String new)
+		nextPutAll: (self sourceIdentifiedBy: aSourceIdentifier and: aTargetIdentifier);
+		space;
+		nextPutAll: aLevelDescription;
+		contents
 ]
 
 { #category : #'tests - support' }
@@ -71,22 +90,57 @@ AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeNa
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
-			| channel queue |
-
-			channel := connection createChannel.
-			channel declareExchangeNamed: anExchangeName of: anExchangeType applying: [:exchange | ].
-			
-			aMessageCollection
-				do: [ :message | channel basicPublish: message utf8Encoded exchange: anExchangeName routingKey: aRoute ].
-
-			( Delay forMilliseconds: 100 ) wait.
-			queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
-
-			channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
 			self
-				assert: queue method messageCount equals: 0;
-				assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
-			]
+				publish: aMessageCollection 
+				to: aRoute 
+				onExchangeNamed: anExchangeName 
+				of: anExchangeType 
+				over: connection
+				withProperties: connection protocolClass basicPropertiesClass new ]
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> publish: aMessageCollection 
+	to: aRoute 
+	onExchangeNamed: anExchangeName 
+	of: anExchangeType 
+	over: aConnection
+	withProperties: anAmqpProtocolProperties [
+
+	| channel queue |
+
+	channel := aConnection createChannel.
+	channel declareExchangeNamed: anExchangeName of: anExchangeType applying: [:exchange | ].
+			
+	aMessageCollection
+		do: [ :message | 
+			channel 
+				basicPublish: message utf8Encoded 
+				exchange: anExchangeName 
+				routingKey: aRoute 
+				properties: anAmqpProtocolProperties ].
+
+	( Delay forMilliseconds: 100 ) wait.
+	queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
+
+	channel queueBind: queue method queue exchange: anExchangeName routingKey: aRoute.
+	self
+		assert: queue method messageCount equals: 0;
+		assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchangeNamed: anExchangeName [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			self
+				publish: aMessageCollection 
+				to: ''
+				onExchangeNamed: anExchangeName 
+				of: 'headers' 
+				over: connection
+				withProperties: ( connection protocolClass basicPropertiesClass new headers: aHeadersDictionary )]
 ]
 
 { #category : #'tests - support' }
@@ -101,6 +155,46 @@ AMQPTest >> setUp [
 				queueDelete: 'tasks';
 				queueDelete: 'hello'
 			]
+]
+
+{ #category : #'tests - accessing' }
+AMQPTest >> sourceIdentifiedBy: source and: target [
+
+	^ (WriteStream on: String new)
+		nextPut: source;
+		nextPut: $-;
+		nextPut: target;
+		contents
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName 
+	boundToHeadersExchangeNamed: anExchangeName 
+	matchingToAllOf: aHeadersDictionary 
+	applying: aBlock [
+
+	^ self
+		spawnWorkerNamed: aProcessName 
+		consumingFromAll: #('') 
+		boundToExchangeNamed: anExchangeName 
+		of: 'headers'
+		withArguments: (aHeadersDictionary add: 'x-match' -> 'all'; yourself)
+		applying: aBlock
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName 
+	boundToHeadersExchangeNamed: anExchangeName 
+	matchingToAnyOf: aHeadersDictionary 
+	applying: aBlock [
+
+	^ self
+		spawnWorkerNamed: aProcessName 
+		consumingFromAll: #('') 
+		boundToExchangeNamed: anExchangeName 
+		of: 'headers'
+		withArguments: (aHeadersDictionary add: 'x-match' -> 'any'; yourself)
+		applying: aBlock
 ]
 
 { #category : #'tests - support' }
@@ -138,7 +232,28 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: a
 ]
 
 { #category : #'tests - support' }
-AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToExchangeNamed: anExchangeName of: anExchangeType applying: aBlock [
+AMQPTest >> spawnWorkerNamed: aProcessName 
+	consumingFromAll: aRouteSet 
+	boundToExchangeNamed: anExchangeName 
+	of: anExchangeType 
+	applying: aBlock [
+
+	^ self
+		spawnWorkerNamed: aProcessName 
+		consumingFromAll: aRouteSet
+		boundToExchangeNamed: anExchangeName 
+		of: anExchangeType
+		withArguments: nil
+		applying: aBlock
+]
+
+{ #category : #'tests - support' }
+AMQPTest >> spawnWorkerNamed: aProcessName 
+	consumingFromAll: aRouteSet 
+	boundToExchangeNamed: anExchangeName 
+	of: anExchangeType
+	withArguments: anArgumentsDictionary
+	applying: aBlock [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -149,7 +264,12 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToEx
 			queue := channel declareQueueApplying: [ :builder | builder beExclusive ].
 			
 			aRouteSet
-				do: [ :route | channel queueBind: queue method queue exchange: anExchangeName routingKey: route ].
+				do: [ :route | 
+					channel 
+						queueBind: queue method queue 
+						exchange: anExchangeName 
+						routingKey: route 
+						arguments: anArgumentsDictionary ].
 
 			channel
 				consumeFrom: queue method queue
@@ -177,11 +297,12 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFromAll: aRouteSet boundToEx
 { #category : #'tests - support' }
 AMQPTest >> spawnWorkerNamed: aWorkerName consumingFromExchangeNamed: anExchangeName of: anExchangeType applying: aBlock [
 
-	^ self spawnWorkerNamed: aWorkerName
-		  consumingFromAll: #( '' )
-		  boundToExchangeNamed: anExchangeName
-		  of: anExchangeType
-		  applying: aBlock
+	^ self 
+		spawnWorkerNamed: aWorkerName
+		consumingFromAll: #( '' )
+		boundToExchangeNamed: anExchangeName
+		of: anExchangeType
+		applying: aBlock
 ]
 
 { #category : #tests }
@@ -347,6 +468,180 @@ AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 ]
 
 { #category : #tests }
+AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAllProperties [
+
+	| exchangeName sourceAtarget1InfoMessages sourceBInfoMessages errorMessages loggers |
+	
+	exchangeName := 'headers_logs'.
+	sourceAtarget1InfoMessages := OrderedCollection new.
+	sourceBInfoMessages := OrderedCollection new.
+	errorMessages := OrderedCollection new.
+	loggers := OrderedCollection new.
+	
+	loggers 
+		add: (self
+			spawnWorkerNamed: 'source_A_target_1_info_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'source' put: 'A';
+					at: 'target' put: '1';
+					at: 'level' put: 'info';
+					yourself)
+			applying: [ :message | sourceAtarget1InfoMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'source_B_info_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'source' put: 'B';
+					at: 'level' put: 'info';
+					yourself)
+			applying: [ :message | sourceBInfoMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'error_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAllOf:
+				(Dictionary new
+					at: 'level' put: 'error';
+					yourself)
+			applying: [ :message | errorMessages add: message ]).
+
+	loggers do: #resume.
+	(Delay forSeconds: 1) wait.
+
+	#('info' 'warning' 'error') do: [ :level |
+		#($A $B) do: [ :sourceIdentifier | 
+			#($1 $2) do: [ :targetIdentifier | | fullIdentifier |
+				fullIdentifier := self sourceIdentifiedBy: sourceIdentifier and: targetIdentifier.
+				self
+					publish: (Array with: (self messageAs: level from: sourceIdentifier to: targetIdentifier))
+					with: (Dictionary 
+						with: 'source' -> sourceIdentifier asString
+						with: 'target' -> targetIdentifier asString
+						with: 'level' -> level)
+					onHeadersExchangeNamed: exchangeName ] ] ].
+		
+	(Delay forSeconds: 1) wait.
+	loggers do: #terminate.
+	
+	self
+		assert: sourceAtarget1InfoMessages 
+			has: 1 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $1));	
+		assert: sourceBInfoMessages 
+			has: 2 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $B to: $1)
+					with: (self messageAs: 'info' from: $B to: $2));
+		assert: errorMessages 
+			has: 4
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'error' from: $A to: $1)
+					with: (self messageAs: 'error' from: $A to: $2)
+					with: (self messageAs: 'error' from: $B to: $1)
+					with: (self messageAs: 'error' from: $B to: $2))
+]
+
+{ #category : #tests }
+AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAnyProperty [
+
+	| exchangeName sourceAtarget1InfoMessages sourceAtarget1ErrorMessages sourceAtarget2AllMessages sourceBtarget1AllMessages loggers |
+	
+	exchangeName := 'headers_logs'.
+	sourceAtarget1InfoMessages := OrderedCollection new.
+	sourceAtarget1ErrorMessages := OrderedCollection new.
+	sourceAtarget2AllMessages := OrderedCollection new.
+	sourceBtarget1AllMessages := OrderedCollection new.
+	loggers := OrderedCollection new.
+	
+	loggers 
+		add: (self
+			spawnWorkerNamed: 'source_A_target_1_info_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAnyOf:
+				(Dictionary new
+					at: 'info' put: 'A-1';
+					yourself)
+			applying: [ :message | sourceAtarget1InfoMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'source_A_target_1_error_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAnyOf:
+				(Dictionary new
+					at: 'warning' put: 'A-1';
+					at: 'error' put: 'A-1';
+					yourself)
+			applying: [ :message | sourceAtarget1ErrorMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'source_A_target_2_all_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAnyOf:
+				(Dictionary new
+					at: 'info' put: 'A-2';
+					at: 'warning' put: 'A-2';
+					at: 'error' put: 'A-2';
+					yourself)
+			applying: [ :message | sourceAtarget2AllMessages add: message ]);
+		add: (self
+			spawnWorkerNamed: 'source_B_target_1_all_logger'
+			boundToHeadersExchangeNamed: exchangeName
+			matchingToAnyOf:
+				(Dictionary new
+					at: 'info' put: 'B-1';
+					at: 'warning' put: 'B-1';
+					at: 'error' put: 'B-1';
+					yourself)
+			applying: [ :message | sourceBtarget1AllMessages add: message ]).
+
+	loggers do: #resume.
+	(Delay forSeconds: 1) wait.
+
+	#('info' 'warning' 'error') do: [ :level | 
+		#($A $B) do: [ :sourceIdentifier | 
+			#($1 $2) do: [ :targetIdentifier | | fullIdentifier |
+				fullIdentifier := self sourceIdentifiedBy: sourceIdentifier and: targetIdentifier.
+				self
+					publish: (Array with: (self messageAs: level from: sourceIdentifier to: targetIdentifier))
+					with: (Dictionary with: level -> fullIdentifier)
+					onHeadersExchangeNamed: exchangeName ] ] ].
+		
+	(Delay forSeconds: 1) wait.
+	loggers do: #terminate.
+	
+	self
+		assert: sourceAtarget1InfoMessages 
+			has: 1 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $1));	
+		assert: sourceAtarget1ErrorMessages 
+			has: 2 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'warning' from: $A to: $1)
+					with: (self messageAs: 'error' from: $A to: $1));
+		assert: sourceAtarget2AllMessages 
+			has: 3 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $A to: $2)
+					with: (self messageAs: 'warning' from: $A to: $2)
+					with: (self messageAs: 'error' from: $A to: $2));
+		assert: sourceBtarget1AllMessages 
+			has: 3 
+			messagesAndAreEqualsTo: (
+				OrderedCollection 
+					with: (self messageAs: 'info' from: $B to: $1)
+					with: (self messageAs: 'warning' from: $B to: $1)
+					with: (self messageAs: 'error' from: $B to: $1))
+]
+
+{ #category : #tests }
 AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 
 	| errorLoggerMessages loggerMessages errorLogger logger |
@@ -405,7 +700,7 @@ AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 { #category : #tests }
 AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 
-	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLoffer |
+	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLogger |
 
 	publicErrorLoggerMessages := OrderedCollection new.
 	anonymousInfoLoggerMessages := OrderedCollection new.
@@ -417,7 +712,7 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 		of: 'topic'
 		applying: [ :message | publicErrorLoggerMessages add: message ].
 
-	anonymousInfoLoffer := self
+	anonymousInfoLogger := self
 		spawnWorkerNamed: 'anonymous_info_logger'
 		consumingFromAll: #('anonymous.*' '*.info')
 		boundToExchangeNamed: 'topic_logs'
@@ -425,7 +720,7 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 		applying: [ :message | anonymousInfoLoggerMessages add: message ].
 
 	publicErrorLogger resume.
-	anonymousInfoLoffer resume.
+	anonymousInfoLogger resume.
 
 	( Delay forSeconds: 1 ) wait.
 
@@ -453,7 +748,7 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 	( Delay forSeconds: 1 ) wait.
 
 	publicErrorLogger terminate.
-	anonymousInfoLoffer terminate.
+	anonymousInfoLogger terminate.
 
 	self
 		assert: publicErrorLoggerMessages size equals: 5;
