@@ -1,0 +1,33 @@
+name: Unit Tests 
+
+on: [push, pull_request, workflow_dispatch]
+
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        smalltalk: [ Pharo64-8.0, Pharo64-7.0, Pharo32-7.0 ]
+    name: ${{ matrix.smalltalk }}
+    services:
+      rabbitmq:
+        image: rabbitmq:latest
+        ports: 
+          - 5672:5672
+        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hpi-swa/setup-smalltalkCI@v1
+        with:
+          smalltalk-image: ${{ matrix.smalltalk }}
+      - name: Load Image and Run Tests
+        run: smalltalkci -s ${{ matrix.smalltalk }} .smalltalkci/.unit-tests.ston
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        timeout-minutes: 15
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          name: ${{ matrix.os }}-${{ matrix.smalltalk }}
+          token: ${{ secrets.CODECOV_TOKEN }}
