@@ -1,25 +1,46 @@
-# changes file
-*.changes
+# Windows 
+# =========================
 
-# system image
-*.image
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
 
-# Pharo Smalltalk Debug log file
-PharoDebug.log
+# Folder config file
+Desktop.ini
 
-# Squeak Smalltalk Debug log file
-SqueakDebug.log
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
 
-# Monticello package cache
-/package-cache
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
 
-# playground cache
-/play-cache
-/play-stash
+# Windows shortcuts
+*.lnk
 
-# Metacello-github cache
-/github-cache
-github-*.zip
+# OSX
+# =========================
 
-# MacOS auto-generated
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
