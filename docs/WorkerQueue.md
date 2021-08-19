@@ -57,19 +57,19 @@ Now you'll create a subscription to the queue. First you a register a callback,
  the acknowledge to the broker.
 
 ```smalltalk
-channel 
+channel
   consumeFrom: 'task_queue'
   applying: [ :messageReceived | | elapsedTime |
- 
+
   elapsedTime :=  messageReceived body utf8Decoded count: [ :char | char = $. ].
- 
+
   (Delay forSeconds: elapsedTime) wait.
   self inform: (
-    '<1s> just finished a new task for <2p> seconds' 
-      expandMacrosWith: workerName 
+    '<1s> just finished a new task for <2p> seconds'
+      expandMacrosWith: workerName
       with: elapsedTime).
   channel basicAck: messageReceived method deliveryTag
-]. 
+].
 ```
 
 If the broker does not receive the acknowledge it will wait forever since there
@@ -89,8 +89,8 @@ worker := Process
    ] asContext
   priority: Processor activePriority.
 
-worker name: workerName. 
-worker resume 
+worker name: workerName.
+worker resume
 ```
 
 That's it! Here you can check the complete script with all the steps described.
@@ -109,19 +109,19 @@ channel := connection createChannel.
 channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 
-channel 
+channel
   consumeFrom: 'task_queue'
   applying: [ :messageReceived | | elapsedTime |
- 
+
   elapsedTime :=  messageReceived body utf8Decoded count: [ :char | char = $. ].
- 
+
   (Delay forSeconds: elapsedTime) wait.
-  self inform: 
-    ('<1s> just finished a new task for <2p> seconds' 
-      expandMacrosWith: workerName 
+  self inform:
+    ('<1s> just finished a new task for <2p> seconds'
+      expandMacrosWith: workerName
       with: elapsedTime).
   channel basicAck: messageReceived method deliveryTag
-]. 
+].
 
 worker := Process
     forContext:
@@ -130,8 +130,8 @@ worker := Process
      ] asContext
     priority: Processor activePriority.
 
-worker name: workerName. 
-worker resume 
+worker name: workerName.
+worker resume
 ```
 
 ## Setting up the producer

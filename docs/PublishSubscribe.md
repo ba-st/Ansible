@@ -53,10 +53,10 @@ channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
 
-channel 
+channel
   consumeFrom: result method queue
-  applying: [ :messageReceived | 
-    Transcript 
+  applying: [ :messageReceived |
+    Transcript
       show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ].
 
 logger := Process
@@ -67,7 +67,7 @@ logger := Process
     priority: Processor activePriority.
 
 logger name: 'Transcript logger'.
-logger resume 
+logger resume
 ```
 
 ## Receiveing notifications
@@ -88,9 +88,9 @@ channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'logs' routingKey: ''.
 
-channel 
+channel
   consumeFrom: result method queue
-  applying: [ :messageReceived | self inform: 'A log message has arrived!' ].  
+  applying: [ :messageReceived | self inform: 'A log message has arrived!' ].
 
 logger := Process
     forContext:
@@ -100,7 +100,7 @@ logger := Process
     priority: Processor activePriority.
 
 logger name: 'Transcript logger'.
-logger resume 
+logger resume
 ```
 
 See that they only differ in the callback they register.
@@ -121,7 +121,7 @@ connection open.
 channel := connection createChannel.
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 
-channel 
+channel
   basicPublish: '2014-10-31 13:11:10.8458 [Info] Service started up' utf8Encoded
   exchange: 'logs' routingKey: ''.
 channel

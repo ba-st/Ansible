@@ -46,7 +46,7 @@ result := channel declareQueueApplying: [ :queue | ].
   channel queueBind: result method queue exchange: 'better_logs' routingKey: severity.
 ].
 
-channel 
+channel
   consumeFrom: result method queue
   applying: [ :messageReceived |
     Transcript show: ('<2s> [<1s>]<n>'
@@ -62,7 +62,7 @@ logger := Process
     priority: Processor activePriority.
 logger name: 'Transcript logger'.
 
-logger resume 
+logger resume
 ```
 
 Notice that the queue was bound to every severity
@@ -92,14 +92,14 @@ channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | 
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
 
-channel 
+channel
  consumeFrom: result method queue
- applying: [ :messageReceived | 
-  GrowlMorph 
+ applying: [ :messageReceived |
+  GrowlMorph
    openWithLabel: 'Error'
-   contents: 'A log message has arrived!' 
+   contents: 'A log message has arrived!'
    backgroundColor: Color red
-   labelColor: Color black ].  
+   labelColor: Color black ].
 
 logger := Process
     forContext:
@@ -108,8 +108,8 @@ logger := Process
      ] asContext
     priority: Processor activePriority.
 logger name: 'Error notifier'.
- 
-logger resume 
+
+logger resume
 ```
 
 ## Producing logs
@@ -128,10 +128,10 @@ connection open.
 channel := connection createChannel.
 channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
 
-channel 
-  basicPublish: '2014-10-31 13:11:10.8458 Service started up' utf8Encoded 
-  exchange: 'better_logs' 
-  routingKey: 'info'. 
+channel
+  basicPublish: '2014-10-31 13:11:10.8458 Service started up' utf8Encoded
+  exchange: 'better_logs'
+  routingKey: 'info'.
 channel
 ```
 
