@@ -107,7 +107,8 @@ See that they only differ in the callback they register.
 
 ## Producing logs
 
-This is the script to produce log entries. Unlike the previous tutorial, you'll be publishing messages to the exchange, not directly to a queue
+This is the script to produce log entries. Unlike the previous tutorial, you'll
+ be publishing messages to the exchange, not directly to a queue
 
 ```smalltalk
 | connection channel result |

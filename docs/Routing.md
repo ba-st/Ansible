@@ -48,11 +48,11 @@ result := channel declareQueueApplying: [ :queue | ].
 
 channel 
   consumeFrom: result method queue
-  applying: [ :messageReceived | 
-    Transcript show: ('<2s> [<1s>]<n>' 
-    expandMacrosWith: messageReceived method routingKey 
-    with: messageReceived body utf8Decoded) 
- ]. 
+  applying: [ :messageReceived |
+    Transcript show: ('<2s> [<1s>]<n>'
+    expandMacrosWith: messageReceived method routingKey
+    with: messageReceived body utf8Decoded)
+ ].
 
 logger := Process
     forContext:
@@ -61,7 +61,7 @@ logger := Process
      ] asContext
     priority: Processor activePriority.
 logger name: 'Transcript logger'.
- 
+
 logger resume 
 ```
 
