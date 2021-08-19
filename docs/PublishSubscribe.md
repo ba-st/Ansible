@@ -40,7 +40,7 @@ Notice that the declared exchange is of type `fanout`, meaning published message
 
 Running this script will spawn a logger that will post every message to the Transcript
 
-```Smalltalk
+```smalltalk
 | connection channel result logger |
 
 connection := AmqpConnectionBuilder new
@@ -55,7 +55,9 @@ channel queueBind: result method queue exchange: 'logs' routingKey: ''.
 
 channel 
   consumeFrom: result method queue
-  applying: [ :messageReceived | Transcript show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ]. 
+  applying: [ :messageReceived | 
+    Transcript 
+      show: ('<1s><n>' expandMacrosWith: messageReceived body utf8Decoded) ].
 
 logger := Process
     forContext:
@@ -73,7 +75,7 @@ logger resume
 Here's the script to spawn a process that will pop up a toast notification on
  every log message received
 
-```Smalltalk
+```smalltalk
 | connection channel result logger |
 
 connection := AmqpConnectionBuilder new
@@ -118,7 +120,9 @@ connection open.
 channel := connection createChannel.
 channel declareExchangeNamed: 'logs' of: 'fanout' applying: [:exchange | ].
 
-channel basicPublish: '2014-10-31 13:11:10.8458 [Info] Service started up' utf8Encoded exchange: 'logs' routingKey: ''. 
+channel 
+  basicPublish: '2014-10-31 13:11:10.8458 [Info] Service started up' utf8Encoded
+  exchange: 'logs' routingKey: ''.
 channel
 ```
 
