@@ -11,6 +11,12 @@ jobs:
         smalltalk: [ Pharo64-10, Pharo64-9.0, Pharo64-8.0 ]
         load-spec: [ deployment, tests, development, tools ]
     name: ${{ matrix.smalltalk }} + ${{ matrix.load-spec }}
+    services:
+      rabbitmq:
+        image: rabbitmq:latest
+        ports: 
+          - 5672:5672
+        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v2
       - uses: hpi-swa/setup-smalltalkCI@v1
