@@ -8,9 +8,6 @@ SmalltalkCISpec {
     }
   ],
   #testing : {
-    #coverage : {
-      #packages : [ 'Ansible*' ],
-      #format: #lcov
-    }
+    #failOnZeroTests : false
   }
 }
