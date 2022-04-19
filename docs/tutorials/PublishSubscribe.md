@@ -1,6 +1,6 @@
 # Publish-Subscribe
 
-> (based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html))
+> Based on the [official Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-three-python.html)
 
 This messaging pattern allows sending the same message to more than one receiver.
 
@@ -10,7 +10,7 @@ In this tutorial, you'll set up a logging system with two subscribers, one will
  receive the log messages and print them on the Transcript and the other one will
  open a toast indicating that a new log message arrived.
 
-For more information on the pattern see [publish-subsribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html).
+For more information on the pattern see [publish-subscribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html).
 
 ## Introducing the exchange
 
@@ -131,7 +131,7 @@ channel
 
 Open two Ansible images to isolate the publisher from the consumers.
 
-On one evaluate, in diferent Playgrounds, the scripts for spawning the logger and
+On one evaluate, in different Playgrounds, the scripts for spawning the logger and
  the notifier. Don't forget to open the Transcript!
 
 On the other image, inspect in a Playground the producer script. Use the inspector

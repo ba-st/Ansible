@@ -1,6 +1,6 @@
 # Worker queue
 
-(based on the [offical Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html))
+> based on the [official Python tutorial](https://www.rabbitmq.com/tutorials/tutorial-two-python.html)
 
 Work queues allow distributing time-consuming tasks between multiple workers to
  minimize the time the producer has to wait for them to complete. Tasks are
