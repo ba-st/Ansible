@@ -53,7 +53,7 @@ AmqpCodec >> nextLong [
 AmqpCodec >> nextLongPut: v [
 
 	v ifNil: [ ^ self nextLongPut: 0 ].
-	1 to: 4 do: [ :i | self nextOctetPut: ( v digitAt: 5 - i ) ].
+	1 to: 4 do: [ :i | self nextOctetPut: ( v byteAt: 5 - i ) ].
 	^ v
 ]
 
@@ -77,7 +77,7 @@ AmqpCodec >> nextLonglong [
 AmqpCodec >> nextLonglongPut: v [
 
 	v ifNil: [ ^ self nextLonglongPut: 0 ].
-	1 to: 8 do: [ :i | self nextOctetPut: ( v digitAt: 9 - i ) ].
+	1 to: 8 do: [ :i | self nextOctetPut: ( v byteAt: 9 - i ) ].
 	^ v
 ]
 
@@ -138,7 +138,7 @@ AmqpCodec >> nextShort [
 AmqpCodec >> nextShortPut: v [
 
 	v ifNil: [ ^ self nextShortPut: 0 ].
-	1 to: 2 do: [ :i | self nextOctetPut: ( v digitAt: 3 - i ) ].
+	1 to: 2 do: [ :i | self nextOctetPut: ( v byteAt: 3 - i ) ].
 	^ v
 ]
 

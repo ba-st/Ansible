@@ -28,20 +28,20 @@ AmqpProtocolHeaderFrame >> readFrom: connection length: length [
 
 	"length is four bytes big-endian: $P followed by the first three bytes of the version spec."
 	codec := connection codec.
-	( length digitAt: 4 ) = $P asciiValue
+	( length byteAt: 4 ) = $P asciiValue
 		ifFalse: [ AmqpProtocolSyntaxError signal: 'Invalid AMQP protocol version header' ].
-	transportVersion := length digitAt: 3.
+	transportVersion := length byteAt: 3.
 	transportVersion = 1
 		ifTrue: [ isObsoleteProtocolVariant := true.
-			( length digitAt: 2 ) = 1
+			( length byteAt: 2 ) = 1
 				ifFalse: [ AmqpProtocolSyntaxError signal: 'Unexpected transport version low byte' ].
-			majorVersion := length digitAt: 1.
+			majorVersion := length byteAt: 1.
 			minorVersion := codec nextOctet.
 			revision := nil
 			]
 		ifFalse: [ isObsoleteProtocolVariant := false.
-			majorVersion := length digitAt: 2.
-			minorVersion := length digitAt: 1.
+			majorVersion := length byteAt: 2.
+			minorVersion := length byteAt: 1.
 			revision := codec nextOctet
 			].
 	AmqpProtocolMismatchError new
