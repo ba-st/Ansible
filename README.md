@@ -23,7 +23,7 @@ with no delay even between star systems.
 
 ## Quick links
 
-- [**Getting Started**](docs/README.md) is a good place to start to
+- [**Getting Started**](docs/README.md) is a good place to start
   exploring the docs 😉
 - [Report a defect](https://github.com/ba-st/Ansible/issues/new?labels=Type%3A+Defect)
 - [Request feature](https://github.com/ba-st/Ansible/issues/new?labels=Type%3A+Feature)
