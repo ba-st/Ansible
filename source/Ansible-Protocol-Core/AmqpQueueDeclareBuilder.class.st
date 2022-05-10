@@ -20,9 +20,27 @@ AmqpQueueDeclareBuilder class >> for: aProtocolVersion [
 ]
 
 { #category : #configuring }
+AmqpQueueDeclareBuilder >> autoDelete [
+
+	autoDelete := true
+]
+
+{ #category : #configuring }
+AmqpQueueDeclareBuilder >> beDurable [
+	
+	durable := true
+]
+
+{ #category : #configuring }
 AmqpQueueDeclareBuilder >> beExclusive [
 	
 	exclusive := true
+]
+
+{ #category : #configuring }
+AmqpQueueDeclareBuilder >> bePassive [
+	
+	passive := true
 ]
 
 { #category : #building }

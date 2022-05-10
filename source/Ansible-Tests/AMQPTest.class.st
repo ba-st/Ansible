@@ -760,14 +760,9 @@ AMQPTest >> withLocalhostConnectionDo: block [
 
 	| connection |
 
-	connection := AmqpConnectionBuilder new
-		protocol: Amqp091;
-		hostname: 'localhost';
-		build.
+	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
 	connection open.
-
 	block value: connection.
-
 	connection close
 ]
 
