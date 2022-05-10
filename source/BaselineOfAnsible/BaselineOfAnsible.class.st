@@ -57,5 +57,9 @@ BaselineOfAnsible >> setUpPackages: spec [
 		package: 'Ansible-Protocol-Tests'
 			with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Protocol-Tests';
+		package: 'Ansible-Protocol-091-Tests'
+			with: [ spec requires: 'Ansible-Protocol-091' ];
+		group: 'Tests' with: 'Ansible-Protocol-091-Tests';
+
 		package: 'Ansible-Tools' with: [ spec requires: 'XMLParser-Core' ]
 ]

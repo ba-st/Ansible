@@ -319,6 +319,7 @@ Amqp091 class >> frameMinSize [
 { #category : #'class initialization' }
 Amqp091 class >> initialize [
 
+	<ignoreForCoverage>
 	super initialize.
 	classIds at: 60 put: Amqp091BasicProperties.
 	methodIds at: 1310741 put: Amqp091ChannelFlowOk.

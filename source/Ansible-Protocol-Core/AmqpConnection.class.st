@@ -31,17 +31,6 @@ AmqpConnection class >> to: aHostname over: aPort using: aProtocolVersion with: 
 		  parameterizedBy: connectionParameters
 ]
 
-{ #category : #'instance creation' }
-AmqpConnection class >> to: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
-
-	^ self
-		  to: aHostname
-		  over: aProtocolVersion portNumber
-		  using: aProtocolVersion
-		  with: connectionCredentials
-		  parameterizedBy: connectionParameters
-]
-
 { #category : #'connection-handling' }
 AmqpConnection >> close [
 
@@ -127,21 +116,6 @@ AmqpConnection >> hardClose [
 			].
 	heartbeatSender stop.		
 	socket close
-]
-
-{ #category : #'connection-handling' }
-AmqpConnection >> host: hostName [
-
-	^ self host: hostName port: self protocolClass portNumber
-]
-
-{ #category : #'connection-handling' }
-AmqpConnection >> host: aHostname port: aPortNumber [
-
-	self close.
-	hostname := aHostname.
-	portNumber := aPortNumber.
-	self initializeSocketConnection
 ]
 
 { #category : #initialization }
@@ -307,12 +281,6 @@ AmqpConnection >> processAsyncEvents [
 AmqpConnection >> protocolClass [
 
 	^ protocolClass
-]
-
-{ #category : #'connection-handling' }
-AmqpConnection >> protocolClass: aProtocolVersion [
-
-	protocolClass := aProtocolVersion
 ]
 
 { #category : #'connection-handling' }

@@ -69,7 +69,7 @@ AmqpConnectionBuilder >> initialize [
 AmqpConnectionBuilder >> initializeForProtocol: aProtocolClass [
 
 	protocolClass := aProtocolClass.
-	portNumber := self defaultPortNumber
+	self portNumber: self defaultPortNumber
 ]
 
 { #category : #configuring }

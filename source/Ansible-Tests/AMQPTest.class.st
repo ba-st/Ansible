@@ -762,8 +762,12 @@ AMQPTest >> withLocalhostConnectionDo: block [
 
 	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
 	connection open.
-	block value: connection.
-	connection close
+	connection
+		whenConnected: [ 
+			block value: connection.
+			connection close
+			]
+		whenNot: [ :error | self fail: error messageText ]
 ]
 
 { #category : #'tests - support' }
