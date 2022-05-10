@@ -33,3 +33,12 @@
 > After Iceberg cloned a repository, it will be checked-out at the default
 > branch (in this case `release-candidate`). If you want to work on a different
 > branch or commit, perform the checkout before the baseline installation step.
+
+## Running the Unit Tests
+
+To run the unit tests you need a working RabbitMQ instance. The easier way is
+to start one using docker:
+
+```bash
+docker run -d -p 5672:5672 rabbitmq:latest
+```
