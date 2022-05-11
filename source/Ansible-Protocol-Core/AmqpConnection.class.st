@@ -12,25 +12,23 @@ Class {
 		'channels',
 		'nextChannel',
 		'protocolClass',
-		'heartbeatSender'
+		'heartbeatSender',
+		'hostname',
+		'socketConnectionStatus',
+		'portNumber'
 	],
 	#category : #'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
-AmqpConnection class >> protocolClass [
-
-	^ Amqp091
-]
-
 { #category : #'instance creation' }
-AmqpConnection class >> to: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
+AmqpConnection class >> to: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
-	^ self basicNew
-		initializeTo: aHostname
-		using: aProtocolVersion
-		with: connectionCredentials
-		parameterizedBy: connectionParameters
+	^ self new
+		  initializeTo: aHostname
+		  over: aPort
+		  using: aProtocolVersion
+		  with: connectionCredentials
+		  parameterizedBy: connectionParameters
 ]
 
 { #category : #'connection-handling' }
@@ -120,18 +118,6 @@ AmqpConnection >> hardClose [
 	socket close
 ]
 
-{ #category : #'connection-handling' }
-AmqpConnection >> host: hostName [
-
-	^ self host: hostName port: self protocolClass portNumber
-]
-
-{ #category : #'connection-handling' }
-AmqpConnection >> host: hostName port: portNumber [
-
-	socket connectToHostNamed: hostName port: portNumber
-]
-
 { #category : #initialization }
 AmqpConnection >> initialize [
 
@@ -150,18 +136,30 @@ AmqpConnection >> initializeHeartbeatSender [
 ]
 
 { #category : #initialization }
-AmqpConnection >> initializeTo: aHostname using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
-
-	protocolClass := aProtocolVersion.
+AmqpConnection >> initializeSocketConnection [
 
 	socket := Socket newTCP.
-	socket connectToHostNamed: aHostname port: aProtocolVersion portNumber.
+	[ 
+	socket connectToHostNamed: hostname port: portNumber.
+	socketConnectionStatus := SuccesfulSocketConnection new
+	]
+		on: NetworkError
+		do: [ :error | 
+			socketConnectionStatus := FailedSocketConnection dueTo: error.
+			error return
+			]
+]
 
+{ #category : #initialization }
+AmqpConnection >> initializeTo: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
+
+	protocolClass := aProtocolVersion.
+	hostname := aHostname.
+	portNumber := aPort.
 	credentials := connectionCredentials.
 	parameters := connectionParameters.
-
-	self initialize.
-	self initializeHeartbeatSender.
+	self initializeSocketConnection.
+	self initializeHeartbeatSender
 ]
 
 { #category : #'private-opening' }
@@ -283,12 +281,6 @@ AmqpConnection >> processAsyncEvents [
 AmqpConnection >> protocolClass [
 
 	^ protocolClass
-]
-
-{ #category : #'connection-handling' }
-AmqpConnection >> protocolClass: aProtocolVersion [
-
-	protocolClass := aProtocolVersion
 ]
 
 { #category : #'connection-handling' }
@@ -431,4 +423,10 @@ AmqpConnection >> waitForEvent [
 		on: ConnectionTimedOut
 		do: [  ].
 	^ self processAsyncEvents
+]
+
+{ #category : #'connection-handling' }
+AmqpConnection >> whenConnected: aBlock whenNot: anotherBlock [
+
+	^socketConnectionStatus whenConnected: aBlock whenNot: anotherBlock
 ]

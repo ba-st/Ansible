@@ -30,10 +30,9 @@ AmqpProtocol class >> frameClassFor: typeCode [
 	^ nil	"ignored frame kind"
 ]
 
-{ #category : #accessing }
+{ #category : #'class initialization' }
 AmqpProtocol class >> initialize [
 
-	super initialize.
 	classIds := Dictionary new.
 	methodIds := Dictionary new
 ]

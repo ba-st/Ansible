@@ -326,9 +326,7 @@ AmqpChannel >> initializeUsing: aChannelHandler [
 AmqpChannel >> mapEventHandlers [
 
 	handler mapEvent: protocolVersion channelCloseMethod to: self selector: #handleChannelClose:.
-	handler mapEvent: protocolVersion basicDeliverMethod to: self selector: #handleBasicDeliver:.
-	handler mapEvent: protocolVersion basicReturnMethod to: self selector: #handleBasicReturn:.
-	handler mapEvent: protocolVersion channelFlowMethod to: self selector: #handleChannelFlow:
+	handler mapEvent: protocolVersion basicDeliverMethod to: self selector: #handleBasicDeliver:
 ]
 
 { #category : #'AMQP receiving messages' }

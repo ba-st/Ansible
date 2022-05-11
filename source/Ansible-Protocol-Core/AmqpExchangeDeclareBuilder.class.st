@@ -18,6 +18,18 @@ AmqpExchangeDeclareBuilder class >> named: aName of: aType for: aProtocolVersion
 	^ self new initializeNamed: aName of: aType for: aProtocolVersion
 ]
 
+{ #category : #configuring }
+AmqpExchangeDeclareBuilder >> beDurable [
+
+	durable := true
+]
+
+{ #category : #configuring }
+AmqpExchangeDeclareBuilder >> bePassive [
+
+	passive := true
+]
+
 { #category : #building }
 AmqpExchangeDeclareBuilder >> buildApplying: aBlock [
 

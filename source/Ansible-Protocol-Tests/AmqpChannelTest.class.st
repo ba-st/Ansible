@@ -10,17 +10,16 @@ Class {
 { #category : #running }
 AmqpChannelTest >> setUp [
 
-	connection := AmqpConnectionBuilder new
-		protocol: Amqp091;
-		hostname: 'localhost';
-		build.
+	super setUp.
+	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
 	connection open
 ]
 
 { #category : #running }
 AmqpChannelTest >> tearDown [
 
-	connection close
+	connection ifNotNil: #close.
+	super tearDown
 ]
 
 { #category : #tests }

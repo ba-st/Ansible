@@ -378,8 +378,9 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 	secondWorker terminate.
 
 	self
-		assert: firstWorkerMessages size equals: 3;
-		assert: secondWorkerMessages size equals: 3
+		assert: firstWorkerMessages notEmpty;
+		assert: secondWorkerMessages notEmpty;
+		assert: firstWorkerMessages size + secondWorkerMessages size equals: 6
 ]
 
 { #category : #tests }
@@ -760,15 +761,14 @@ AMQPTest >> withLocalhostConnectionDo: block [
 
 	| connection |
 
-	connection := AmqpConnectionBuilder new
-		protocol: Amqp091;
-		hostname: 'localhost';
-		build.
+	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
 	connection open.
-
-	block value: connection.
-
-	connection close
+	connection
+		whenConnected: [ 
+			block value: connection.
+			connection close
+			]
+		whenNot: [ :error | self fail: error messageText ]
 ]
 
 { #category : #'tests - support' }

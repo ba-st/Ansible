@@ -16,7 +16,7 @@ Ansible is a AMQP client library for Smalltalk supporting 0-8 and 0-9-1
 [![Pharo 9.0](https://img.shields.io/badge/Pharo-9.0-informational)](https://pharo.org)
 [![Pharo 10](https://img.shields.io/badge/Pharo-10-informational)](https://pharo.org)
 
-An [ansible](https://en.wikipedia.org/wiki/Ansible) is a fictional device
+An [Ansible](https://en.wikipedia.org/wiki/Ansible) is a fictional device
 capable of near-instantaneous communication. It can send and receive message
 to and from a corresponding device over any distance or obstacle whatsoever
 with no delay even between star systems.
@@ -36,7 +36,7 @@ with no delay even between star systems.
 ## Installation
 
 To load the project in a Pharo image or declare it as a dependency of your
-project follow this [instructions](docs/Installation.md).
+project follow these [instructions](docs/Installation.md).
 
 ## Acknowledgements
 
