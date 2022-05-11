@@ -60,32 +60,29 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anEx
 { #category : #'tests - support' }
 AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
-	self withLocalhostConnectionDo: [ :connection | 
-		| channel queue confirmationWasReceived |
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
 
-		confirmationWasReceived := false.
+			channel := connection createChannel.
+			channel queueDeclare: aQueueName.
 
-		channel := connection createChannel.
-		channel queueDeclare: aQueueName.
-		channel
-			confirmMessagesPublicationWith: [ :command | confirmationWasReceived := true ]
-			andThoseNotProcessedWith: [ :command | self fail ].
-		aMessageCollection do: [ :message | 
-			channel
-				basicPublish: message utf8Encoded
-				exchange: ''
-				routingKey: aQueueName
-				properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-			].
+			aMessageCollection
+				do: [ :message | 
+					channel
+						basicPublish: message utf8Encoded
+						exchange: ''
+						routingKey: aQueueName
+						properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
+					].
 
-		( Delay forMilliseconds: 100 ) wait.
-		queue := channel queueDeclare: aQueueName.
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel queueDeclare: aQueueName.
 
-		self
-			assert: queue method messageCount equals: aMessageCollection size;
-			assert: queue method consumerCount equals: 0;
-			assert: confirmationWasReceived
-		]
+			self
+				assert: queue method messageCount equals: aMessageCollection size;
+				assert: queue method consumerCount equals: 0
+			]
 ]
 
 { #category : #'tests - support' }
@@ -381,8 +378,9 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 	secondWorker terminate.
 
 	self
-		assert: firstWorkerMessages size equals: 3;
-		assert: secondWorkerMessages size equals: 3
+		assert: firstWorkerMessages notEmpty;
+		assert: secondWorkerMessages notEmpty;
+		assert: firstWorkerMessages size + secondWorkerMessages size equals: 6
 ]
 
 { #category : #tests }

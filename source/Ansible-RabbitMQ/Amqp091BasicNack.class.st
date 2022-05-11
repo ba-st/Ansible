@@ -1,3 +1,6 @@
+"
+The [AMQP 0-9-1 specification](https://www.rabbitmq.com/specification.html) defines the basic.reject method that allows clients to reject individual, delivered messages, instructing the broker to either discard them or requeue them. Unfortunately, basic.reject provides no support for negatively acknowledging messages in bulk. To solve this, RabbitMQ supports the basic.nack method that provides all the functionality of basic.reject whilst also allowing for bulk processing of messages.
+"
 Class {
 	#name : #Amqp091BasicNack,
 	#superclass : #AmqpProtocolMethod,
@@ -6,7 +9,7 @@ Class {
 		'deliveryTag',
 		'requeue'
 	],
-	#category : #'Ansible-Protocol-091'
+	#category : #'Ansible-RabbitMQ'
 }
 
 { #category : #accessing }

@@ -8,17 +8,17 @@ Class {
 BaselineOfAnsible >> baseline: spec [
 
 	<baseline>
-	spec
-		for: #pharo
-		do: [ self
-				setUpDependencies: spec;
-				setUpPackages: spec.
-			spec
-				group: 'Deployment' with: #('Deployment-08' 'Deployment-091');
-				group: 'CI' with: #('Tests');
-				group: 'Tools' with: #('Ansible-Tools');
-				group: 'Development' with: #('Tests' 'Tools')
-			]
+	spec for: #pharo do: [ 
+		self
+			setUpDependencies: spec;
+			setUpDeploymentPackages: spec;
+			setUpTestPackages: spec;
+			setUpToolsPackages: spec.
+		spec
+			group: 'Deployment' with: #( 'Deployment-08' 'Deployment-091' 'RabbitMQ' );
+			group: 'CI' with: #( 'Tests' );
+			group: 'Development' with: #( 'Tests' 'Tools' )
+		]
 ]
 
 { #category : #accessing }
@@ -37,29 +37,43 @@ BaselineOfAnsible >> setUpDependencies: spec [
 ]
 
 { #category : #baselines }
-BaselineOfAnsible >> setUpPackages: spec [
+BaselineOfAnsible >> setUpDeploymentPackages: spec [
 
 	spec
 		package: 'Ansible-Protocol-Core';
 		group: 'Deployment-08' with: 'Ansible-Protocol-Core';
 		group: 'Deployment-091' with: 'Ansible-Protocol-Core';
-
-		package: 'Ansible-Protocol-Common' with: [ spec requires: 'Ansible-Protocol-Core'];
+		package: 'Ansible-Protocol-Common' with: [ spec requires: 'Ansible-Protocol-Core' ];
+		group: 'Deployment-08' with: 'Ansible-Protocol-Common';
+		group: 'Deployment-091' with: 'Ansible-Protocol-Common';
 		package: 'Ansible-Protocol-08' with: [ spec requires: 'Ansible-Protocol-Common' ];
 		group: 'Deployment-08' with: 'Ansible-Protocol-08';
 		package: 'Ansible-Protocol-091' with: [ spec requires: 'Ansible-Protocol-Common' ];
-		group: 'Deployment-091' with: 'Ansible-Protocol-091';
+		group: 'Deployment-091' with: 'Ansible-Protocol-091'.
 
+	spec
+		package: 'Ansible-RabbitMQ' with: [ spec requires: 'Ansible-Protocol-091' ];
+		group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
+]
 
-		package: 'Ansible-Tests'
-			with: [ spec requires: 'Ansible-Protocol-091' ];
+{ #category : #baselines }
+BaselineOfAnsible >> setUpTestPackages: spec [
+
+	spec
+		package: 'Ansible-Tests' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Tests';
-		package: 'Ansible-Protocol-Tests'
-			with: [ spec requires: 'Ansible-Protocol-091' ];
+		package: 'Ansible-Protocol-Tests' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Protocol-Tests';
-		package: 'Ansible-Protocol-091-Tests'
-			with: [ spec requires: 'Ansible-Protocol-091' ];
+		package: 'Ansible-Protocol-091-Tests' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Protocol-091-Tests';
+		package: 'Ansible-RabbitMQ-Tests' with: [ spec requires: 'Ansible-RabbitMQ' ];
+		group: 'Tests' with: 'Ansible-RabbitMQ-Tests'
+]
 
-		package: 'Ansible-Tools' with: [ spec requires: 'XMLParser-Core' ]
+{ #category : #baselines }
+BaselineOfAnsible >> setUpToolsPackages: spec [
+
+	spec
+		package: 'Ansible-Tools' with: [ spec requires: 'XMLParser-Core' ];
+		group: 'Tools' with: 'Ansible-Tools'
 ]

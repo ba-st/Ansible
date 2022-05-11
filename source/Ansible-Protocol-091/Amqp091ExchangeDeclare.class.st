@@ -30,10 +30,6 @@ Amqp091ExchangeDeclare >> arguments: aValue [
 	arguments := aValue
 ]
 
-{ #category : #accessing }
-Amqp091ExchangeDeclare >> autoDelete: aBoolean [
-]
-
 { #category : #'AMQP codec' }
 Amqp091ExchangeDeclare >> codecMethodId [
 

@@ -1,10 +1,15 @@
+"
+Using standard AMQP 0-9-1, the only way to guarantee that a message isn't lost is by using transactions -- make the channel transactional then for each message or set of messages publish, commit. In this case, transactions are unnecessarily heavyweight and decrease throughput by a factor of 250. To remedy this, a confirmation mechanism was introduced. It mimics the consumer acknowledgements mechanism already present in the protocol.
+
+See [Publisher confirms](https://www.rabbitmq.com/confirms.html#publisher-confirms)
+"
 Class {
 	#name : #Amqp091ConfirmSelect,
 	#superclass : #AmqpProtocolMethod,
 	#instVars : [
 		'noWait'
 	],
-	#category : #'Ansible-Protocol-091'
+	#category : #'Ansible-RabbitMQ'
 }
 
 { #category : #accessing }

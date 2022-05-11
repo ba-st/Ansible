@@ -64,12 +64,6 @@ Amqp091 class >> basicGetOkMethod [
 	^ Amqp091BasicGetOk
 ]
 
-{ #category : #'AMQP methods' }
-Amqp091 class >> basicNackMethod [
-
-	^ Amqp091BasicNack
-]
-
 { #category : #'AMQP content properties' }
 Amqp091 class >> basicPropertiesClass [
 
@@ -170,12 +164,6 @@ Amqp091 class >> channelOpenOkMethod [
 Amqp091 class >> commandInvalid [
 
 	^ 503
-]
-
-{ #category : #'AMQP methods' }
-Amqp091 class >> confirmSelectMethod [
-
-	^ Amqp091ConfirmSelect
 ]
 
 { #category : #'AMQP methods' }
@@ -374,10 +362,7 @@ Amqp091 class >> initialize [
 	methodIds at: 3932210 put: Amqp091BasicReturn.
 	methodIds at: 3932230 put: Amqp091BasicGet.
 	methodIds at: 3932191 put: Amqp091BasicCancelOk.
-	methodIds at: 3932271 put: Amqp091BasicRecoverOk.
-	methodIds at: 3932280 put: Amqp091BasicNack.
-	methodIds at: 5570570 put: Amqp091ConfirmSelect.
-	methodIds at: 5570571 put: Amqp091ConfirmSelectOk
+	methodIds at: 3932271 put: Amqp091BasicRecoverOk
 ]
 
 { #category : #'AMQP protocol constants' }

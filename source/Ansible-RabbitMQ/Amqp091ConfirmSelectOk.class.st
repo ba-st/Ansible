@@ -1,7 +1,7 @@
 Class {
 	#name : #Amqp091ConfirmSelectOk,
 	#superclass : #AmqpProtocolMethod,
-	#category : #'Ansible-Protocol-091'
+	#category : #'Ansible-RabbitMQ'
 }
 
 { #category : #accessing }

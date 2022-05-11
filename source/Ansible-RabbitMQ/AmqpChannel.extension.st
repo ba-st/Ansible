@@ -1,6 +1,6 @@
 Extension { #name : #AmqpChannel }
 
-{ #category : #'*Ansible-Protocol-091' }
+{ #category : #'*Ansible-RabbitMQ' }
 AmqpChannel >> confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock [
 
 	self rpc: protocolVersion confirmSelectMethod new.
