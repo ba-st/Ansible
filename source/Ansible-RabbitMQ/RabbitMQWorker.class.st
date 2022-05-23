@@ -46,7 +46,10 @@ RabbitMQWorker >> initializeConnection [
 { #category : #private }
 RabbitMQWorker >> openConnection [
 
-	LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ connection open ]
+	connection
+		whenConnected: [ 
+		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ connection open ] ]
+		whenNot: [ :error | error signal ]
 ]
 
 { #category : #private }
