@@ -36,19 +36,19 @@ AmqpConnection >> close [
 
 	| connectionClose |
 
-	isOpen
-		ifTrue: [ isOpen := false.
-			connectionClose := self protocolClass connectionCloseMethod new
-				replyCode: self protocolClass replySuccess;
-				replyText: 'Normal shutdown';
-				classId: 0;
-				methodId: 0.
-			self rpc: connectionClose onChannel: 0.
-			self internalClose: connectionClose
-			].
 	heartbeatSender stop.
+	isOpen ifTrue: [ 
+		isOpen := false.
+		connectionClose := self protocolClass connectionCloseMethod new
+			                   replyCode: self protocolClass replySuccess;
+			                   replyText: 'Normal shutdown';
+			                   classId: 0;
+			                   methodId: 0.
+		self rpc: connectionClose onChannel: 0.
+		self internalClose: connectionClose
+		].
+
 	socket close
-	
 ]
 
 { #category : #'connection-handling' }

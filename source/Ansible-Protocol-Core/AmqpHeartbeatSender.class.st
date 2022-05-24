@@ -61,6 +61,6 @@ AmqpHeartbeatSender >> startBeatingEvery: aTimeInterval [
 
 { #category : #'startup-shutdown' }
 AmqpHeartbeatSender >> stop [
-	
-	isStarted ifTrue: [ process terminate ] 
+
+	process terminate
 ]
