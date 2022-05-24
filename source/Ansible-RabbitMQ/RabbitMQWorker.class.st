@@ -13,10 +13,7 @@ task during a short HTTP request window.
 "
 Class {
 	#name : #RabbitMQWorker,
-	#superclass : #Object,
-	#instVars : [
-		'connection'
-	],
+	#superclass : #RabbitMQClient,
 	#category : #'Ansible-RabbitMQ'
 }
 
@@ -25,31 +22,6 @@ RabbitMQWorker class >> isAbstract [
 
 	<ignoreForCoverage>
 	^ self = RabbitMQWorker
-]
-
-{ #category : #private }
-RabbitMQWorker >> configureConnection: builder [
-
-	self subclassResponsibility
-]
-
-{ #category : #initialization }
-RabbitMQWorker >> initializeConnection [
-
-	| builder |
-
-	builder := AmqpConnectionBuilder usingAMQP091Protocol.
-	self configureConnection: builder.
-	connection := builder build
-]
-
-{ #category : #private }
-RabbitMQWorker >> openConnection [
-
-	connection
-		whenConnected: [ 
-		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ connection open ] ]
-		whenNot: [ :error | error signal ]
 ]
 
 { #category : #private }
@@ -66,24 +38,8 @@ RabbitMQWorker >> queueName [
 	^ self subclassResponsibility
 ]
 
-{ #category : #controlling }
-RabbitMQWorker >> start [
-
-	self openConnection.
-	connection
-		whenConnected: [ 
-			LaunchpadLogRecord emitInfo: 'Connected to RabbitMQ'.
-			self startReceivingMessages
-			]
-		whenNot: [ :error | 
-			LaunchpadLogRecord emitError:
-				( 'Cannot connect to RabbitMQ, <1s>' expandMacrosWith: error messageText ).
-			AmqpDisconnectedError signal: error messageText
-			]
-]
-
 { #category : #private }
-RabbitMQWorker >> startReceivingMessages [
+RabbitMQWorker >> startProcessing [
 
 	| channel |
 
@@ -95,12 +51,4 @@ RabbitMQWorker >> startReceivingMessages [
 		channel basicAck: message method deliveryTag
 		].
 	[ connection waitForEvent ] repeat
-]
-
-{ #category : #controlling }
-RabbitMQWorker >> stop [
-
-	connection
-		whenConnected: [ connection close ]
-		whenNot: [ LaunchpadLogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
 ]
