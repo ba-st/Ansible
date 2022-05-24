@@ -32,8 +32,16 @@ BaselineOfAnsible >> setUpDependencies: spec [
 
 	spec
 		baseline: 'XMLParser'
-			with: [ spec repository: 'github://pharo-contributions/XML-XMLParser:3.5.0/src' ];
-		project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: #('Core') ]
+		with: [ spec repository: 'github://pharo-contributions/XML-XMLParser:3.5.0/src' ];
+		project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: #( 'Core' ) ].
+
+	spec
+		baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v4' ];
+		project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
+
+	spec
+		baseline: 'Buoy' with: [ spec repository: 'github://ba-st/Buoy:v6' ];
+		project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ]
 ]
 
 { #category : #baselines }
@@ -52,7 +60,8 @@ BaselineOfAnsible >> setUpDeploymentPackages: spec [
 		group: 'Deployment-091' with: 'Ansible-Protocol-091'.
 
 	spec
-		package: 'Ansible-RabbitMQ' with: [ spec requires: 'Ansible-Protocol-091' ];
+		package: 'Ansible-RabbitMQ'
+		with: [ spec requires: #( 'Ansible-Protocol-091' 'Launchpad-Deployment' ) ];
 		group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
 ]
 
@@ -66,7 +75,7 @@ BaselineOfAnsible >> setUpTestPackages: spec [
 		group: 'Tests' with: 'Ansible-Protocol-Tests';
 		package: 'Ansible-Protocol-091-Tests' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Protocol-091-Tests';
-		package: 'Ansible-RabbitMQ-Tests' with: [ spec requires: 'Ansible-RabbitMQ' ];
+		package: 'Ansible-RabbitMQ-Tests' with: [ spec requires: #( 'Ansible-RabbitMQ' 'Buoy-SUnit' ) ];
 		group: 'Tests' with: 'Ansible-RabbitMQ-Tests'
 ]
 
