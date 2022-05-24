@@ -19,14 +19,18 @@ RabbitMQTextReverserTest >> publish: text onQueueNamed: aQueueName [
 
 		channel := connection createChannel.
 		channel queueDeclare: aQueueName durable: true.
-		channel basicPublish: text utf8Encoded exchange: '' routingKey: aQueueName
+		channel
+			basicPublish: text utf8Encoded
+			exchange: ''
+			routingKey: aQueueName
+			properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
 		]
 ]
 
 { #category : #accessing }
 RabbitMQTextReverserTest >> queueName [
 
-	^ 'tasks'
+	^ 'tasks-for-' , testSelector
 ]
 
 { #category : #running }
@@ -34,11 +38,7 @@ RabbitMQTextReverserTest >> setUp [
 
 	super setUp.
 	reversedTexts := OrderedCollection new.
-	workerProcess := [ 
-	                 | worker |
-	                 worker := RabbitMQTextReverser workingWith: self.
-	                 worker start
-	                 ] newProcess.
+	workerProcess := [ ( RabbitMQTextReverser workingWith: self ) start ] newProcess.
 	workerProcess
 		name: 'Text reverser worker';
 		priority: Processor userBackgroundPriority
@@ -60,8 +60,6 @@ RabbitMQTextReverserTest >> tearDown [
 { #category : #tests }
 RabbitMQTextReverserTest >> testProcessingMessages [
 
-	self publish: 'Nobody' onQueueNamed: self queueName.
-
 	workerProcess resume.
 
 	Processor yield.
@@ -81,8 +79,6 @@ RabbitMQTextReverserTest >> testProcessingMessages [
 
 { #category : #tests }
 RabbitMQTextReverserTest >> testProcessingOneMessage [
-
-	self publish: 'Nobody' onQueueNamed: self queueName.
 
 	workerProcess resume.
 
