@@ -20,10 +20,16 @@ RabbitMQClient class >> isAbstract [
 	^ self = RabbitMQClient
 ]
 
-{ #category : #private }
+{ #category : #'private - configuring' }
 RabbitMQClient >> configureConnection: builder [
 
 	self subclassResponsibility
+]
+
+{ #category : #'private - configuring' }
+RabbitMQClient >> connectivityErrors [
+
+	^ NetworkError
 ]
 
 { #category : #initialization }
@@ -36,13 +42,38 @@ RabbitMQClient >> initializeConnection [
 	connection := builder build
 ]
 
-{ #category : #private }
+{ #category : #'private - connecting' }
+RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
+
+	LaunchpadLogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
+			  expandMacrosWith: attemptNumber
+			  with: self retryCount + 1
+			  with: error messageText )
+]
+
+{ #category : #'private - connecting' }
 RabbitMQClient >> openConnection [
 
-	connection
-		whenConnected: [ 
-		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ connection open ] ]
-		whenNot: [ :error | error signal ]
+	self withSuccessfulConnectionDo: [ :succesfulConnection | 
+		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ 
+			self
+				try: [ succesfulConnection open ]
+				onConnectivityErrorDo: [ :attemptNumber :error | 
+				self logFailedConnectionAttempt: attemptNumber dueTo: error ]
+			]
+		]
+]
+
+{ #category : #'private - configuring' }
+RabbitMQClient >> options [
+
+	^ Dictionary new
+]
+
+{ #category : #'private - configuring' }
+RabbitMQClient >> retryCount [
+
+	^ self options at: #retryCount ifAbsent: [ 2 ]
 ]
 
 { #category : #controlling }
@@ -73,4 +104,27 @@ RabbitMQClient >> stop [
 	connection
 		whenConnected: [ connection close ]
 		whenNot: [ LaunchpadLogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
+]
+
+{ #category : #'private - connecting' }
+RabbitMQClient >> try: aBlock onConnectivityErrorDo: failBlock [
+
+	Retry value: aBlock configuredBy: [ :retry | 
+		retry
+			upTo: self retryCount;
+			on: self connectivityErrors evaluating: failBlock.
+		self options at: #retry ifPresent: [ :action | action value: retry ]
+		]
+]
+
+{ #category : #'private - connecting' }
+RabbitMQClient >> withSuccessfulConnectionDo: aBlock [
+
+	self
+		try: [ connection whenConnected: [ aBlock value: connection ] whenNot: [ :error | error signal ] ]
+		onConnectivityErrorDo: [ :attemptNumber :error | 
+			self logFailedConnectionAttempt: attemptNumber dueTo: error.
+			LaunchpadLogRecord emitWarning: 'Reconnecting socket to RabbitMQ'.
+			connection initializeSocketConnection
+			]
 ]
