@@ -41,7 +41,11 @@ BaselineOfAnsible >> setUpDependencies: spec [
 
 	spec
 		baseline: 'Buoy' with: [ spec repository: 'github://ba-st/Buoy:v6' ];
-		project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ]
+		project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
+
+	spec
+		baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v4' ];
+		project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
 ]
 
 { #category : #baselines }
@@ -61,7 +65,7 @@ BaselineOfAnsible >> setUpDeploymentPackages: spec [
 
 	spec
 		package: 'Ansible-RabbitMQ'
-		with: [ spec requires: #( 'Ansible-Protocol-091' 'Launchpad-Deployment' ) ];
+		with: [ spec requires: #( 'Ansible-Protocol-091' 'Launchpad-Deployment' 'Hyperspace-Deployment' ) ];
 		group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
 ]
 

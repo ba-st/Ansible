@@ -38,7 +38,11 @@ RabbitMQTextReverserTest >> setUp [
 
 	super setUp.
 	reversedTexts := OrderedCollection new.
-	workerProcess := [ ( RabbitMQTextReverser workingWith: self ) start ] newProcess.
+	workerProcess := [ 
+	                 | worker |
+	                 worker := RabbitMQTextReverser workingWith: self.
+	                 [ worker start ] ensure: [ worker stop ]
+	                 ] newProcess.
 	workerProcess
 		name: 'Text reverser worker';
 		priority: Processor userBackgroundPriority
@@ -103,11 +107,14 @@ RabbitMQTextReverserTest >> withLocalhostConnectionDo: block [
 	| connection |
 
 	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
-	connection open.
+
 	connection
 		whenConnected: [ 
-			block value: connection.
-			connection close
+			connection open.
+			[ block value: connection ] ensure: [ connection close ]
 			]
-		whenNot: [ :error | self fail: error messageText ]
+		whenNot: [ :error | 
+			connection hardClose.
+			self fail: error messageText
+			]
 ]
