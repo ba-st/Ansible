@@ -6,7 +6,7 @@ promoting the project, or even contributing code.
 
 ## Reporting issues
 
-You can report issues [here](https://github.com/<OWNER>/<REPO_NAME>/issues/new)
+You can report issues [here](https://github.com/ba-st/Ansible/issues/new)
 
 ## Contributing Code
 
