@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        smalltalk: [ Pharo64-10, Pharo64-9.0, Pharo64-8.0 ]
+        smalltalk: [ Pharo64-11, Pharo64-10, Pharo64-9.0, Pharo64-8.0 ]
     name: ${{ matrix.smalltalk }}
     services:
       rabbitmq:
@@ -18,7 +18,7 @@ jobs:
           - 5672:5672
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: ${{ matrix.smalltalk }}
@@ -31,3 +31,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           name: Unit-Tests-${{ matrix.smalltalk }}
+          token: ${{ secrets.CODECOV_TOKEN }}

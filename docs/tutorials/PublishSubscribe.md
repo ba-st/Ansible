@@ -141,7 +141,7 @@ After sending a couple of messages the subscriber's Transcript will look like th
 
 ![Transcript with received messages](publish_subscribe_message_received_transcript.png)
 
-Also, you'll receive a notification for every message  like this one
+Also, you'll receive a notification for every message like this one
 
 ![Message received toast](publish_subscribe_message_received_toast.png)
 
