@@ -45,16 +45,16 @@ channel declareQueueApplying: [ :queue | queue name: 'task_queue' ].
 channel prefetchCount: 1.
 ````
 
-The `channel prefetchCount: 1` directs RabbitMQ to wait for an acknowledge of
+The `channel prefetchCount: 1` directs RabbitMQ to wait for an acknowledgment of
  the last message before sending another to the worker. Without this, the broker
  will send the messages to the worker as soon as they enter the queue (regardless
  of whether the worker is ready to receive more messages).
 
-Now you'll create a subscription to the queue. First you a register a callback,
+Now you'll create a subscription to the queue. First you register a callback,
  which will simulate running a task by creating a delay of n seconds, where n
  is the amount of dots in the message. It will open a toast message for each
  received message by the consumer showing the time it took, and it will send
- the acknowledge to the broker.
+ the acknowledgment to the broker.
 
 ```smalltalk
 channel
@@ -72,9 +72,9 @@ channel
 ].
 ```
 
-If the broker does not receive the acknowledge it will wait forever since there
- is no timeout. If the connection dies RabbitMQ will re-queue the message and
- try to send it again.
+If the broker does not receive the acknowledgment it will wait forever since there
+is no timeout. If the connection dies RabbitMQ will re-queue the message and
+try to send it again.
 
 ## Spawning workers
 
@@ -164,8 +164,8 @@ On the images acting as worker open a Playground and evaluate the corresponding
  script. Now, on the third one inspect the producer script on a Playground. This
  will send your first message.
 
-Since you inspected the script, an inspector on a instance of channel will open.
- To send more messages to the workers send  `#basicPublish:exchange:routingKey:`
+Since you inspected the script, an inspector on an instance of channel will open.
+ To send more messages to the workers send `#basicPublish:exchange:routingKey:`
  to it.
 
 After each message sent you should see a toast notification on one your worker

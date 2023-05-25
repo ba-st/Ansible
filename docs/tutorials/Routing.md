@@ -7,7 +7,7 @@ This communication pattern allows sending messages to a specific route.
 ![Diagram of routing](routing.png)
 
 In this tutorial, you'll refine the logging example you did [previously](PublishSubscribe.md)
- by selectively sending some of the log messages to a specific error logger.
+ by selectively sending some log messages to a specific error logger.
 
 Log messages have a severity: `info`, `warning` or `error`.
 

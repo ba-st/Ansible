@@ -24,8 +24,6 @@ AmqpProtocolHeaderFrame >> readFrom: connection length: length [
 
 	| codec |
 	
-	length inspect.
-
 	"length is four bytes big-endian: $P followed by the first three bytes of the version spec."
 	codec := connection codec.
 	( length byteAt: 4 ) = $P asciiValue
