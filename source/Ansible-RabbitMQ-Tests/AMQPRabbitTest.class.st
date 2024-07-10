@@ -6,7 +6,7 @@ Class {
 }
 
 { #category : 'private' }
-AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [ 
+AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
 	self withLocalhostConnectionDo: [ :connection | 
 		| channel queue confirmationWasReceived |
