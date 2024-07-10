@@ -37,13 +37,6 @@ RabbitMQPublisherTest >> defaultRabbitMQPublisher [
 		  ]
 ]
 
-{ #category : 'running' }
-RabbitMQPublisherTest >> initialize [
-
-	super initialize.
-	reversedTexts := OrderedCollection new
-]
-
 { #category : 'private - accessing' }
 RabbitMQPublisherTest >> publish: anObject onQueueNamed: aQueueName [
 
@@ -83,6 +76,8 @@ RabbitMQPublisherTest >> resumeWorkerDuring: aBlock [
 RabbitMQPublisherTest >> setUp [
 
 	super setUp.
+	
+	reversedTexts := OrderedCollection new.
 
 	workerProcess :=
 		[| worker |

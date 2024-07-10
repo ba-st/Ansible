@@ -26,28 +26,6 @@ RabbitMQWorker class >> isAbstract [
 ]
 
 { #category : 'private' }
-RabbitMQWorker >> ensureConnectedAndOpen [
-
-	| createConnection |
-
-	createConnection := [
-		self
-			try: [
-				connection := builder build.
-				connection open]
-			onConnectivityErrorDo: [:attemptNumber :error |
-				self logFailedConnectionAttempt: attemptNumber dueTo: error]].
-
-	connection
-		ifNil: createConnection
-		ifNotNil: [connection whenConnected: [] whenNot: createConnection].
-		
-	connection
-		whenOpen: []
-		whenNot: [connection closeReason ifNil: [connection open] ifNotNil: createConnection]
-]
-
-{ #category : 'private' }
 RabbitMQWorker >> process: payload [
 
 	"A message was received including the bytes in `payload`"

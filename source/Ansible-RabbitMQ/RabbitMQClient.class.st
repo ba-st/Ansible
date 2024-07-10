@@ -34,6 +34,28 @@ RabbitMQClient >> connectivityErrors [
 	^ NetworkError
 ]
 
+{ #category : 'private' }
+RabbitMQClient >> ensureConnectedAndOpen [
+
+	| createConnection |
+
+	createConnection := [
+		self
+			try: [
+				connection := builder build.
+				connection open]
+			onConnectivityErrorDo: [:attemptNumber :error |
+				self logFailedConnectionAttempt: attemptNumber dueTo: error]].
+
+	connection
+		ifNil: createConnection
+		ifNotNil: [connection whenConnected: [] whenNot: createConnection].
+		
+	connection
+		whenOpen: []
+		whenNot: [connection closeReason ifNil: [connection open] ifNotNil: createConnection]
+]
+
 { #category : 'initialization' }
 RabbitMQClient >> initializeConnection [
 
