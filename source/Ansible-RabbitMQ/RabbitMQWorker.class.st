@@ -26,6 +26,28 @@ RabbitMQWorker class >> isAbstract [
 ]
 
 { #category : 'private' }
+RabbitMQWorker >> ensureConnectedAndOpen [
+
+	| createConnection |
+
+	createConnection := [
+		self
+			try: [
+				connection := builder build.
+				connection open]
+			onConnectivityErrorDo: [:attemptNumber :error |
+				self logFailedConnectionAttempt: attemptNumber dueTo: error]].
+
+	connection
+		ifNil: createConnection
+		ifNotNil: [connection whenConnected: [] whenNot: createConnection].
+		
+	connection
+		whenOpen: []
+		whenNot: [connection closeReason ifNil: [connection open] ifNotNil: createConnection]
+]
+
+{ #category : 'private' }
 RabbitMQWorker >> process: payload [
 
 	"A message was received including the bytes in `payload`"
@@ -42,9 +64,13 @@ RabbitMQWorker >> queueName [
 { #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
-	| channel |
+	| channel reconnect |
 
-	channel := connection createChannel.
+	reconnect := [
+		self ensureConnectedAndOpen.
+		channel := connection createChannel].
+	channel ifNil: reconnect ifNotNil: [channel whenOpenDo: [] whenClosedDo: reconnect].
+	
 	channel queueDeclare: self queueName durable: true.
 	channel prefetchCount: 1.
 	channel consumeFrom: self queueName applying: [ :message | 

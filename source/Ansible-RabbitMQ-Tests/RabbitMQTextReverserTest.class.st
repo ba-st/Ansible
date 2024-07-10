@@ -109,13 +109,12 @@ RabbitMQTextReverserTest >> withLocalhostConnectionDo: block [
 
 	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
 
+	connection open.
+
 	connection
-		whenConnected: [ 
-			connection open.
-			[ block value: connection ] ensure: [ connection close ]
+		whenConnected: [
+			block value: connection.
+			connection close
 			]
-		whenNot: [ :error | 
-			connection hardClose.
-			self fail: error messageText
-			]
+		whenNot: [ :error | self fail: error messageText ]
 ]

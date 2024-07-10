@@ -8,7 +8,8 @@ Class {
 	#name : 'RabbitMQClient',
 	#superclass : 'Object',
 	#instVars : [
-		'connection'
+		'connection',
+		'builder'
 	],
 	#category : 'Ansible-RabbitMQ',
 	#package : 'Ansible-RabbitMQ'
@@ -35,8 +36,6 @@ RabbitMQClient >> connectivityErrors [
 
 { #category : 'initialization' }
 RabbitMQClient >> initializeConnection [
-
-	| builder |
 
 	builder := AmqpConnectionBuilder usingAMQP091Protocol.
 	self configureConnection: builder.
