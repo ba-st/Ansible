@@ -1,3 +1,11 @@
+"
+I'm a publisher connected to a RabbitMQ queue.
+I will send messages to the specified queue for further processing.
+
+The main idea behind publishing messages to a queue is to decouple the task of generating
+messages from the task of processing them. This allows for more flexibility and scalability
+as the producers and consumers can operate independently. 
+"
 Class {
 	#name : 'RabbitMQPublisher',
 	#superclass : 'Object',
