@@ -179,3 +179,9 @@ AmqpChannelHandler >> waitForReply: acceptableReplies [
 			]
 	] repeat
 ]
+
+{ #category : 'accessing' }
+AmqpChannelHandler >> whenOpenDo: aBlock whenClosedDo: aClosedHandler [
+
+	^closeReason ifNil: aBlock ifNotNil: aClosedHandler
+]

@@ -489,3 +489,11 @@ AmqpChannel >> update: aSymbol [
 		ifTrue: [ self changed: #channelClosed ].
 	^ super update: aSymbol
 ]
+
+{ #category : 'accessing' }
+AmqpChannel >> whenOpenDo: aBlock whenClosedDo: aClosedHandler [
+
+	^handler whenOpenDo: aBlock whenClosedDo: aClosedHandler
+
+
+]
