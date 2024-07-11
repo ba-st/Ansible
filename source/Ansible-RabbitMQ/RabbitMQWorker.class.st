@@ -14,6 +14,9 @@ task during a short HTTP request window.
 Class {
 	#name : 'RabbitMQWorker',
 	#superclass : 'RabbitMQClient',
+	#instVars : [
+		'channel'
+	],
 	#category : 'Ansible-RabbitMQ',
 	#package : 'Ansible-RabbitMQ'
 }
@@ -23,6 +26,36 @@ RabbitMQWorker class >> isAbstract [
 
 	<ignoreForCoverage>
 	^ self = RabbitMQWorker
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> configureChannel [
+
+	channel queueDeclare: self queueName durable: true.
+	channel prefetchCount: 1.
+	channel consumeFrom: self queueName applying: [ :message |
+		self process: message body.
+		channel basicAck: message method deliveryTag
+		]
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> ensureChannelOpen [
+
+	| reconnect |
+
+	reconnect := [
+	             self ensureConnectedAndOpen.
+	             channel := connection createChannel
+	             ].
+	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ]
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> logDisconnectionDueTo: anError [
+
+	LaunchpadLogRecord emitError:
+		( 'RabbitMQClient disconnected: <1s>' expandMacrosWith: anError messageText )
 ]
 
 { #category : 'private' }
@@ -42,18 +75,15 @@ RabbitMQWorker >> queueName [
 { #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
-	| channel reconnect |
+	self
+		ensureChannelOpen;
+		configureChannel.
 
-	reconnect := [
-		self ensureConnectedAndOpen.
-		channel := connection createChannel].
-	channel ifNil: reconnect ifNotNil: [channel whenOpenDo: [] whenClosedDo: reconnect].
-	
-	channel queueDeclare: self queueName durable: true.
-	channel prefetchCount: 1.
-	channel consumeFrom: self queueName applying: [ :message | 
-		self process: message body.
-		channel basicAck: message method deliveryTag
-		].
-	[ connection waitForEvent ] repeat
+	[[ connection waitForEvent ]
+		on: AmqpDisconnectedError
+		do: [ :error |
+			self
+				logDisconnectionDueTo: error;
+				ensureChannelOpen;
+				configureChannel]] repeat
 ]

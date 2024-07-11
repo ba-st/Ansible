@@ -6,22 +6,23 @@ Class {
 	#superclass : 'TestCase',
 	#instVars : [
 		'reversedTexts',
-		'workerProcess'
+		'workerProcess',
+		'worker'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
 }
 
 { #category : 'private' }
-RabbitMQTextReverserTest >> publish: text onQueueNamed: aQueueName [
+RabbitMQTextReverserTest >> publish: aText onQueueNamed: aQueueName [
 
-	self withLocalhostConnectionDo: [ :connection | 
+	self withLocalhostConnectionDo: [ :connection |
 		| channel |
 
 		channel := connection createChannel.
 		channel queueDeclare: aQueueName durable: true.
 		channel
-			basicPublish: text utf8Encoded
+			basicPublish: aText utf8Encoded
 			exchange: ''
 			routingKey: aQueueName
 			properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
@@ -34,25 +35,34 @@ RabbitMQTextReverserTest >> queueName [
 	^ 'tasks-for-' , testSelector
 ]
 
+{ #category : 'private' }
+RabbitMQTextReverserTest >> resumeWorkerDuring: aBlock [
+
+	workerProcess resume.
+	Processor yield.
+	self wait.
+	aBlock value.
+	self wait
+]
+
 { #category : 'running' }
 RabbitMQTextReverserTest >> setUp [
 
 	super setUp.
 	reversedTexts := OrderedCollection new.
-	workerProcess := [ 
-	                 | worker |
-	                 worker := RabbitMQTextReverser workingWith: self.
-	                 [ worker start ] ensure: [ worker stop ]
-	                 ] newProcess.
+
+	worker := RabbitMQTextReverser workingWith: self.
+
+	workerProcess := [ [ worker start ] ensure: [ worker stop ] ] newProcess.
 	workerProcess
 		name: 'Text reverser worker';
 		priority: Processor userBackgroundPriority
 ]
 
 { #category : 'accessing' }
-RabbitMQTextReverserTest >> storeText: string [
+RabbitMQTextReverserTest >> storeText: aString [
 
-	reversedTexts add: string
+	reversedTexts add: aString
 ]
 
 { #category : 'running' }
@@ -65,16 +75,11 @@ RabbitMQTextReverserTest >> tearDown [
 { #category : 'tests' }
 RabbitMQTextReverserTest >> testProcessingMessages [
 
-	workerProcess resume.
-
-	Processor yield.
-	self wait.
-
-	self
-		publish: 'Hello' onQueueNamed: self queueName;
-		publish: 'World' onQueueNamed: self queueName.
-
-	self wait.
+	self resumeWorkerDuring: [
+		self
+			publish: 'Hello' onQueueNamed: self queueName;
+			publish: 'World' onQueueNamed: self queueName
+		].
 
 	self
 		assert: reversedTexts size equals: 2;
@@ -85,14 +90,8 @@ RabbitMQTextReverserTest >> testProcessingMessages [
 { #category : 'tests' }
 RabbitMQTextReverserTest >> testProcessingOneMessage [
 
-	workerProcess resume.
+	self resumeWorkerDuring: [ self publish: 'Hello' onQueueNamed: self queueName ].
 
-	Processor yield.
-	self wait.
-
-	self publish: 'Hello' onQueueNamed: self queueName.
-
-	self wait.
 	self withTheOnlyOneIn: reversedTexts do: [ :text | self assert: text equals: 'olleH' ]
 ]
 
@@ -103,7 +102,7 @@ RabbitMQTextReverserTest >> wait [
 ]
 
 { #category : 'private' }
-RabbitMQTextReverserTest >> withLocalhostConnectionDo: block [
+RabbitMQTextReverserTest >> withLocalhostConnectionDo: aBlock [
 
 	| connection |
 
@@ -113,7 +112,7 @@ RabbitMQTextReverserTest >> withLocalhostConnectionDo: block [
 
 	connection
 		whenConnected: [
-			block value: connection.
+			aBlock value: connection.
 			connection close
 			]
 		whenNot: [ :error | self fail: error messageText ]
