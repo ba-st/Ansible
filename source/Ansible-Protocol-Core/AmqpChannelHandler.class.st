@@ -163,20 +163,26 @@ AmqpChannelHandler >> waitForReply: acceptableReplies [
 	acceptableReplies ifEmpty: [ ^ nil ].
 
 	i := 1.
-	[ [ i > inbound size ]
-		whileTrue: [ self ensureOpen.
-			connection mainLoopCycle
-			].
-	[ i <= inbound size ]
-		whileTrue: [ | cmd |
+	[
+	[ i > inbound size ] whileTrue: [
+		| currentConnection |
 
-			cmd := inbound at: i.
-			( acceptableReplies includes: cmd method class )
-				ifTrue: [ inbound removeAt: i.
-					^ cmd
-					].
-			i := i + 1
-			]
+		self ensureOpen.
+		currentConnection := connection mainLoopCycle.
+		currentConnection socketConnectionStatus
+			whenConnected: [  ]
+			whenNot: [ :error | AmqpDisconnectedError signal: error ]].
+	[ i <= inbound size ] whileTrue: [
+		| cmd |
+
+		cmd := inbound at: i.
+		( acceptableReplies includes: cmd method class ) ifTrue: [
+			LogRecord emitInfo: ' estoy en el whileTrue del cmd donde deberia de regresar el command'.
+			inbound removeAt: i.
+			^ cmd
+			].
+		i := i + 1
+		]
 	] repeat
 ]
 

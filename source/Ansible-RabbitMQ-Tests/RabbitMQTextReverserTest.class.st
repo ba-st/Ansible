@@ -13,6 +13,12 @@ Class {
 	#package : 'Ansible-RabbitMQ-Tests'
 }
 
+{ #category : 'accessing' }
+RabbitMQTextReverserTest class >> defaultTimeLimit [
+
+	^ 60 seconds
+]
+
 { #category : 'private' }
 RabbitMQTextReverserTest >> publish: aText onQueueNamed: aQueueName [
 
@@ -70,6 +76,33 @@ RabbitMQTextReverserTest >> tearDown [
 
 	workerProcess terminate.
 	super tearDown
+]
+
+{ #category : 'tests' }
+RabbitMQTextReverserTest >> testProcessingMessageWhenChannelIsTemporallyLost [
+
+	| logger |
+
+	logger := MemoryLogger new.
+
+	self resumeWorkerDuring: [ "self
+			publish: 'Hello' onQueueNamed: self queueName;
+			publish: 'World' onQueueNamed: self queueName.
+
+		self wait.
+
+		self
+			assert: reversedTexts size equals: 2;
+			assert: reversedTexts first equals: 'olleH';
+			assert: reversedTexts last equals: 'dlroW'."
+		logger runDuring: [ worker stop].
+
+		self publish: 'Test channel restored' onQueueNamed: self queueName
+		].
+
+	self
+		assert: reversedTexts size equals: 3;
+		assert: reversedTexts last equals: 'derotser lennahc tseT'
 ]
 
 { #category : 'tests' }

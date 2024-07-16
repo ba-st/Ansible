@@ -14,6 +14,12 @@ RabbitMQTextReverser class >> workingWith: aTestCase [
 	^self new initializeWorkingWith: aTestCase
 ]
 
+{ #category : 'accessing' }
+RabbitMQTextReverser >> channel [
+
+	^ channel
+]
+
 { #category : 'private' }
 RabbitMQTextReverser >> configureConnection: builder [
 

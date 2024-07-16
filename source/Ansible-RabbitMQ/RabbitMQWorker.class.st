@@ -46,9 +46,17 @@ RabbitMQWorker >> ensureChannelOpen [
 
 	reconnect := [
 	             self ensureConnectedAndOpen.
+	             LogRecord emitInfo: 'Pase el ensureConnected para crear el channel'.
 	             channel := connection createChannel
 	             ].
-	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ]
+
+
+	channel ifNil: reconnect ifNotNil: [
+		LogRecord emitInfo: channel printString.
+		channel whenOpenDo: [  ] whenClosedDo: reconnect
+		].
+
+	self configureChannel
 ]
 
 { #category : 'private' }
@@ -75,15 +83,12 @@ RabbitMQWorker >> queueName [
 { #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
-	self
-		ensureChannelOpen;
-		configureChannel.
+	self ensureChannelOpen.
 
 	[[ connection waitForEvent ]
-		on: AmqpDisconnectedError
+		on: AmqpDisconnectedError,ConnectionClosed 
 		do: [ :error |
 			self
 				logDisconnectionDueTo: error;
-				ensureChannelOpen;
-				configureChannel]] repeat
+				ensureChannelOpen]] repeat
 ]

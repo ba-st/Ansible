@@ -25,7 +25,7 @@ RabbitMQPublisherTest >> configureConnection: aBuilder [
 	aBuilder password: 'guest'
 ]
 
-{ #category : 'private - accessing' }
+{ #category : 'running' }
 RabbitMQPublisherTest >> defaultRabbitMQPublisher [
 
 	^ RabbitMQPublisher configuredBy: [ :options |
@@ -194,9 +194,14 @@ RabbitMQPublisherTest >> testDebuggingLogsTurnedOff [
 { #category : 'running' }
 RabbitMQPublisherTest >> testPublishingMessageWhenChannelIsTemporallyLost [
 
+	|logger|
+	
+	logger := MemoryLogger new.
+
 	self resumeWorkerDuring: [
-		publisher channel close.
-		self publish: #( 'test channel restored' ) onQueueNamed: self queueName
+		logger runDuring: [ 	publisher channel close.
+		self publish: #( 'test channel restored' ) onQueueNamed: self queueName ]
+	
 		].
 
 	self

@@ -347,6 +347,18 @@ AmqpChannel >> prefetchCount: prefetchCount prefetchSize: prefetchSize global: a
 				global: aBoolean )
 ]
 
+{ #category : 'AMQP receiving messages' }
+AmqpChannel >> printOn: aStream [
+
+	aStream nextPutAll: ( 'AMPQ Channel <1p> on connection <2p> (<3s>)'
+			  expandMacrosWith: handler channelNumber
+			  with: handler connection
+			  with:
+			  ( self
+				    whenOpenDo: [ 'Open' ]
+				    whenClosedDo: [ :reason | 'Closed due <1p>' expandMacrosWith: reason ] ) )
+]
+
 { #category : 'AMQP private' }
 AmqpChannel >> protocolClass [
 

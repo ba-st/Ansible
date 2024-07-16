@@ -352,9 +352,13 @@ AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber ifConnectionClos
 
 	| ch |
 
+	LogRecord emitInfo: 'Llegue al RPC de la conexion'.
+
 	ch := self ensureChannel: aChannelNumber.
 	self sendMethod: aRequestMethod onChannel: aChannelNumber.
-	^ ch waitForReply: aRequestMethod acceptableResponseClasses
+	^ [ ch waitForReply: aRequestMethod acceptableResponseClasses ]
+		  on: ConnectionClosed
+		  do: [ LogRecord emitInfo: 'SE CERRO LA CONEXION EN EL WAIT FOR REPLY' ]
 ]
 
 { #category : 'connection-handling' }
@@ -430,6 +434,12 @@ AmqpConnection >> sendProtocolHeader [
 AmqpConnection >> setChannel: aChannelNumber to: aChannelHandler [
 
 	channels at: aChannelNumber put: aChannelHandler
+]
+
+{ #category : 'connection-handling' }
+AmqpConnection >> socketConnectionStatus [
+
+	^ socketConnectionStatus
 ]
 
 { #category : 'private-opening' }
