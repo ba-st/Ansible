@@ -13,10 +13,39 @@ Class {
 	#package : 'Ansible-RabbitMQ-Tests'
 }
 
-{ #category : 'accessing' }
-RabbitMQTextReverserTest class >> defaultTimeLimit [
+{ #category : 'private' }
+RabbitMQTextReverserTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
 
-	^ 60 seconds
+	^ OSPlatform current runCommand:
+		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
+			    expandMacrosWith: aRabbitmqContainerId
+			    with: aUsername
+			    with: aCloseReason )
+]
+
+{ #category : 'private' }
+RabbitMQTextReverserTest >> closeAllUserConnections [
+
+	| rabbitmqContainerId closeReason |
+
+	rabbitmqContainerId := self rabbitMQContainerID.
+
+	closeReason := 'CloseConnectionsTest'.
+
+	rabbitmqContainerId isEmpty
+		then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
+		otherwise: [
+			self
+				closeAllConnectionsOf: rabbitmqContainerId
+				for: self defaultRabbitMQWorkerUsername
+				because: closeReason
+			]
+]
+
+{ #category : 'private' }
+RabbitMQTextReverserTest >> defaultRabbitMQWorkerUsername [
+
+	^ AmqpConnectionBuilder usingAMQP091Protocol credentials username
 ]
 
 { #category : 'private' }
@@ -39,6 +68,12 @@ RabbitMQTextReverserTest >> publish: aText onQueueNamed: aQueueName [
 RabbitMQTextReverserTest >> queueName [
 
 	^ 'tasks-for-' , testSelector
+]
+
+{ #category : 'private' }
+RabbitMQTextReverserTest >> rabbitMQContainerID [
+
+	^ ( OSPlatform current resultOfCommand: 'docker ps -q --filter "name=rabbitmq"' ) trim
 ]
 
 { #category : 'private' }
@@ -79,13 +114,14 @@ RabbitMQTextReverserTest >> tearDown [
 ]
 
 { #category : 'tests' }
-RabbitMQTextReverserTest >> testProcessingMessageWhenChannelIsTemporallyLost [
+RabbitMQTextReverserTest >> testProcessingMessageWhenConnectionIsTemporallyLost [
 
 	| logger |
 
 	logger := MemoryLogger new.
 
-	self resumeWorkerDuring: [ "self
+	self resumeWorkerDuring: [
+		self
 			publish: 'Hello' onQueueNamed: self queueName;
 			publish: 'World' onQueueNamed: self queueName.
 
@@ -94,15 +130,28 @@ RabbitMQTextReverserTest >> testProcessingMessageWhenChannelIsTemporallyLost [
 		self
 			assert: reversedTexts size equals: 2;
 			assert: reversedTexts first equals: 'olleH';
-			assert: reversedTexts last equals: 'dlroW'."
-		logger runDuring: [ worker stop].
+			assert: reversedTexts last equals: 'dlroW'.
 
-		self publish: 'Test channel restored' onQueueNamed: self queueName
+		logger runDuring: [
+			self
+				closeAllUserConnections;
+				wait
+			].
+		self publish: 'Test connection restored' onQueueNamed: self queueName
 		].
+
 
 	self
 		assert: reversedTexts size equals: 3;
-		assert: reversedTexts last equals: 'derotser lennahc tseT'
+		assert: reversedTexts last equals: 'derotser noitcennoc tseT'.
+
+	self assert: logger recordings size equals: 2.
+
+	self assert: ( '*[ERROR] RabbitMQClient disconnected due to Connection closed' match:
+			  ( logger recordings at: 1 ) printString ).
+
+	self assert: ( '* [INFO] AMQP connection *->localhost:5672 established successfully' match:
+			  ( logger recordings at: 2 ) printString )
 ]
 
 { #category : 'tests' }
