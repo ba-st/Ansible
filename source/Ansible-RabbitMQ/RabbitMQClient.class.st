@@ -31,7 +31,7 @@ RabbitMQClient >> configureConnection: builder [
 { #category : 'private - configuring' }
 RabbitMQClient >> connectivityErrors [
 
-	^ NetworkError
+	^ NetworkError , ConnectionClosed , AmqpDisconnectedError
 ]
 
 { #category : 'private' }

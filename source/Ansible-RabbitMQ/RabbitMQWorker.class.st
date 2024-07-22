@@ -46,15 +46,10 @@ RabbitMQWorker >> ensureChannelOpen [
 
 	reconnect := [
 	             self ensureConnectedAndOpen.
-	             LogRecord emitInfo: 'Pase el ensureConnected para crear el channel'.
 	             channel := connection createChannel
 	             ].
 
-
-	channel ifNil: reconnect ifNotNil: [
-		LogRecord emitInfo: channel printString.
-		channel whenOpenDo: [  ] whenClosedDo: reconnect
-		].
+	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ].
 
 	self configureChannel
 ]
@@ -62,8 +57,8 @@ RabbitMQWorker >> ensureChannelOpen [
 { #category : 'private' }
 RabbitMQWorker >> logDisconnectionDueTo: anError [
 
-	LaunchpadLogRecord emitError:
-		( 'RabbitMQClient disconnected: <1s>' expandMacrosWith: anError messageText )
+	LogRecord emitError:
+		( 'RabbitMQClient disconnected due to <1s>' expandMacrosWith: anError messageText )
 ]
 
 { #category : 'private' }
@@ -86,7 +81,7 @@ RabbitMQWorker >> startProcessing [
 	self ensureChannelOpen.
 
 	[[ connection waitForEvent ]
-		on: AmqpDisconnectedError,ConnectionClosed 
+		on: self connectivityErrors
 		do: [ :error |
 			self
 				logDisconnectionDueTo: error;

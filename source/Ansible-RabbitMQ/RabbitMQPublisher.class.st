@@ -29,16 +29,16 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	^ self new initializeConfiguredBy: options
 ]
 
-{ #category : 'accessing' }
+{ #category : 'private - accessing' }
 RabbitMQPublisher >> channel [
 
-	^channel
+	^ channel
 ]
 
 { #category : 'private - accessing' }
 RabbitMQPublisher >> connectivityErrors [
 
-	^ AmqpDisconnectedError , NetworkError
+	^ NetworkError , ConnectionClosed , AmqpDisconnectedError
 ]
 
 { #category : 'private - connecting' }
@@ -47,9 +47,10 @@ RabbitMQPublisher >> ensureChannelOpen [
 	| reconnect |
 
 	reconnect := [
-		self ensureConnectedAndOpen.
-		channel := connection createChannel].
-	channel ifNil: reconnect ifNotNil: [channel whenOpenDo: [] whenClosedDo: reconnect]
+	             self ensureConnectedAndOpen.
+	             channel := connection createChannel
+	             ].
+	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ]
 ]
 
 { #category : 'private - connecting' }
