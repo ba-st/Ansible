@@ -311,6 +311,22 @@ AmqpChannel >> handleChannelClose: cmd [
 		onChannel: handler channelNumber	"TODO: notify callbacks of closure"
 ]
 
+{ #category : 'AMQP closing' }
+AmqpChannel >> hardCloseDescribedWith: aDescription [
+
+	| c |
+
+	handler closeReason
+		ifNil: [ c := protocolVersion channelCloseMethod new
+				replyCode: protocolVersion internalError;
+				replyText: 'Abnormal disconnection';
+				classId: 0;
+				methodId: 0.
+			handler rpc: c.
+			handler internalClose: c
+			]
+]
+
 { #category : 'initialization' }
 AmqpChannel >> initializeUsing: aChannelHandler [
 

@@ -78,11 +78,11 @@ AmqpConnection >> codec [
 { #category : 'accessing' }
 AmqpConnection >> connectionPairsDescription [
 
-	^ '<1s>:<2s>-><3s>:<4s>'
-		  expandMacrosWith: socket peerName asString
-		  with: socket port asString
+	^ '<1p>:<2p>-><3s>:<4p>'
+		  expandMacrosWith: socket peerName
+		  with: socket port
 		  with: hostname
-		  with: portNumber asString
+		  with: portNumber
 ]
 
 { #category : 'connection-handling' }
@@ -352,13 +352,9 @@ AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber ifConnectionClos
 
 	| ch |
 
-	LogRecord emitInfo: 'Llegue al RPC de la conexion'.
-
 	ch := self ensureChannel: aChannelNumber.
 	self sendMethod: aRequestMethod onChannel: aChannelNumber.
-	^ [ ch waitForReply: aRequestMethod acceptableResponseClasses ]
-		  on: ConnectionClosed
-		  do: [ LogRecord emitInfo: 'SE CERRO LA CONEXION EN EL WAIT FOR REPLY' ]
+	^ ch waitForReply: aRequestMethod acceptableResponseClasses
 ]
 
 { #category : 'connection-handling' }
@@ -445,21 +441,24 @@ AmqpConnection >> socketConnectionStatus [
 { #category : 'private-opening' }
 AmqpConnection >> startConnection [
 
-	| response |
+	| response nextFrame |
 
-	response := credentials responseFor: self nextFrame method.
-	response
-		ifNil: [ AmqpDisconnectedError
-				signal: 'No acceptable SASL mechanism for the given credentials' ].
+	nextFrame := self nextFrame.
+
+	nextFrame ifNil: [
+		self hardCloseDescribedWith: 'Failed retrieving next frame'.
+		^ self].
+
+	response := credentials responseFor: nextFrame method.
+	response ifNil: [
+		AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
 	self
-		sendMethod:
-			(self protocolClass connectionStartOkMethod new
-				clientProperties:
-					(Dictionary new
-						at: 'product' put: 'RabbitMQ Smalltalk';
-						yourself);
-				mechanism: response key;
-				response: response value)
+		sendMethod: ( self protocolClass connectionStartOkMethod new
+				  clientProperties: ( Dictionary new
+						    at: 'product' put: 'RabbitMQ Smalltalk';
+						    yourself );
+				  mechanism: response key;
+				  response: response value )
 		onChannel: 0.
 	credentials := nil
 ]
