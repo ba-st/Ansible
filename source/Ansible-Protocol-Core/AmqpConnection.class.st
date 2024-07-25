@@ -349,7 +349,9 @@ AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber ifConnectionClos
 
 	ch := self ensureChannel: aChannelNumber.
 	self sendMethod: aRequestMethod onChannel: aChannelNumber.
-	^ ch waitForReply: aRequestMethod acceptableResponseClasses
+	^ [ ch waitForReply: aRequestMethod acceptableResponseClasses ]
+		  on: AmqpDisconnectedError , ConnectionClosed
+		  do: [ :signal | aBlock cull: signal ]
 ]
 
 { #category : 'connection-handling' }
