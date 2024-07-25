@@ -226,15 +226,10 @@ AmqpConnection >> internalClose: method [
 { #category : 'connection-handling' }
 AmqpConnection >> mainLoopCycle [
 
-	| frame |
-
-	frame := self nextFrame.
-	frame ifNil: [
-		self hardCloseDescribedWith: 'Failed retrieving next frame'.
-		^ self
-		].
-	( frame isKindOf: AmqpHeartbeatFrame ) ifFalse: [
-		( channels at: frame channelNumber ) handleFrame: frame ]
+	self withNextFrameDo: [ :nextFrame |
+		( nextFrame isKindOf: AmqpHeartbeatFrame ) ifFalse: [
+			( channels at: nextFrame channelNumber ) handleFrame: nextFrame ]
+		]
 ]
 
 { #category : 'connection-handling' }
@@ -441,39 +436,36 @@ AmqpConnection >> socketConnectionStatus [
 { #category : 'private-opening' }
 AmqpConnection >> startConnection [
 
-	| response nextFrame |
+	self withNextFrameDo: [ :nextFrame |
+		| response |
 
-	nextFrame := self nextFrame.
-
-	nextFrame ifNil: [
-		self hardCloseDescribedWith: 'Failed retrieving next frame'.
-		^ self].
-
-	response := credentials responseFor: nextFrame method.
-	response ifNil: [
-		AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
-	self
-		sendMethod: ( self protocolClass connectionStartOkMethod new
-				  clientProperties: ( Dictionary new
-						    at: 'product' put: 'RabbitMQ Smalltalk';
-						    yourself );
-				  mechanism: response key;
-				  response: response value )
-		onChannel: 0.
-	credentials := nil
+		response := credentials responseFor: nextFrame method.
+		response ifNil: [
+			AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
+		self
+			sendMethod: ( self protocolClass connectionStartOkMethod new
+					  clientProperties: ( Dictionary new
+							    at: 'product' put: 'RabbitMQ Smalltalk';
+							    yourself );
+					  mechanism: response key;
+					  response: response value )
+			onChannel: 0.
+		credentials := nil
+		]
 ]
 
 { #category : 'private-opening' }
 AmqpConnection >> tuneConnection [
 
-	parameters applyServerSettings: self nextFrame method.
-	self
-		sendMethod:
-			(self protocolClass connectionTuneOkMethod new
-				channelMax: parameters channelMax;
-				frameMax: parameters frameMax;
-				heartbeat: parameters heartbeat)
-		onChannel: 0
+	self withNextFrameDo: [ :nextFrame |
+		parameters applyServerSettings: nextFrame method.
+		self
+			sendMethod: ( self protocolClass connectionTuneOkMethod new
+					  channelMax: parameters channelMax;
+					  frameMax: parameters frameMax;
+					  heartbeat: parameters heartbeat )
+			onChannel: 0
+		]
 ]
 
 { #category : 'accessing' }
@@ -502,4 +494,19 @@ AmqpConnection >> whenConnected: aBlock whenNot: anotherBlock [
 AmqpConnection >> whenOpen: aBlock whenNot: aClosedHandler [
 
 	^isOpen then: aBlock otherwise: aClosedHandler
+]
+
+{ #category : 'connection-handling' }
+AmqpConnection >> withNextFrameDo: aBlock [
+
+	| nextFrame |
+
+	nextFrame := self nextFrame.
+
+	nextFrame
+		ifNil: [
+			self hardCloseDescribedWith: 'Failed retrieving next frame'.
+			^ self
+			]
+		ifNotNil: aBlock
 ]
