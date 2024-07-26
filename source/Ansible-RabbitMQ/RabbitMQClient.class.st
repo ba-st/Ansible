@@ -67,7 +67,7 @@ RabbitMQClient >> initializeConnection [
 { #category : 'private - connecting' }
 RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
 
-	LaunchpadLogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
+	LogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
 			  expandMacrosWith: attemptNumber
 			  with: self retryCount + 1
 			  with: error messageText )
@@ -77,7 +77,7 @@ RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
 RabbitMQClient >> openConnection [
 
 	self withSuccessfulConnectionDo: [ :succesfulConnection | 
-		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ 
+		LogRecord emitInfo: 'Connecting to RabbitMQ' during: [ 
 			self
 				try: [ succesfulConnection open ]
 				onConnectivityErrorDo: [ :attemptNumber :error | 
@@ -104,11 +104,11 @@ RabbitMQClient >> start [
 	self openConnection.
 	connection
 		whenConnected: [ 
-			LaunchpadLogRecord emitInfo: 'Connected to RabbitMQ'.
+			LogRecord emitInfo: 'Connected to RabbitMQ'.
 			self startProcessing
 			]
 		whenNot: [ :error | 
-			LaunchpadLogRecord emitError:
+			LogRecord emitError:
 				( 'Cannot connect to RabbitMQ, <1s>' expandMacrosWith: error messageText ).
 			AmqpDisconnectedError signal: error messageText
 			]
@@ -125,7 +125,7 @@ RabbitMQClient >> stop [
 
 	connection
 		whenConnected: [ connection close ]
-		whenNot: [ LaunchpadLogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
+		whenNot: [ LogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
 ]
 
 { #category : 'private - connecting' }
@@ -146,7 +146,7 @@ RabbitMQClient >> withSuccessfulConnectionDo: aBlock [
 		try: [ connection whenConnected: [ aBlock value: connection ] whenNot: [ :error | error signal ] ]
 		onConnectivityErrorDo: [ :attemptNumber :error | 
 			self logFailedConnectionAttempt: attemptNumber dueTo: error.
-			LaunchpadLogRecord emitWarning: 'Reconnecting socket to RabbitMQ'.
+			LogRecord emitWarning: 'Reconnecting socket to RabbitMQ'.
 			connection initializeSocketConnection
 			]
 ]
