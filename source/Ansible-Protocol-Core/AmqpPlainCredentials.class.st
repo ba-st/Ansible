@@ -1,26 +1,27 @@
 Class {
-	#name : #AmqpPlainCredentials,
-	#superclass : #Object,
+	#name : 'AmqpPlainCredentials',
+	#superclass : 'Object',
 	#instVars : [
 		'username',
 		'password'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpPlainCredentials >> password [
 
 	^ password
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpPlainCredentials >> password: anObject [
 
 	password := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpPlainCredentials >> responseFor: aMethod [
 
 	| s |
@@ -37,13 +38,13 @@ AmqpPlainCredentials >> responseFor: aMethod [
 	^ 'PLAIN' -> s contents
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpPlainCredentials >> username [
 
 	^ username
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpPlainCredentials >> username: anObject [
 
 	username := anObject

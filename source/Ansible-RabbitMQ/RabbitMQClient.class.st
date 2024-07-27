@@ -5,34 +5,35 @@ I know how to connect to Rabbit MQ.
 My subclasses will act as different roles depending on the system needs.
 "
 Class {
-	#name : #RabbitMQClient,
-	#superclass : #Object,
+	#name : 'RabbitMQClient',
+	#superclass : 'Object',
 	#instVars : [
 		'connection'
 	],
-	#category : #'Ansible-RabbitMQ'
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #testing }
+{ #category : 'testing' }
 RabbitMQClient class >> isAbstract [
 
 	<ignoreForCoverage>
 	^ self = RabbitMQClient
 ]
 
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> configureConnection: builder [
 
 	self subclassResponsibility
 ]
 
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> connectivityErrors [
 
 	^ NetworkError
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 RabbitMQClient >> initializeConnection [
 
 	| builder |
@@ -42,7 +43,7 @@ RabbitMQClient >> initializeConnection [
 	connection := builder build
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private - connecting' }
 RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
 
 	LaunchpadLogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
@@ -51,7 +52,7 @@ RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
 			  with: error messageText )
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private - connecting' }
 RabbitMQClient >> openConnection [
 
 	self withSuccessfulConnectionDo: [ :succesfulConnection | 
@@ -64,19 +65,19 @@ RabbitMQClient >> openConnection [
 		]
 ]
 
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> options [
 
 	^ Dictionary new
 ]
 
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> retryCount [
 
 	^ self options at: #retryCount ifAbsent: [ 2 ]
 ]
 
-{ #category : #controlling }
+{ #category : 'controlling' }
 RabbitMQClient >> start [
 
 	self openConnection.
@@ -92,13 +93,13 @@ RabbitMQClient >> start [
 			]
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQClient >> startProcessing [
 
 	self subclassResponsibility
 ]
 
-{ #category : #controlling }
+{ #category : 'controlling' }
 RabbitMQClient >> stop [
 
 	connection
@@ -106,7 +107,7 @@ RabbitMQClient >> stop [
 		whenNot: [ LaunchpadLogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private - connecting' }
 RabbitMQClient >> try: aBlock onConnectivityErrorDo: failBlock [
 
 	Retry value: aBlock configuredBy: [ :retry | 
@@ -117,7 +118,7 @@ RabbitMQClient >> try: aBlock onConnectivityErrorDo: failBlock [
 		]
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private - connecting' }
 RabbitMQClient >> withSuccessfulConnectionDo: aBlock [
 
 	self

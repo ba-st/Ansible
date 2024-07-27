@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpExchangeDeclareBuilder,
-	#superclass : #Object,
+	#name : 'AmqpExchangeDeclareBuilder',
+	#superclass : 'Object',
 	#instVars : [
 		'name',
 		'type',
@@ -9,28 +9,29 @@ Class {
 		'arguments',
 		'protocolVersion'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpExchangeDeclareBuilder class >> named: aName of: aType for: aProtocolVersion [
 
 	^ self new initializeNamed: aName of: aType for: aProtocolVersion
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpExchangeDeclareBuilder >> beDurable [
 
 	durable := true
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpExchangeDeclareBuilder >> bePassive [
 
 	passive := true
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpExchangeDeclareBuilder >> buildApplying: aBlock [
 
 	aBlock value: self.
@@ -43,7 +44,7 @@ AmqpExchangeDeclareBuilder >> buildApplying: aBlock [
 		arguments: arguments
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpExchangeDeclareBuilder >> initializeNamed: aName of: aType for: aProtocolVersion [
 
 	protocolVersion := aProtocolVersion.

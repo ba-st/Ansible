@@ -1,10 +1,11 @@
 Class {
-	#name : #BaselineOfAnsible,
-	#superclass : #BaselineOf,
-	#category : #BaselineOfAnsible
+	#name : 'BaselineOfAnsible',
+	#superclass : 'BaselineOf',
+	#category : 'BaselineOfAnsible',
+	#package : 'BaselineOfAnsible'
 }
 
-{ #category : #baselines }
+{ #category : 'baselines' }
 BaselineOfAnsible >> baseline: spec [
 
 	<baseline>
@@ -21,13 +22,13 @@ BaselineOfAnsible >> baseline: spec [
 		]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 BaselineOfAnsible >> projectClass [
 
-	^ MetacelloCypressBaselineProject
+	^ MetacelloCypressBaselineProject 
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 BaselineOfAnsible >> setUpDependencies: spec [
 
 	spec
@@ -48,7 +49,7 @@ BaselineOfAnsible >> setUpDependencies: spec [
 		project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
 ]
 
-{ #category : #baselines }
+{ #category : 'baselines' }
 BaselineOfAnsible >> setUpDeploymentPackages: spec [
 
 	spec
@@ -69,7 +70,7 @@ BaselineOfAnsible >> setUpDeploymentPackages: spec [
 		group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
 ]
 
-{ #category : #baselines }
+{ #category : 'baselines' }
 BaselineOfAnsible >> setUpTestPackages: spec [
 
 	spec
@@ -83,7 +84,7 @@ BaselineOfAnsible >> setUpTestPackages: spec [
 		group: 'Tests' with: 'Ansible-RabbitMQ-Tests'
 ]
 
-{ #category : #baselines }
+{ #category : 'baselines' }
 BaselineOfAnsible >> setUpToolsPackages: spec [
 
 	spec

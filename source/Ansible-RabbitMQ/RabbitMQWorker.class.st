@@ -12,19 +12,20 @@ This concept is especially useful in web applications where it's impossible to h
 task during a short HTTP request window.
 "
 Class {
-	#name : #RabbitMQWorker,
-	#superclass : #RabbitMQClient,
-	#category : #'Ansible-RabbitMQ'
+	#name : 'RabbitMQWorker',
+	#superclass : 'RabbitMQClient',
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #testing }
+{ #category : 'testing' }
 RabbitMQWorker class >> isAbstract [
 
 	<ignoreForCoverage>
 	^ self = RabbitMQWorker
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQWorker >> process: payload [
 
 	"A message was received including the bytes in `payload`"
@@ -32,13 +33,13 @@ RabbitMQWorker >> process: payload [
 	self subclassResponsibility
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RabbitMQWorker >> queueName [
 
 	^ self subclassResponsibility
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
 	| channel |

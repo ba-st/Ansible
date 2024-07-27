@@ -2,16 +2,17 @@
 A RabbitMQTextReverserTest is a test class for testing the behavior of RabbitMQTextReverser
 "
 Class {
-	#name : #RabbitMQTextReverserTest,
-	#superclass : #TestCase,
+	#name : 'RabbitMQTextReverserTest',
+	#superclass : 'TestCase',
 	#instVars : [
 		'reversedTexts',
 		'workerProcess'
 	],
-	#category : #'Ansible-RabbitMQ-Tests'
+	#category : 'Ansible-RabbitMQ-Tests',
+	#package : 'Ansible-RabbitMQ-Tests'
 }
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQTextReverserTest >> publish: text onQueueNamed: aQueueName [
 
 	self withLocalhostConnectionDo: [ :connection | 
@@ -27,13 +28,13 @@ RabbitMQTextReverserTest >> publish: text onQueueNamed: aQueueName [
 		]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RabbitMQTextReverserTest >> queueName [
 
 	^ 'tasks-for-' , testSelector
 ]
 
-{ #category : #running }
+{ #category : 'running' }
 RabbitMQTextReverserTest >> setUp [
 
 	super setUp.
@@ -48,20 +49,20 @@ RabbitMQTextReverserTest >> setUp [
 		priority: Processor userBackgroundPriority
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RabbitMQTextReverserTest >> storeText: string [
 
 	reversedTexts add: string
 ]
 
-{ #category : #running }
+{ #category : 'running' }
 RabbitMQTextReverserTest >> tearDown [
 
 	workerProcess terminate.
 	super tearDown
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 RabbitMQTextReverserTest >> testProcessingMessages [
 
 	workerProcess resume.
@@ -81,7 +82,7 @@ RabbitMQTextReverserTest >> testProcessingMessages [
 		assert: reversedTexts last equals: 'dlroW'
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 RabbitMQTextReverserTest >> testProcessingOneMessage [
 
 	workerProcess resume.
@@ -95,13 +96,13 @@ RabbitMQTextReverserTest >> testProcessingOneMessage [
 	self withTheOnlyOneIn: reversedTexts do: [ :text | self assert: text equals: 'olleH' ]
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQTextReverserTest >> wait [
 
 	( Delay forMilliseconds: 200 ) wait
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 RabbitMQTextReverserTest >> withLocalhostConnectionDo: block [
 
 	| connection |

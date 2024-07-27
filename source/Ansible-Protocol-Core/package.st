@@ -1,1 +1,1 @@
-Package { #name : #'Ansible-Protocol-Core' }
+Package { #name : 'Ansible-Protocol-Core' }

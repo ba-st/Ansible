@@ -1,1 +1,1 @@
-Package { #name : #'Ansible-RabbitMQ' }
+Package { #name : 'Ansible-RabbitMQ' }

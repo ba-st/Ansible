@@ -1,45 +1,46 @@
 Class {
-	#name : #AmqpMethodFrame,
-	#superclass : #AmqpFrame,
+	#name : 'AmqpMethodFrame',
+	#superclass : 'AmqpFrame',
 	#instVars : [
 		'methodId',
 		'method'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> encodeBodyOn: codec [
 
 	codec nextLongPut: methodId.
 	method encodeOn: codec
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> method [
 
 	^ method
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> method: anObject [
 
 	method := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> methodId [
 
 	^ methodId
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> methodId: anObject [
 
 	methodId := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodFrame >> readFrom: connection length: length [
 
 	| codec |

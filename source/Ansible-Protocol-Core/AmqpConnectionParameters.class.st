@@ -1,15 +1,16 @@
 Class {
-	#name : #AmqpConnectionParameters,
-	#superclass : #Object,
+	#name : 'AmqpConnectionParameters',
+	#superclass : 'Object',
 	#instVars : [
 		'channelMax',
 		'frameMax',
 		'heartbeat'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> applyServerSettings: aTune [
 
 	channelMax := self combine: channelMax with: aTune channelMax.
@@ -17,19 +18,19 @@ AmqpConnectionParameters >> applyServerSettings: aTune [
 	heartbeat := self combine: heartbeat with: aTune heartbeat
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> channelMax [
 
 	^ channelMax
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> channelMax: anObject [
 
 	channelMax := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> combine: v1 with: v2 [
 
 	v1 = 0
@@ -39,25 +40,25 @@ AmqpConnectionParameters >> combine: v1 with: v2 [
 	^ v1 min: v2
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> frameMax [
 
 	^ frameMax
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> frameMax: anObject [
 
 	frameMax := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> heartbeat [
 
 	^ heartbeat
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnectionParameters >> heartbeat: anObject [
 
 	heartbeat := anObject

@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpQueueDeclareBuilder,
-	#superclass : #Object,
+	#name : 'AmqpQueueDeclareBuilder',
+	#superclass : 'Object',
 	#instVars : [
 		'protocolVersion',
 		'queueName',
@@ -10,40 +10,41 @@ Class {
 		'autoDelete',
 		'arguments'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpQueueDeclareBuilder class >> for: aProtocolVersion [
 	
 	^ self new initializeFor: aProtocolVersion 
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpQueueDeclareBuilder >> autoDelete [
 
 	autoDelete := true
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpQueueDeclareBuilder >> beDurable [
 	
 	durable := true
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpQueueDeclareBuilder >> beExclusive [
 	
 	exclusive := true
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpQueueDeclareBuilder >> bePassive [
 	
 	passive := true
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpQueueDeclareBuilder >> buildApplying: aBlock [
 
 	aBlock value: self.
@@ -57,7 +58,7 @@ AmqpQueueDeclareBuilder >> buildApplying: aBlock [
 		arguments: arguments
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpQueueDeclareBuilder >> initializeFor: aProtocolVersion [
 
 	protocolVersion := aProtocolVersion.
@@ -70,7 +71,7 @@ AmqpQueueDeclareBuilder >> initializeFor: aProtocolVersion [
 	arguments := nil
 ]
 
-{ #category : #configuring }
+{ #category : 'configuring' }
 AmqpQueueDeclareBuilder >> name: aQueueName [ 
 	
 	queueName := aQueueName

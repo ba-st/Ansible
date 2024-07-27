@@ -1,1 +1,1 @@
-Package { #name : #BaselineOfAnsible }
+Package { #name : 'BaselineOfAnsible' }

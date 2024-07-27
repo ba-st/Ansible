@@ -4,27 +4,28 @@ Using standard AMQP 0-9-1, the only way to guarantee that a message isn't lost i
 See [Publisher confirms](https://www.rabbitmq.com/confirms.html#publisher-confirms)
 "
 Class {
-	#name : #Amqp091ConfirmSelect,
-	#superclass : #AmqpProtocolMethod,
+	#name : 'Amqp091ConfirmSelect',
+	#superclass : 'AmqpProtocolMethod',
 	#instVars : [
 		'noWait'
 	],
-	#category : #'Ansible-RabbitMQ'
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelect >> acceptableResponseClasses [
 
 	^ Array with: Amqp091ConfirmSelectOk
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelect >> codecMethodId [
 
 	^ 5570570
 ]
 
-{ #category : #decoding }
+{ #category : 'decoding' }
 Amqp091ConfirmSelect >> decodeFrom: codec [
 
 	| bitBuffer |
@@ -33,7 +34,7 @@ Amqp091ConfirmSelect >> decodeFrom: codec [
 	noWait := (bitBuffer bitAnd: 1) ~= 0
 ]
 
-{ #category : #encoding }
+{ #category : 'encoding' }
 Amqp091ConfirmSelect >> encodeOn: codec [
 
 	| bitBuffer |
@@ -43,19 +44,19 @@ Amqp091ConfirmSelect >> encodeOn: codec [
 	codec nextOctetPut: bitBuffer
 ]
 
-{ #category : #testing }
+{ #category : 'testing' }
 Amqp091ConfirmSelect >> hasContents [
 
 	^false
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelect >> noWait [
 
 	^ noWait
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelect >> noWait: aValue [
 
 	noWait := aValue

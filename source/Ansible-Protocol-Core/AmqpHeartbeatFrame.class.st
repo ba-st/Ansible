@@ -1,10 +1,11 @@
 Class {
-	#name : #AmqpHeartbeatFrame,
-	#superclass : #AmqpFrame,
-	#category : #'Ansible-Protocol-Core'
+	#name : 'AmqpHeartbeatFrame',
+	#superclass : 'AmqpFrame',
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpHeartbeatFrame >> encodeBodyOn: codec [
 
 	"do nothing."
@@ -12,7 +13,7 @@ AmqpHeartbeatFrame >> encodeBodyOn: codec [
 	
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpHeartbeatFrame >> readFrom: connection length: length [
 
 	length = 0

@@ -1,11 +1,12 @@
 Class {
-	#name : #AMQPRabbitTest,
-	#superclass : #TestCase,
-	#category : #'Ansible-RabbitMQ-Tests'
+	#name : 'AMQPRabbitTest',
+	#superclass : 'TestCase',
+	#category : 'Ansible-RabbitMQ-Tests',
+	#package : 'Ansible-RabbitMQ-Tests'
 }
 
-{ #category : #private }
-AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [
+{ #category : 'private' }
+AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [ 
 
 	self withLocalhostConnectionDo: [ :connection | 
 		| channel queue confirmationWasReceived |
@@ -35,7 +36,7 @@ AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 		]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPRabbitTest >> testBasicConsumeUsingPublisherConfirmation [
 
 	| channel queue |
@@ -71,7 +72,7 @@ AMQPRabbitTest >> testBasicConsumeUsingPublisherConfirmation [
 			]
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 AMQPRabbitTest >> withLocalhostConnectionDo: block [
 
 	| connection |

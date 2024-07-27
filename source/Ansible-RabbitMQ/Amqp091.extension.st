@@ -1,12 +1,12 @@
-Extension { #name : #Amqp091 }
+Extension { #name : 'Amqp091' }
 
-{ #category : #'*Ansible-RabbitMQ' }
+{ #category : '*Ansible-RabbitMQ' }
 Amqp091 class >> basicNackMethod [
 
 	^methodIds at: 3932280 ifAbsentPut: [Amqp091BasicNack]
 ]
 
-{ #category : #'*Ansible-RabbitMQ' }
+{ #category : '*Ansible-RabbitMQ' }
 Amqp091 class >> confirmSelectMethod [
 
 	^methodIds

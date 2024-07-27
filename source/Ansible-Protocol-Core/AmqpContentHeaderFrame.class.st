@@ -1,39 +1,40 @@
 Class {
-	#name : #AmqpContentHeaderFrame,
-	#superclass : #AmqpFrame,
+	#name : 'AmqpContentHeaderFrame',
+	#superclass : 'AmqpFrame',
 	#instVars : [
 		'classId',
 		'bodySize',
 		'properties'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> bodySize [
 
 	^ bodySize
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> bodySize: anObject [
 
 	bodySize := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> classId [
 
 	^ classId
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> classId: anObject [
 
 	classId := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> encodeBodyOn: codec [
 
 	codec nextShortPut: classId.
@@ -42,19 +43,19 @@ AmqpContentHeaderFrame >> encodeBodyOn: codec [
 	properties encodeOn: codec
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> properties [
 
 	^ properties
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> properties: anObject [
 
 	properties := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentHeaderFrame >> readFrom: connection length: length [
 
 	| codec |

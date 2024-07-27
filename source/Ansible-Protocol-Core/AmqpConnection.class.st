@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpConnection,
-	#superclass : #Object,
+	#name : 'AmqpConnection',
+	#superclass : 'Object',
 	#instVars : [
 		'socket',
 		'codec',
@@ -17,10 +17,11 @@ Class {
 		'socketConnectionStatus',
 		'portNumber'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpConnection class >> to: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
 	^ self new
@@ -31,7 +32,7 @@ AmqpConnection class >> to: aHostname over: aPort using: aProtocolVersion with: 
 		  parameterizedBy: connectionParameters
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> close [
 
 	| connectionClose |
@@ -51,19 +52,19 @@ AmqpConnection >> close [
 	socket close
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> closeReason [
 
 	^ closeReason
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnection >> codec [
 
 	^ codec
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> createChannel [
 
 	| handler |
@@ -73,27 +74,27 @@ AmqpConnection >> createChannel [
 	^ AmqpChannel using: handler
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnection >> credentials [
 
 	^ credentials
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> ensureChannel: channelNumber [
 
 	self ensureOpen.
 	^ ( channels at: channelNumber ) ensureOpen
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> ensureOpen [
 
 	closeReason notNil
 		ifTrue: [ AmqpDisconnectedError signal: 'Connection closed' ]
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> handleConnectionClose: cmd [
 
 	self internalClose: cmd method.
@@ -102,7 +103,7 @@ AmqpConnection >> handleConnectionClose: cmd [
 	socket close
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> hardClose [
 
 	| connectionClose |
@@ -118,7 +119,7 @@ AmqpConnection >> hardClose [
 	socket close
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpConnection >> initialize [
 
 	super initialize.
@@ -129,13 +130,13 @@ AmqpConnection >> initialize [
 	nextChannel := 0
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpConnection >> initializeHeartbeatSender [
 
 	heartbeatSender := AmqpHeartbeatSender keepingOpen: self
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpConnection >> initializeSocketConnection [
 
 	socket := Socket newTCP.
@@ -150,7 +151,7 @@ AmqpConnection >> initializeSocketConnection [
 			]
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpConnection >> initializeTo: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
 
 	protocolClass := aProtocolVersion.
@@ -162,7 +163,7 @@ AmqpConnection >> initializeTo: aHostname over: aPort using: aProtocolVersion wi
 	self initializeHeartbeatSender
 ]
 
-{ #category : #'private-opening' }
+{ #category : 'private-opening' }
 AmqpConnection >> installChannel0 [
 
 	| channel |
@@ -171,7 +172,7 @@ AmqpConnection >> installChannel0 [
 	channel mapEvent: self protocolClass connectionCloseMethod to: self selector: #handleConnectionClose:
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> internalClose: method [
 
 	closeReason
@@ -181,7 +182,7 @@ AmqpConnection >> internalClose: method [
 			]
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> mainLoopCycle [
 
 	| frame |
@@ -194,7 +195,7 @@ AmqpConnection >> mainLoopCycle [
 		ifFalse: [ (channels at: frame channelNumber) handleFrame: frame ]
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> nextChannel [
 
 	| tries limit |
@@ -214,7 +215,7 @@ AmqpConnection >> nextChannel [
 	^ nextChannel
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> nextFrame [
 
 	| typeCode channel length frameType frame |
@@ -237,7 +238,7 @@ AmqpConnection >> nextFrame [
 	] repeat
 ]
 
-{ #category : #opening }
+{ #category : 'opening' }
 AmqpConnection >> open [
 
 	codec := AmqpCodec
@@ -256,7 +257,7 @@ AmqpConnection >> open [
 	heartbeatSender startBeatingEvery: parameters heartbeat
 ]
 
-{ #category : #'private-opening' }
+{ #category : 'private-opening' }
 AmqpConnection >> openConnection [
 
 
@@ -269,7 +270,7 @@ AmqpConnection >> openConnection [
 	isOpen := true.
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> processAsyncEvents [
 
 	[ self ensureOpen.
@@ -277,19 +278,19 @@ AmqpConnection >> processAsyncEvents [
 	] whileTrue: [ self mainLoopCycle ]
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> protocolClass [
 
 	^ protocolClass
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> resetChannel: channelNumber [
 
 	channels removeKey: channelNumber ifAbsent: [  ]
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> rpc: requestMethod onChannel: channelNumber [
 
 	| ch |
@@ -299,7 +300,7 @@ AmqpConnection >> rpc: requestMethod onChannel: channelNumber [
 	^ ch waitForReply: requestMethod acceptableResponseClasses
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: aStartingPosition onChannel: aChannelNumber [
 
 	| length |
@@ -314,14 +315,14 @@ AmqpConnection >> sendBodyFrameContaining: aByteArray startingAt: aStartingPosit
 	^ aStartingPosition + length
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> sendFrame: aFrame [
 
 	aFrame encodeOn: codec.
 	codec nextOctetPut: self protocolClass frameEnd
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> sendMethod: aMethod onChannel: aChannelNumber [
 
 	self
@@ -334,7 +335,7 @@ AmqpConnection >> sendMethod: aMethod onChannel: aChannelNumber [
 	codec flush
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray onChannel: channelNumber [
 
 	| pos |
@@ -361,20 +362,20 @@ AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray o
 	codec flush
 ]
 
-{ #category : #'private-opening' }
+{ #category : 'private-opening' }
 AmqpConnection >> sendProtocolHeader [
 
 	codec nextPutAll: self protocolClass protocolHeader.
 	codec flush
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnection >> setChannel: aChannelNumber to: aChannelHandler [
 
 	channels at: aChannelNumber put: aChannelHandler
 ]
 
-{ #category : #'private-opening' }
+{ #category : 'private-opening' }
 AmqpConnection >> startConnection [
 
 	| response |
@@ -396,7 +397,7 @@ AmqpConnection >> startConnection [
 	credentials := nil
 ]
 
-{ #category : #'private-opening' }
+{ #category : 'private-opening' }
 AmqpConnection >> tuneConnection [
 
 	parameters applyServerSettings: self nextFrame method.
@@ -409,13 +410,13 @@ AmqpConnection >> tuneConnection [
 		onChannel: 0
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConnection >> virtualHost [
 
 	^ virtualHost
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> waitForEvent [
 
 	self ensureOpen.
@@ -425,7 +426,7 @@ AmqpConnection >> waitForEvent [
 	^ self processAsyncEvents
 ]
 
-{ #category : #'connection-handling' }
+{ #category : 'connection-handling' }
 AmqpConnection >> whenConnected: aBlock whenNot: anotherBlock [
 
 	^socketConnectionStatus whenConnected: aBlock whenNot: anotherBlock

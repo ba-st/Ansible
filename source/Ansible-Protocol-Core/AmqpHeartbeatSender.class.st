@@ -1,21 +1,22 @@
 Class {
-	#name : #AmqpHeartbeatSender,
-	#superclass : #Object,
+	#name : 'AmqpHeartbeatSender',
+	#superclass : 'Object',
 	#instVars : [
 		'connection',
 		'process',
 		'isStarted'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpHeartbeatSender class >> keepingOpen: anAmqpConnection [
 
 	^ self new initializeKeepingOpen: anAmqpConnection
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> heartbeatFrame [
 
 	^ AmqpHeartbeatFrame new
@@ -24,14 +25,14 @@ AmqpHeartbeatSender >> heartbeatFrame [
 		yourself
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpHeartbeatSender >> initializeKeepingOpen: anAmqpConnection [
 
 	connection := anAmqpConnection.
 	isStarted := false 
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> spawnProcessSendingHeartbeatEvery: aTimeInterval [
 
 	^ ( Process
@@ -49,7 +50,7 @@ AmqpHeartbeatSender >> spawnProcessSendingHeartbeatEvery: aTimeInterval [
 		yourself
 ]
 
-{ #category : #'startup-shutdown' }
+{ #category : 'startup-shutdown' }
 AmqpHeartbeatSender >> startBeatingEvery: aTimeInterval [
 
 	aTimeInterval ~= 0
@@ -59,7 +60,7 @@ AmqpHeartbeatSender >> startBeatingEvery: aTimeInterval [
 			]
 ]
 
-{ #category : #'startup-shutdown' }
+{ #category : 'startup-shutdown' }
 AmqpHeartbeatSender >> stop [
 
 	process terminate

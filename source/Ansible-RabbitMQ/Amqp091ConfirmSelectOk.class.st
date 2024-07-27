@@ -1,30 +1,31 @@
 Class {
-	#name : #Amqp091ConfirmSelectOk,
-	#superclass : #AmqpProtocolMethod,
-	#category : #'Ansible-RabbitMQ'
+	#name : 'Amqp091ConfirmSelectOk',
+	#superclass : 'AmqpProtocolMethod',
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelectOk >> acceptableResponseClasses [
 
 	^ #()
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 Amqp091ConfirmSelectOk >> codecMethodId [
 
 	^ 5570571
 ]
 
-{ #category : #decoding }
+{ #category : 'decoding' }
 Amqp091ConfirmSelectOk >> decodeFrom: codec [
 ]
 
-{ #category : #encoding }
+{ #category : 'encoding' }
 Amqp091ConfirmSelectOk >> encodeOn: codec [
 ]
 
-{ #category : #testing }
+{ #category : 'testing' }
 Amqp091ConfirmSelectOk >> hasContents [
 
 	^false
