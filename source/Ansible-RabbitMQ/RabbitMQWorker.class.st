@@ -14,9 +14,6 @@ task during a short HTTP request window.
 Class {
 	#name : 'RabbitMQWorker',
 	#superclass : 'RabbitMQClient',
-	#instVars : [
-		'channel'
-	],
 	#category : 'Ansible-RabbitMQ',
 	#package : 'Ansible-RabbitMQ'
 }
@@ -29,29 +26,16 @@ RabbitMQWorker class >> isAbstract [
 ]
 
 { #category : 'private' }
-RabbitMQWorker >> configureChannel [
+RabbitMQWorker >> declareQueueInChannel [
 
-	channel queueDeclare: self queueName durable: true.
-	channel prefetchCount: 1.
-	channel consumeFrom: self queueName applying: [ :message |
-		self process: message body.
-		channel basicAck: message method deliveryTag
-		]
+  channel queueDeclare: self queueName durable: true
 ]
 
 { #category : 'private' }
 RabbitMQWorker >> ensureChannelOpen [
 
-	| reconnect |
-
-	reconnect := [
-	             self ensureConnectedAndOpen.
-	             channel := connection createChannel
-	             ].
-
-	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ].
-
-	self configureChannel
+  super ensureChannelOpen.
+  self declareQueueInChannel
 ]
 
 { #category : 'private' }
@@ -75,15 +59,37 @@ RabbitMQWorker >> queueName [
 	^ self subclassResponsibility
 ]
 
+{ #category : 'controlling' }
+RabbitMQWorker >> start [
+
+  super start.
+  self startProcessing
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> startConsumingFromQueue [
+
+  self ensureChannelOpen.
+
+  channel prefetchCount: 1.
+  channel consumeFrom: self queueName applying: [ :message |
+      self process: message body.
+      channel basicAck: message method deliveryTag
+    ]
+]
+
 { #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
-	self ensureChannelOpen.
+  self startConsumingFromQueue.
 
-	[[ connection waitForEvent ]
-		on: self connectivityErrors
-		do: [ :error |
-			self
-				logDisconnectionDueTo: error;
-				ensureChannelOpen]] repeat
+  [
+    [ connection waitForEvent ]
+      on: self connectivityErrors
+      do: [ :error |
+          self
+            logDisconnectionDueTo: error;
+            startConsumingFromQueue
+        ]
+  ] repeat
 ]

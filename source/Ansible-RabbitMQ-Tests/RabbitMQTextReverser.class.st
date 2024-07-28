@@ -20,17 +20,13 @@ RabbitMQTextReverser >> channel [
 	^ channel
 ]
 
-{ #category : 'private' }
-RabbitMQTextReverser >> configureConnection: builder [
-
-	
-]
-
 { #category : 'initialization' }
 RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 
-	testCase := aTestCase.
-	self initializeConnection
+  testCase := aTestCase.
+  self initializeConfiguredBy: ( Dictionary new
+        at: #hostname put: 'localhost';
+        yourself )
 ]
 
 { #category : 'private' }
