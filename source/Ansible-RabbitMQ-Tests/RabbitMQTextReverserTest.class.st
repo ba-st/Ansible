@@ -7,11 +7,21 @@ Class {
 	#instVars : [
 		'reversedTexts',
 		'workerProcess',
-		'worker'
+		'worker',
+		'loggingAsserter'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
 }
+
+{ #category : 'adding' }
+RabbitMQTextReverserTest >> addTimestampRegexTo: aLogEntryCollection [ 
+
+  ^ aLogEntryCollection collect: [ :regexExpression |
+        '\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}(\.\d+)?(\+|-)(\d+\:\d+) <1s>' expandMacrosWith:
+          regexExpression
+      ]
+]
 
 { #category : 'private' }
 RabbitMQTextReverserTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
@@ -51,17 +61,10 @@ RabbitMQTextReverserTest >> defaultRabbitMQWorkerUsername [
 { #category : 'private' }
 RabbitMQTextReverserTest >> publish: aText onQueueNamed: aQueueName [
 
-	self withLocalhostConnectionDo: [ :connection |
-		| channel |
+  | publisher |
+  publisher := RabbitMQPublisher configuredBy: [  ].
 
-		channel := connection createChannel.
-		channel queueDeclare: aQueueName durable: true.
-		channel
-			basicPublish: aText utf8Encoded
-			exchange: ''
-			routingKey: aQueueName
-			properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-		]
+  publisher publishOnly: aText onQueueNamed: aQueueName
 ]
 
 { #category : 'accessing' }
@@ -86,10 +89,25 @@ RabbitMQTextReverserTest >> resumeWorkerDuring: aBlock [
 	self wait
 ]
 
+{ #category : 'private - support' }
+RabbitMQTextReverserTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRegexes: expectedLogEntries [ 
+
+  | expectedLogEntriesWithTimestamp |
+
+  expectedLogEntriesWithTimestamp := self addTimestampRegexTo: expectedLogEntries.
+
+  loggingAsserter
+    runMemoryLoggerDuring: aBlock;
+    assertLogRecordsMatchUsing: expectedLogEntriesWithTimestamp
+]
+
 { #category : 'running' }
 RabbitMQTextReverserTest >> setUp [
 
 	super setUp.
+	
+	loggingAsserter := LoggingAsserter on: self.
+	
 	reversedTexts := OrderedCollection new.
 
 	worker := RabbitMQTextReverser workingWith: self.
@@ -116,42 +134,35 @@ RabbitMQTextReverserTest >> tearDown [
 { #category : 'tests' }
 RabbitMQTextReverserTest >> testProcessingMessageWhenConnectionIsTemporallyLost [
 
-	| logger |
+  self resumeWorkerDuring: [
+      self
+        publish: 'Hello' onQueueNamed: self queueName;
+        publish: 'World' onQueueNamed: self queueName.
 
-	logger := MemoryLogger new.
+      self wait.
 
-	self resumeWorkerDuring: [
-		self
-			publish: 'Hello' onQueueNamed: self queueName;
-			publish: 'World' onQueueNamed: self queueName.
+      self
+        assert: reversedTexts size equals: 2;
+        assert: reversedTexts first equals: 'olleH';
+        assert: reversedTexts last equals: 'dlroW'.
 
-		self wait.
+      self
+        runMemoryLoggerDuring: [
+            self
+              closeAllUserConnections;
+              wait
+          ]
+        assertingLogRecordsMatchRegexes:
+          { '\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }.
 
-		self
-			assert: reversedTexts size equals: 2;
-			assert: reversedTexts first equals: 'olleH';
-			assert: reversedTexts last equals: 'dlroW'.
-
-		logger runDuring: [
-			self
-				closeAllUserConnections;
-				wait
-			].
-		self publish: 'Test connection restored' onQueueNamed: self queueName
-		].
+      self publish: 'Test connection restored' onQueueNamed: self queueName
+    ].
 
 
-	self
-		assert: reversedTexts size equals: 3;
-		assert: reversedTexts last equals: 'derotser noitcennoc tseT'.
-
-	self assert: logger recordings size equals: 2.
-
-	self assert: ( '*[ERROR] RabbitMQClient disconnected due to Connection closed' match:
-			  ( logger recordings at: 1 ) printString ).
-
-	self assert: ( '* [INFO] AMQP connection *->localhost:5672 established successfully' match:
-			  ( logger recordings at: 2 ) printString )
+  self
+    assert: reversedTexts size equals: 3;
+    assert: reversedTexts last equals: 'derotser noitcennoc tseT'
 ]
 
 { #category : 'tests' }
@@ -181,21 +192,4 @@ RabbitMQTextReverserTest >> testProcessingOneMessage [
 RabbitMQTextReverserTest >> wait [
 
 	( Delay forMilliseconds: 200 ) wait
-]
-
-{ #category : 'private' }
-RabbitMQTextReverserTest >> withLocalhostConnectionDo: aBlock [
-
-	| connection |
-
-	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
-
-	connection open.
-
-	connection
-		whenConnected: [
-			aBlock value: connection.
-			connection close
-			]
-		whenNot: [ :error | self fail: error messageText ]
 ]
