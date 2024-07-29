@@ -22,6 +22,14 @@ Class {
 }
 
 { #category : 'testing' }
+RabbitMQWorker class >> configuredBy: aConfigurationAction doingWithPayload: aPayloadProcessor [
+
+  ^ self
+      configuredBy: aConfigurationAction
+      processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
+]
+
+{ #category : 'testing' }
 RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWith: aMessageProcessor [
 
   | options |
@@ -36,7 +44,7 @@ RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWit
 { #category : 'private' }
 RabbitMQWorker >> declareQueueInChannel [
 
-  channel queueDeclare: self queueName durable: true
+  channel queueDeclare: self queueName durable: ( options at: #queueDurable ifAbsent: [ true ] )
 ]
 
 { #category : 'private' }
@@ -81,7 +89,7 @@ RabbitMQWorker >> startConsumingFromQueue [
 
   channel prefetchCount: 1.
   channel consumeFrom: self queueName applying: [ :message |
-      messageProcessor value: message body.
+      messageProcessor value: message.
       channel basicAck: message method deliveryTag
     ]
 ]
