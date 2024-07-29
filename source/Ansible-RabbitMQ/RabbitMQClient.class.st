@@ -32,7 +32,7 @@ RabbitMQClient >> channel [
 { #category : 'private - configuring' }
 RabbitMQClient >> connectivityErrors [
 
-	^ NetworkError , ConnectionClosed , AmqpDisconnectedError
+	^ NetworkError , AmqpDisconnectedError
 ]
 
 { #category : 'initialization' }

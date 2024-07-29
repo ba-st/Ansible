@@ -19,7 +19,7 @@ AmqpHeartbeatSender class >> keepingOpen: anAmqpConnection [
 { #category : 'accessing' }
 AmqpHeartbeatSender >> connectivityErrors [
 
-  ^ NetworkError , ConnectionClosed , AmqpDisconnectedError
+  ^ NetworkError , AmqpDisconnectedError
 ]
 
 { #category : 'accessing' }
