@@ -9,7 +9,6 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'connection',
-		'builder',
 		'channel',
 		'options'
 	],
@@ -24,10 +23,28 @@ RabbitMQClient class >> isAbstract [
 	^ self = RabbitMQClient
 ]
 
+{ #category : 'publishing' }
+RabbitMQClient >> channel [
+
+  ^ channel
+]
+
 { #category : 'private - configuring' }
 RabbitMQClient >> connectivityErrors [
 
 	^ NetworkError , ConnectionClosed , AmqpDisconnectedError
+]
+
+{ #category : 'initialization' }
+RabbitMQClient >> createAMQPConnection [
+
+  | builder |
+  builder := AmqpConnectionBuilder usingAMQP091Protocol.
+  builder hostname: ( options at: #hostname ifAbsent: [ 'localhost' ] ).
+  builder portNumber: ( options at: #port ifAbsent: [ 5672 ] ).
+  builder username: ( options at: #username ifAbsent: [ 'guest' ] ).
+  builder password: ( options at: #password ifAbsent: [ 'guest' ] ).
+  ^ builder build
 ]
 
 { #category : 'private' }
@@ -50,7 +67,7 @@ RabbitMQClient >> ensureConnectedAndOpen [
 	createConnection := [
 		self
 			try: [
-				connection := builder build.
+				connection := self createAMQPConnection.
 				connection open]
 			onConnectivityErrorDo: [:attemptNumber :error |
 				self logFailedConnectionAttempt: attemptNumber dueTo: error]].
@@ -65,14 +82,9 @@ RabbitMQClient >> ensureConnectedAndOpen [
 ]
 
 { #category : 'initialization' }
-RabbitMQClient >> initializeConfiguredBy: anOptionsDictionary [
+RabbitMQClient >> initialize [
 
-  options := anOptionsDictionary.
-  builder := AmqpConnectionBuilder usingAMQP091Protocol.
-  builder hostname: ( options at: #hostname ).
-  builder portNumber: ( options at: #port ifAbsent: [ 5672 ] ).
-  builder username: ( options at: #username ifAbsent: [ 'guest' ] ).
-  builder password: ( options at: #password ifAbsent: [ 'guest' ] )
+  options := Dictionary new
 ]
 
 { #category : 'private - connecting' }

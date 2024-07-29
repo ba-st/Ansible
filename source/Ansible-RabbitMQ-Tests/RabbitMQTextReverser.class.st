@@ -1,8 +1,9 @@
 Class {
 	#name : 'RabbitMQTextReverser',
-	#superclass : 'RabbitMQWorker',
+	#superclass : 'Object',
 	#instVars : [
-		'testCase'
+		'testCase',
+		'worker'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -17,26 +18,29 @@ RabbitMQTextReverser class >> workingWith: aTestCase [
 { #category : 'accessing' }
 RabbitMQTextReverser >> channel [
 
-	^ channel
+	^ worker channel
 ]
 
 { #category : 'initialization' }
 RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 
-  testCase := aTestCase.
-  self initializeConfiguredBy: ( Dictionary new
-        at: #hostname put: 'localhost';
-        yourself )
-]
-
-{ #category : 'private' }
-RabbitMQTextReverser >> process: payload [
-
-	testCase storeText: payload utf8Decoded reversed
+  worker := RabbitMQWorker
+              configuredBy: [ :options |
+                  options
+                    at: #hostname put: 'localhost';
+                    at: #queueName put: aTestCase queueName
+                ]
+              processingMessagesWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
 ]
 
 { #category : 'accessing' }
-RabbitMQTextReverser >> queueName [
+RabbitMQTextReverser >> start [
 
-	^ testCase queueName
+  ^ worker start
+]
+
+{ #category : 'accessing' }
+RabbitMQTextReverser >> stop [
+
+  ^ worker stop
 ]

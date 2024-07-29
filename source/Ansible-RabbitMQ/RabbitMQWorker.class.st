@@ -14,15 +14,23 @@ task during a short HTTP request window.
 Class {
 	#name : 'RabbitMQWorker',
 	#superclass : 'RabbitMQClient',
+	#instVars : [
+		'messageProcessor'
+	],
 	#category : 'Ansible-RabbitMQ',
 	#package : 'Ansible-RabbitMQ'
 }
 
 { #category : 'testing' }
-RabbitMQWorker class >> isAbstract [
+RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWith: aMessageProcessor [
 
-	<ignoreForCoverage>
-	^ self = RabbitMQWorker
+  | options |
+  options := Dictionary new.
+  aConfigurationAction cull: options.
+  options
+    at: #queueName
+    ifAbsent: [ InstanceCreationFailed signal: 'Missing name of the queue to consume from' ].
+  ^ self new initializeConfiguredBy: options processingMessagesWith: aMessageProcessor
 ]
 
 { #category : 'private' }
@@ -39,24 +47,24 @@ RabbitMQWorker >> ensureChannelOpen [
 ]
 
 { #category : 'private' }
+RabbitMQWorker >> initializeConfiguredBy: anOptionsDictionary processingMessagesWith: aMessageProcessor [
+
+  super initialize.
+  options := anOptionsDictionary.
+  messageProcessor := aMessageProcessor
+]
+
+{ #category : 'private' }
 RabbitMQWorker >> logDisconnectionDueTo: anError [
 
 	LogRecord emitError:
 		( 'RabbitMQClient disconnected due to <1s>' expandMacrosWith: anError messageText )
 ]
 
-{ #category : 'private' }
-RabbitMQWorker >> process: payload [
-
-	"A message was received including the bytes in `payload`"
-
-	self subclassResponsibility
-]
-
 { #category : 'accessing' }
 RabbitMQWorker >> queueName [
 
-	^ self subclassResponsibility
+	^ options at: #queueName
 ]
 
 { #category : 'controlling' }
@@ -73,7 +81,7 @@ RabbitMQWorker >> startConsumingFromQueue [
 
   channel prefetchCount: 1.
   channel consumeFrom: self queueName applying: [ :message |
-      self process: message body.
+      messageProcessor value: message body.
       channel basicAck: message method deliveryTag
     ]
 ]

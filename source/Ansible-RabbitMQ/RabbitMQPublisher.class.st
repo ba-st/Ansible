@@ -19,14 +19,15 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	| options |
 
 	options := Dictionary new.
-	aConfigurationAction value: options.
+	aConfigurationAction cull: options.
 	^ self new initializeConfiguredBy: options
 ]
 
-{ #category : 'publishing' }
-RabbitMQPublisher >> channel [
+{ #category : 'initialization' }
+RabbitMQPublisher >> initializeConfiguredBy: anOptionsDictionary [
 
-  ^ channel
+  super initialize.
+  options := anOptionsDictionary
 ]
 
 { #category : 'publishing' }
