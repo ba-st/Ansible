@@ -17,6 +17,12 @@ AmqpHeartbeatSender class >> keepingOpen: anAmqpConnection [
 ]
 
 { #category : 'accessing' }
+AmqpHeartbeatSender >> connectivityErrors [
+
+  ^ NetworkError , ConnectionClosed , AmqpDisconnectedError
+]
+
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> heartbeatFrame [
 
 	^ AmqpHeartbeatFrame new
@@ -33,35 +39,51 @@ AmqpHeartbeatSender >> initializeKeepingOpen: anAmqpConnection [
 ]
 
 { #category : 'accessing' }
+AmqpHeartbeatSender >> mainKeepAliveCycleEvery: aTimeInterval [
+
+  ^ [
+      [
+        ( Delay forSeconds: aTimeInterval ) wait.
+        [
+          connection sendFrame: self heartbeatFrame.
+          connection codec flush
+        ]
+          on: self connectivityErrors
+          do: [ :signal |
+              LogRecord emitError:
+                ( 'AMQP Heartbeat failed unexpectedly (<1s>).' expandMacrosWith: signal messageText ).
+              connection hardCloseDescribedWith: signal messageText.
+              ^ self
+            ]
+      ] repeat
+    ] ensure: [ self stop ]
+]
+
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> spawnProcessSendingHeartbeatEvery: aTimeInterval [
 
-	^ ( Process
-			forContext: [ 
-				[ 
-					[ 
-						( Delay forSeconds: aTimeInterval ) wait.
-						connection sendFrame: self heartbeatFrame.
-						connection codec flush
-					] repeat
-				] ensure: [ process terminate ]
-			] asContext
-		priority: Processor userBackgroundPriority )
-		name: 'Heartbeat sender';
-		yourself
+  ^ ( Process
+        forContext: [ self mainKeepAliveCycleEvery: aTimeInterval ] asContext
+        priority: Processor userBackgroundPriority )
+      name: 'Heartbeat sender';
+      yourself
 ]
 
 { #category : 'startup-shutdown' }
-AmqpHeartbeatSender >> startBeatingEvery: aTimeInterval [
+AmqpHeartbeatSender >> startBeatingEvery: aTimeInSeconds [
 
-	aTimeInterval ~= 0
-		ifTrue: [ process := self spawnProcessSendingHeartbeatEvery: aTimeInterval.
-			process resume.
-			isStarted := true
-			]
+  ( aTimeInSeconds strictlyPositive and: [ isStarted not ] ) then: [
+      process := self spawnProcessSendingHeartbeatEvery: aTimeInSeconds.
+      process resume.
+      isStarted := true
+    ]
 ]
 
 { #category : 'startup-shutdown' }
 AmqpHeartbeatSender >> stop [
 
-	process terminate
+  isStarted then: [
+      process ifNotNil: #terminate.
+      isStarted := false
+    ]
 ]
