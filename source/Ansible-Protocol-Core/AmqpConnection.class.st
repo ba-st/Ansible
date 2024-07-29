@@ -166,29 +166,24 @@ AmqpConnection >> initializeHeartbeatSender [
 { #category : 'initialization' }
 AmqpConnection >> initializeSocketConnection [
 
-	socket := Socket newTCP.
-	[
-	socket connectToHostNamed: hostname port: portNumber.
-	socketConnectionStatus := SuccesfulSocketConnection new
-	]
-		on: NetworkError
-		do: [ :error |
-			socketConnectionStatus := FailedSocketConnection dueTo: error.
-			error return
-			].
+  socket := Socket newTCP.
+  [
+    socket connectToHostNamed: hostname port: portNumber.
+    socketConnectionStatus := SuccesfulSocketConnection new.
 
-	self
-		whenConnected: [
-			LogRecord emitInfo:
-				( 'AMQP connection <1s> established successfully' expandMacrosWith:
-					  self connectionPairsDescription )
-			]
-		whenNot: [ :error |
-			LogRecord emitInfo: ( 'AMQP connection to <1s>:<2s> failed to establish because <3s>'
-					  expandMacrosWith: hostname
-					  with: portNumber printString
-					  with: error printString )
-			]
+    LogRecord emitInfo:
+      ( 'AMQP connection <1s> established successfully' expandMacrosWith:
+          self connectionPairsDescription )
+  ]
+    on: NetworkError
+    do: [ :error |
+        socketConnectionStatus := FailedSocketConnection dueTo: error.
+        LogRecord emitInfo: ( 'AMQP connection to <1s>:<2s> failed to establish because <3s>'
+              expandMacrosWith: hostname
+              with: portNumber printString
+              with: error printString ).
+        error pass
+      ]
 ]
 
 { #category : 'initialization' }

@@ -138,15 +138,11 @@ RabbitMQPublisherTest >> testCannotStartBecauseNotFoundARabbitMQService [
 
   self
     runMemoryLoggerDuring: [
-        self
-          should: [ anotherPublisher start ]
-          raise: ConnectionClosed
-          withMessageText: 'connection closed while sending data'
-      ]
+      self should: [ anotherPublisher start ] raise: NetworkError ]
     assertingLogRecordsMatchRegexes:
-      { '\[INFO\] AMQP connection to localhost\:1234 failed to establish because ConnectionClosed\: Connection aborted to 127.0.0.1\:1234' .
-        '\[ERROR\] Attempt #1/1 to connect to RabbitMQ failed\: connection closed while sending data' .
-        '\[INFO\] AMQP connection to localhost\:1234 failed to establish because ConnectionClosed\: Connection aborted to 127.0.0.1\:1234' }
+      { '\[INFO\] AMQP connection to localhost\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to 127.0.0.1\:1234' .
+        '\[ERROR\] Attempt #1/1 to connect to RabbitMQ failed\: (Connection aborted|Cannot connect) to 127.0.0.1\:1234' .
+        '\[INFO\] AMQP connection to localhost\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to 127.0.0.1\:1234' }
 ]
 
 { #category : 'running' }

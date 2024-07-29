@@ -29,8 +29,8 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 { #category : 'configuring' }
 RabbitMQPublisher >> confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock [
 
-  channelConfigurationCommands add: [ :channel |
-      channel confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock ]
+  channelConfigurationCommands add: [ :theChannel |
+      theChannel confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock ]
 ]
 
 { #category : 'initialization' }
