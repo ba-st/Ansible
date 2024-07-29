@@ -78,7 +78,7 @@ AmqpConnection >> codec [
 { #category : 'accessing' }
 AmqpConnection >> connectionPairsDescription [
 
-	^ '<1p>:<2p>-><3s>:<4p>'
+	^ '<1s>:<2p>-><3s>:<4p>'
 		  expandMacrosWith: socket peerName
 		  with: socket port
 		  with: hostname
@@ -310,7 +310,12 @@ AmqpConnection >> openConnection [
 { #category : 'connection-handling' }
 AmqpConnection >> printOn: aStream [
 
-	aStream nextPutAll: ( 'AMPQ Connection on <1s>' expandMacrosWith: self connectionPairsDescription )
+  self
+    whenConnected: [
+        aStream nextPutAll:
+          ( 'AMPQ Connection on <1s>' expandMacrosWith: self connectionPairsDescription ) ]
+    whenNot: [ :reason |
+      aStream nextPutAll: ( 'AMPQ Connection closed due to <1s>' expandMacrosWith: reason ) ]
 ]
 
 { #category : 'connection-handling' }
@@ -345,13 +350,14 @@ AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber [
 { #category : 'initialization' }
 AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber ifConnectionClosesWhileWaitingReplyDo: aBlock [
 
-	| ch |
-
-	ch := self ensureChannel: aChannelNumber.
-	self sendMethod: aRequestMethod onChannel: aChannelNumber.
-	^ [ ch waitForReply: aRequestMethod acceptableResponseClasses ]
-		  on: AmqpDisconnectedError , ConnectionClosed
-		  do: [ :signal | aBlock cull: signal ]
+  ^ [
+      | ch |
+      ch := self ensureChannel: aChannelNumber.
+      self sendMethod: aRequestMethod onChannel: aChannelNumber.
+      ch waitForReply: aRequestMethod acceptableResponseClasses
+    ]
+      on: AmqpDisconnectedError , ConnectionClosed
+      do: [ :signal | aBlock cull: signal ]
 ]
 
 { #category : 'connection-handling' }

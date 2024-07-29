@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'workerProcess',
 		'publisher',
-		'reversedTexts'
+		'reversedTexts',
+		'loggingAsserter'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -17,15 +18,15 @@ RabbitMQPublisherTest class >> defaultTimeLimit [
 ]
 
 { #category : 'private - accessing' }
-RabbitMQPublisherTest >> configureConnection: aBuilder [
+RabbitMQPublisherTest >> addTimestampRegexTo: aLogEntryCollection [ 
 
-	aBuilder hostname: 'localhost'.
-	aBuilder portNumber: 5672.
-	aBuilder username: 'guest'.
-	aBuilder password: 'guest'
+  ^ aLogEntryCollection collect: [ :regexExpression |
+        '\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}(\.\d+)?(\+|-)(\d+\:\d+) <1s>' expandMacrosWith:
+          regexExpression
+      ]
 ]
 
-{ #category : 'running' }
+{ #category : 'private - accessing' }
 RabbitMQPublisherTest >> defaultRabbitMQPublisher [
 
 	^ RabbitMQPublisher configuredBy: [ :options |
@@ -72,11 +73,24 @@ RabbitMQPublisherTest >> resumeWorkerDuring: aBlock [
 	self wait
 ]
 
+{ #category : 'private - support' }
+RabbitMQPublisherTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRegexes: expectedLogEntries [ 
+
+  | expectedLogEntriesWithTimestamp |
+
+  expectedLogEntriesWithTimestamp := self addTimestampRegexTo: expectedLogEntries.
+
+  loggingAsserter
+    runMemoryLoggerDuring: aBlock;
+    assertLogRecordsMatchUsing: expectedLogEntriesWithTimestamp
+]
+
 { #category : 'running' }
 RabbitMQPublisherTest >> setUp [
 
 	super setUp.
 	
+	loggingAsserter := LoggingAsserter on: self.
 	reversedTexts := OrderedCollection new.
 
 	workerProcess :=
@@ -90,8 +104,7 @@ RabbitMQPublisherTest >> setUp [
 		priority: Processor userBackgroundPriority.
 
 	publisher := self defaultRabbitMQPublisher.
-	publisher start.
-	publisher channel queueDeclare: self queueName durable: true
+	publisher start
 ]
 
 { #category : 'private - accessing' }
@@ -100,7 +113,7 @@ RabbitMQPublisherTest >> storeText: aString [
 	reversedTexts add: aString
 ]
 
-{ #category : 'private - accessing' }
+{ #category : 'private - support' }
 RabbitMQPublisherTest >> tearDown [
 
 	publisher channel queueDelete: self queueName.
@@ -112,94 +125,82 @@ RabbitMQPublisherTest >> tearDown [
 { #category : 'running' }
 RabbitMQPublisherTest >> testCannotStartBecauseNotFoundARabbitMQService [
 
-	| anotherPublisher logger expectedErrorDescription |
+  | anotherPublisher |
+  anotherPublisher := RabbitMQPublisher configuredBy: [ :options |
+                          options
+                            at: #hostname put: 'localhost';
+                            at: #port put: 1234;
+                            at: #username put: 'bugs';
+                            at: #password put: 'bunny';
+                            at: #maximumConnectionAttemps put: 1;
+                            at: #timeSlotBetweenConnectionRetriesInMs put: 1
+                        ].
 
-	logger := MemoryLogger new.
-
-	anotherPublisher := RabbitMQPublisher configuredBy: [ :options |
-		                    options
-			                    at: #hostname put: 'looney-tunes.com';
-			                    at: #port put: 1234;
-			                    at: #username put: 'bugs';
-			                    at: #password put: 'bunny';
-			                    at: #maximumConnectionAttemps put: 1;
-			                    at: #timeSlotBetweenConnectionRetriesInMs put: 1
-		                    ].
-
-	expectedErrorDescription := 'connection closed while sending data'.
-
-	logger runDuring: [ self shouldFix: [ anotherPublisher start ] ].
-
-	self assert: ( logger recordings anySatisfy: [ :recording |
-			  recording printString includesSubstring: #'Attempt #1/1 to connect to RabbitMQ failed' ] )
+  self
+    runMemoryLoggerDuring: [
+        self
+          should: [ anotherPublisher start ]
+          raise: ConnectionClosed
+          withMessageText: 'connection closed while sending data'
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection to localhost\:1234 failed to establish because ConnectionClosed\: Connection aborted to 127.0.0.1\:1234' .
+        '\[ERROR\] Attempt #1/1 to connect to RabbitMQ failed\: connection closed while sending data' .
+        '\[INFO\] AMQP connection to localhost\:1234 failed to establish because ConnectionClosed\: Connection aborted to 127.0.0.1\:1234' }
 ]
 
 { #category : 'running' }
 RabbitMQPublisherTest >> testDebuggingLogsEnabled [
 
-	| anotherPublisher logger |
+  | anotherPublisher  |
+  anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
 
-	logger := MemoryLogger new.
-	anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
-
-	logger runDuring: [
-		anotherPublisher start.
-		anotherPublisher publishOnly: 'Hola!' onQueueNamed: self queueName.
-		anotherPublisher stop
-		].
-
-	self assert: logger recordings size equals: 3.
-
-	self assert: ( '*[INFO] AMQP connection *->localhost:5672 established successfully' match:
-			  ( logger recordings at: 1 ) printString ).
-
-	self assert:
-		( '* [DEBUG] RabbitMQ message published {"messagePublished":"Hola!","routingKey":"tasks-for-testDebuggingLogsEnabled","connectionDescription":"*->localhost:5672"}'
-			  match: ( logger recordings at: 2 ) printString ).
-
-	self assert: ( '* [INFO] AMQP connection *->localhost:5672 closed normally' match:
-			  ( logger recordings at: 3 ) printString )
+  self
+    runMemoryLoggerDuring: [
+        anotherPublisher start.
+        anotherPublisher publishOnly: 'Hola!' onQueueNamed: self queueName.
+        anotherPublisher stop
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+        '\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hola!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
+        '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed normally' }
 ]
 
 { #category : 'running' }
 RabbitMQPublisherTest >> testDebuggingLogsTurnedOff [
 
-	| anotherPublisher logger |
+	| anotherPublisher |
 
-	logger := MemoryLogger new.
 	anotherPublisher := self defaultRabbitMQPublisher.
 
-	logger runDuring: [
-		anotherPublisher start.
-		anotherPublisher publishOnly: 'Hola!' onQueueNamed: self queueName.
-		anotherPublisher stop
-		].
-
-	self assert: logger recordings size equals: 2.
-
-	self assert: ( '*[INFO] AMQP connection *->localhost:5672 established successfully' match:
-			  ( logger recordings at: 1 ) printString ).
-
-	self assert: ( '* [INFO] AMQP connection *->localhost:5672 closed normally' match:
-			  ( logger recordings at: 2 ) printString )
+  self
+    runMemoryLoggerDuring: [
+        anotherPublisher start.
+        anotherPublisher publishOnly: 'Hola!' onQueueNamed: self queueName.
+        anotherPublisher stop
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+        '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed normally' }
 ]
 
 { #category : 'running' }
 RabbitMQPublisherTest >> testPublishingMessageWhenChannelIsTemporallyLost [
 
-	|logger|
-	
-	logger := MemoryLogger new.
+  self resumeWorkerDuring: [
+      self
+        runMemoryLoggerDuring: [
+            publisher start.
+            publisher channel close.
+            self publish: #( 'test channel restored' ) onQueueNamed: self queueName
+          ]
+        assertingLogRecordsMatchRegexes: {  }
+    ].
 
-	self resumeWorkerDuring: [
-		logger runDuring: [ 	publisher channel close.
-		self publish: #( 'test channel restored' ) onQueueNamed: self queueName ]
-	
-		].
-
-	self
-		withTheOnlyOneIn: reversedTexts
-		do: [ :reversedText | self assert: reversedText equals: 'derotser lennahc tset' ]
+  self
+    withTheOnlyOneIn: reversedTexts
+    do: [ :reversedText | self assert: reversedText equals: 'derotser lennahc tset' ]
 ]
 
 { #category : 'running' }

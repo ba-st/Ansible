@@ -366,7 +366,7 @@ AmqpChannel >> prefetchCount: prefetchCount prefetchSize: prefetchSize global: a
 { #category : 'AMQP receiving messages' }
 AmqpChannel >> printOn: aStream [
 
-	aStream nextPutAll: ( 'AMPQ Channel <1p> on connection <2p> (<3s>)'
+	aStream nextPutAll: ( 'AMPQ Channel <1p> on <2p> (<3s>)'
 			  expandMacrosWith: handler channelNumber
 			  with: handler connection
 			  with:
