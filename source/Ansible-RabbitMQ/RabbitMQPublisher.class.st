@@ -9,6 +9,9 @@ as the producers and consumers can operate independently.
 Class {
 	#name : 'RabbitMQPublisher',
 	#superclass : 'RabbitMQClient',
+	#instVars : [
+		'channelConfigurationCommands'
+	],
 	#category : 'Ansible-RabbitMQ',
 	#package : 'Ansible-RabbitMQ'
 }
@@ -23,11 +26,26 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	^ self new initializeConfiguredBy: options
 ]
 
+{ #category : 'configuring' }
+RabbitMQPublisher >> confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock [
+
+  channelConfigurationCommands add: [ :channel |
+      channel confirmMessagesPublicationWith: anAckBlock andThoseNotProcessedWith: aNackBlock ]
+]
+
+{ #category : 'initialization' }
+RabbitMQPublisher >> ensureChannelOpen [
+
+  super ensureChannelOpen.
+  channelConfigurationCommands do: [ :command | command value: channel ]
+]
+
 { #category : 'initialization' }
 RabbitMQPublisher >> initializeConfiguredBy: anOptionsDictionary [
 
   super initialize.
-  options := anOptionsDictionary
+  options := anOptionsDictionary.
+  channelConfigurationCommands := OrderedCollection new
 ]
 
 { #category : 'publishing' }
