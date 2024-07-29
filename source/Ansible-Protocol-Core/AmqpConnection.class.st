@@ -78,9 +78,8 @@ AmqpConnection >> codec [
 { #category : 'accessing' }
 AmqpConnection >> connectionPairsDescription [
 
-	^ '<1s>:<2p>-><3s>:<4p>'
-		  expandMacrosWith: socket peerName
-		  with: socket port
+	^ 'localhost:<1p>-><2s>:<3p>'
+		  expandMacrosWith: socket port
 		  with: hostname
 		  with: portNumber
 ]
