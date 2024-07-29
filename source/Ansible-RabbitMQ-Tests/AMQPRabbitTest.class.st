@@ -8,81 +8,58 @@ Class {
 { #category : 'private' }
 AMQPRabbitTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
-	self withLocalhostConnectionDo: [ :connection | 
-		| channel queue confirmationWasReceived |
+  | publisher confirmationWasReceived queue |
+  publisher := ( RabbitMQPublisher configuredBy: [  ] )
+                 confirmMessagesPublicationWith: [ :command | confirmationWasReceived := true ]
+                 andThoseNotProcessedWith: [ :command | self fail ];
+                 yourself.
 
-		confirmationWasReceived := false.
+  confirmationWasReceived := false.
 
-		channel := connection createChannel.
-		channel queueDeclare: aQueueName.
-		channel
-			confirmMessagesPublicationWith: [ :command | confirmationWasReceived := true ]
-			andThoseNotProcessedWith: [ :command | self fail ].
-		aMessageCollection do: [ :message | 
-			channel
-				basicPublish: message utf8Encoded
-				exchange: ''
-				routingKey: aQueueName
-				properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-			].
+  publisher ensureChannelOpen.
 
-		( Delay forMilliseconds: 100 ) wait.
-		queue := channel queueDeclare: aQueueName.
+  queue := publisher channel queueDeclare: aQueueName.
+  publisher publish: aMessageCollection onQueueNamed: aQueueName.
 
-		self
-			assert: queue method messageCount equals: aMessageCollection size;
-			assert: queue method consumerCount equals: 0;
-			assert: confirmationWasReceived
-		]
+  ( Delay forMilliseconds: 100 ) wait.
+  queue := publisher channel queueDeclare: aQueueName.
+
+  self
+    assert: queue method messageCount equals: aMessageCollection size;
+    assert: queue method consumerCount equals: 0;
+    assert: confirmationWasReceived
 ]
 
 { #category : 'tests' }
 AMQPRabbitTest >> testBasicConsumeUsingPublisherConfirmation [
 
-	| channel queue |
+  | channel queue worker queueName |
+  queueName := 'tasks'.
 
-	self publish: #('Do it!') onQueueNamed: 'tasks'.
+  self publish: #( 'Do it!' ) onQueueNamed: queueName.
 
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			channel := connection createChannel.
-			queue := channel queueDeclare: 'tasks'.
+  worker := RabbitMQWorker
+              configuredBy: [ :options |
+                  options
+                    at: #queueName put: queueName;
+                    at: #queueDurable put: false
+                ]
+              processingMessagesWith: [ :messageReceived |
+                  self
+                    assert: messageReceived body asString equals: 'Do it!';
+                    assert: messageReceived method exchange equals: '';
+                    assert: messageReceived method routingKey equals: queueName;
+                    deny: messageReceived method redelivered
+                ].
 
-			channel prefetchCount: 1.
+  worker startConsumingFromQueue.
+  [
+    channel := worker channel.
 
-			channel
-				consumeFrom: 'tasks'
-				applying: [ :messageReceived | 
-					self
-						assert: messageReceived body asString equals: 'Do it!';
-						assert: messageReceived method exchange equals: '';
-						assert: messageReceived method routingKey equals: 'tasks';
-						deny: messageReceived method redelivered.
+    queue := channel queueDeclare: queueName.
 
-					channel basicAck: messageReceived method deliveryTag
-					].
-
-			queue := channel queueDeclare: 'tasks'.
-
-			self
-				assert: queue method messageCount equals: 0;
-				assert: queue method consumerCount equals: 1.
-
-			channel queueDelete: 'tasks'
-			]
-]
-
-{ #category : 'private' }
-AMQPRabbitTest >> withLocalhostConnectionDo: block [
-
-	| connection |
-
-	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
-	connection open.
-	connection
-		whenConnected: [ 
-			block value: connection.
-			connection close
-			]
-		whenNot: [ :error | self fail: error messageText ]
+    self
+      assert: queue method messageCount equals: 0;
+      assert: queue method consumerCount equals: 1
+  ] ensure: [ worker stop ]
 ]

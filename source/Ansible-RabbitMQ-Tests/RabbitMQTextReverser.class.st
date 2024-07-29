@@ -30,7 +30,7 @@ RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
                     at: #hostname put: 'localhost';
                     at: #queueName put: aTestCase queueName
                 ]
-              processingMessagesWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
+              doingWithPayload: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
 ]
 
 { #category : 'accessing' }
