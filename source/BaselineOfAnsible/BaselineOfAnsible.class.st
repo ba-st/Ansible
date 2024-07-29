@@ -37,6 +37,10 @@ BaselineOfAnsible >> setUpDependencies: spec [
 		project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: #( 'Core' ) ].
 
 	spec
+		baseline: 'Bell' with: [ spec repository: 'github://ba-st/Bell:v3' ];
+		project: 'Bell-SUnit' copyFrom: 'Bell' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
+		
+	spec
 		baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v6' ];
 		project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
 
@@ -80,7 +84,7 @@ BaselineOfAnsible >> setUpTestPackages: spec [
 		group: 'Tests' with: 'Ansible-Protocol-Tests';
 		package: 'Ansible-Protocol-091-Tests' with: [ spec requires: 'Ansible-Protocol-091' ];
 		group: 'Tests' with: 'Ansible-Protocol-091-Tests';
-		package: 'Ansible-RabbitMQ-Tests' with: [ spec requires: #( 'Ansible-RabbitMQ' 'Buoy-SUnit' ) ];
+		package: 'Ansible-RabbitMQ-Tests' with: [ spec requires: #( 'Ansible-RabbitMQ' 'Buoy-SUnit' 'Bell-SUnit' ) ];
 		group: 'Tests' with: 'Ansible-RabbitMQ-Tests'
 ]
 
