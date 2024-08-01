@@ -15,12 +15,6 @@ RabbitMQTextReverser class >> workingWith: aTestCase [
 	^self new initializeWorkingWith: aTestCase
 ]
 
-{ #category : 'accessing' }
-RabbitMQTextReverser >> channel [
-
-	^ worker channel
-]
-
 { #category : 'initialization' }
 RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 

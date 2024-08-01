@@ -59,20 +59,20 @@ RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
 
 	self ensureChannelOpen.
 
-	self shouldLogDebuggingInfo then: [
-		LogRecord
-			emitStructuredDebuggingInfo: 'RabbitMQ message published'
-			with: [:data |
-				data
-					at: #messagePublished put: aMessage;
-					at: #routingKey put: aQueueName;
-					at: #connectionDescription put: connection connectionPairsDescription]].
-
 	channel
 		basicPublish: aMessage utf8Encoded
 		exchange: ''
 		routingKey: aQueueName
-		properties: (connection protocolClass basicPropertiesClass new deliveryMode: 2)
+		properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 ).
+
+	self shouldLogDebuggingInfo then: [
+			LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
+					data
+						at: #messagePublished put: aMessage;
+						at: #routingKey put: aQueueName;
+						at: #connectionDescription put: connection connectionPairsDescription
+				]
+		]
 ]
 
 { #category : 'connecting' }
