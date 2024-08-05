@@ -15,21 +15,28 @@ Class {
 		'heartbeatSender',
 		'hostname',
 		'socketConnectionStatus',
-		'portNumber'
+		'portNumber',
+		'extraClientProperties'
 	],
 	#category : 'Ansible-Protocol-Core',
 	#package : 'Ansible-Protocol-Core'
 }
 
 { #category : 'instance creation' }
-AmqpConnection class >> to: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
+AmqpConnection class >> to: aHostname
+	over: aPort
+	using: aProtocolVersion
+	with: aConnectionCredentialCollection
+	parameterizedBy: aConnectionParameterCollection
+	extraProperties: aClientPropertyCollection [
 
 	^ self new
 		  initializeTo: aHostname
 		  over: aPort
 		  using: aProtocolVersion
-		  with: connectionCredentials
-		  parameterizedBy: connectionParameters
+		  with: aConnectionCredentialCollection
+		  parameterizedBy: aConnectionParameterCollection
+		  extraProperties: aClientPropertyCollection
 ]
 
 { #category : 'connection-handling' }
@@ -187,15 +194,23 @@ AmqpConnection >> initializeSocketConnection [
 ]
 
 { #category : 'initialization' }
-AmqpConnection >> initializeTo: aHostname over: aPort using: aProtocolVersion with: connectionCredentials parameterizedBy: connectionParameters [
+AmqpConnection >> initializeTo: aHostname
+	over: aPort
+	using: aProtocolVersion
+	with: aConnectionCredentialCollection
+	parameterizedBy: aConnectionParameterCollection
+	extraProperties: aClientPropertyCollection [
 
 	protocolClass := aProtocolVersion.
 	hostname := aHostname.
 	portNumber := aPort.
-	credentials := connectionCredentials.
-	parameters := connectionParameters.
-	self initializeSocketConnection.
-	self initializeHeartbeatSender
+	credentials := aConnectionCredentialCollection.
+	parameters := aConnectionParameterCollection.
+	extraClientProperties := aClientPropertyCollection.
+
+	self
+		initializeSocketConnection;
+		initializeHeartbeatSender
 ]
 
 { #category : 'private-opening' }
@@ -439,20 +454,23 @@ AmqpConnection >> socketConnectionStatus [
 AmqpConnection >> startConnection [
 
 	self withNextFrameDo: [ :nextFrame |
-		| response |
+			| response clientProperties |
 
-		response := credentials responseFor: nextFrame method.
-		response ifNil: [
-			AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
-		self
-			sendMethod: ( self protocolClass connectionStartOkMethod new
-					  clientProperties: ( Dictionary new
-							    at: 'product' put: 'RabbitMQ Smalltalk';
-							    yourself );
-					  mechanism: response key;
-					  response: response value )
-			onChannel: 0.
-		credentials := nil
+			response := credentials responseFor: nextFrame method.
+			response ifNil: [
+					AmqpDisconnectedError signal: 'No acceptable SASL mechanism for the given credentials' ].
+			clientProperties := Dictionary new
+				                    at: 'product' put: 'RabbitMQ Smalltalk';
+				                    yourself.
+			extraClientProperties keysAndValuesDo: [ :key :value | clientProperties at: key put: value ].
+			
+			self
+				sendMethod: ( self protocolClass connectionStartOkMethod new
+						  clientProperties: clientProperties;
+						  mechanism: response key;
+						  response: response value )
+				onChannel: 0.
+			credentials := nil
 		]
 ]
 

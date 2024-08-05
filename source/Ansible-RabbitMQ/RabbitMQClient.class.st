@@ -38,13 +38,19 @@ RabbitMQClient >> connectivityErrors [
 { #category : 'initialization' }
 RabbitMQClient >> createAMQPConnection [
 
-  | builder |
-  builder := AmqpConnectionBuilder usingAMQP091Protocol.
-  builder hostname: ( options at: #hostname ifAbsent: [ 'localhost' ] ).
-  builder portNumber: ( options at: #port ifAbsent: [ 5672 ] ).
-  builder username: ( options at: #username ifAbsent: [ 'guest' ] ).
-  builder password: ( options at: #password ifAbsent: [ 'guest' ] ).
-  ^ builder build
+	| builder |
+
+	builder := AmqpConnectionBuilder usingAMQP091Protocol.
+	builder hostname: ( options at: #hostname ifAbsent: [ 'localhost' ] ).
+	builder portNumber: ( options at: #port ifAbsent: [ 5672 ] ).
+	builder username: ( options at: #username ifAbsent: [ 'guest' ] ).
+	builder password: ( options at: #password ifAbsent: [ 'guest' ] ).
+	options at: 'extraClientProperties' ifPresent: [ :extraProperties |
+			extraProperties keysAndValuesDo: [ :propertyName :propertyValue |
+					builder atClientProperty: propertyName put: propertyValue ]
+		].
+
+	^ builder build
 ]
 
 { #category : 'private' }

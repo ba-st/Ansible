@@ -7,7 +7,8 @@ Class {
 		'username',
 		'password',
 		'portNumber',
-		'protocolClass'
+		'protocolClass',
+		'clientProperties'
 	],
 	#category : 'Ansible-Protocol-Core',
 	#package : 'Ansible-Protocol-Core'
@@ -19,10 +20,16 @@ AmqpConnectionBuilder class >> forProtocol: aProtocolClass [
 	^self new initializeForProtocol: aProtocolClass
 ]
 
+{ #category : 'initialization' }
+AmqpConnectionBuilder >> atClientProperty: aName put: aValue [ 
+
+	clientProperties at: aName put: aValue 
+]
+
 { #category : 'building' }
 AmqpConnectionBuilder >> build [
 
-	protocolClass  ifNil: [ Error signal: 'Protocol must be configured' ].
+	protocolClass ifNil: [ Error signal: 'Protocol must be configured' ].
 
 	^ AmqpConnection
 		  to: hostname
@@ -30,6 +37,7 @@ AmqpConnectionBuilder >> build [
 		  using: protocolClass
 		  with: self credentials
 		  parameterizedBy: parameters
+		  extraProperties: clientProperties
 ]
 
 { #category : 'private-accessing' }
@@ -60,6 +68,7 @@ AmqpConnectionBuilder >> initialize [
 		username: 'guest';
 		password: 'guest';
 		hostname: 'localhost'.
+	clientProperties := Dictionary new. 
 	parameters := AmqpConnectionParameters new
 		              channelMax: 0;
 		              frameMax: 131072;
