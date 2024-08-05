@@ -11,6 +11,12 @@ Class {
 	#package : 'Ansible-RabbitMQ-Tests'
 }
 
+{ #category : 'accessing' }
+RabbitMQClientTest class >> defaultTimeLimit [
+
+	^ ( Socket standardTimeout + 120 ) seconds
+]
+
 { #category : 'private - support' }
 RabbitMQClientTest >> addTimestampRegexTo: aLogEntryCollection [ 
 
@@ -34,6 +40,35 @@ RabbitMQClientTest >> anotherRabbitMQPublisher [
 		  ]
 ]
 
+{ #category : 'private - support' }
+RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
+
+	^ OSPlatform current runCommand:
+		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
+			    expandMacrosWith: aRabbitmqContainerId
+			    with: aUsername
+			    with: aCloseReason )
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> closeAllUserConnections [
+
+	| rabbitmqContainerId closeReason |
+
+	rabbitmqContainerId := self rabbitMQContainerID.
+
+	closeReason := 'CloseConnectionsTest'.
+
+	rabbitmqContainerId isEmpty
+		then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
+		otherwise: [
+			self
+				closeAllConnectionsOf: rabbitmqContainerId
+				for: self defaultRabbitMQWorkerUsername
+				because: closeReason
+			]
+]
+
 { #category : 'private - accessing' }
 RabbitMQClientTest >> defaultRabbitMQPublisher [
 
@@ -42,14 +77,37 @@ RabbitMQClientTest >> defaultRabbitMQPublisher [
 				  at: #hostname put: 'localhost';
 				  at: #port put: 5672;
 				  at: #username: put: 'guest';
-				  at: #password put: 'guest'
+				  at: #password put: 'guest';
+				  at: #extraClientProperties put: ( Dictionary new
+						    at: 'process' put: 'RabbitMQClientTest Publisher';
+						    yourself )
 		  ]
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> defaultRabbitMQWorkerUsername [
+
+	^ AmqpConnectionBuilder usingAMQP091Protocol credentials username
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> largerWait [
+	
+	"This delay aims to replicate the time required to successfully close all the RabbitMQ connections."
+
+	( Delay forSeconds: 120 ) wait
 ]
 
 { #category : 'private - accessing' }
 RabbitMQClientTest >> queueName [
 
 	^ 'tasks-for-' , testSelector
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> rabbitMQContainerID [
+
+	^ ( OSPlatform current resultOfCommand: 'docker ps -q --filter "name=rabbitmq"' ) trim
 ]
 
 { #category : 'private - accessing' }
@@ -118,7 +176,9 @@ RabbitMQClientTest >> storeText: aString [
 { #category : 'running' }
 RabbitMQClientTest >> tearDown [
 
-	publisher channel queueDelete: self queueName.
+	[ publisher channel queueDelete: self queueName ]
+		on: AmqpDisconnectedError
+		do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
 	publisher stop.
 	workerProcess terminate.
 	super tearDown
@@ -220,6 +280,43 @@ RabbitMQClientTest >> testPublisherConfirmationWhenMessageProcessed [
 			assert: queue method messageCount equals: 0;
 			assert: queue method consumerCount equals: 1
 	] ensure: [ worker stop ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
+
+	self resumeWorkerDuring: [
+			publisher
+				publishOnly: 'Hello' onQueueNamed: self queueName;
+				publishOnly: 'World' onQueueNamed: self queueName.
+
+			self wait.
+
+			self
+				assert: reversedTexts size equals: 2;
+				assert: reversedTexts first equals: 'olleH';
+				assert: reversedTexts last equals: 'dlroW'.
+
+			self
+				runMemoryLoggerDuring: [
+						self
+							closeAllUserConnections;
+							largerWait.
+						publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+					]
+				assertingLogRecordsMatchRegexes:
+					{ '\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
+						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+						'\[ERROR\] AMQP Heartbeat failed unexpectedly \(connection closed while sending data\)\.' .
+						'\[WARNING\] AMQP connection localhost\:(\d+)->localhost\:5672 hard closed due to connection closed while sending data' .
+						'\[WARNING\] AMQP connection localhost\:(\d+)->localhost\:5672 hard closed due to connection closed while sending data' .
+						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+		].
+
+
+	self
+		assert: reversedTexts size equals: 3;
+		assert: reversedTexts last equals: 'derotser noitcennoc tseT'
 ]
 
 { #category : 'tests' }
