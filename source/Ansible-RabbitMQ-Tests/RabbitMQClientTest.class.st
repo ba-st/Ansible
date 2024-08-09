@@ -40,6 +40,59 @@ RabbitMQClientTest >> anotherRabbitMQPublisher [
 		  ]
 ]
 
+{ #category : 'tests' }
+RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queueName [
+
+  | worker queue messageWasConsumed |
+  messageWasConsumed := false.
+  worker := RabbitMQWorker
+              configuredBy: [ :options |
+                  options
+                    at: #queueName put: queueName;
+                    at: #queueDurable put: false
+                ]
+              processingMessagesWith: [ :messageReceived |
+                  messageWasConsumed := true.
+                  self
+                    assert: messageReceived body asString equals: messagesToSend;
+                    assert: messageReceived method exchange equals: '';
+                    assert: messageReceived method routingKey equals: queueName;
+                    deny: messageReceived method redelivered
+                ].
+  worker startConsumingFromQueue.
+  [
+    queue := worker channel queueDeclare: queueName.
+    self
+      assert: messageWasConsumed;
+      assert: queue method messageCount equals: 0;
+      assert: queue method consumerCount equals: 1
+  ] ensure: [ worker stop ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queueName [
+
+  | queue messageWasPublished |
+  messageWasPublished := false.
+
+  publisher
+    confirmPublicationWith: [ :command | messageWasPublished := true ]
+    otherwise: [ :command | self fail ].
+
+  queue := publisher channel queueDeclare: queueName.
+
+  publisher publishOnly: messagesToSend onQueueNamed: queueName.
+
+  self wait.
+
+  queue := publisher channel queueDeclare: queueName.
+
+  self
+    assert: queue method messageCount equals: 1;
+    assert: queue method consumerCount equals: 0;
+    assert: messageWasPublished
+]
+
 { #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
 
@@ -235,51 +288,14 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublisherConfirmationWhenMessageProcessed [
 
-	| confirmationWasReceived queue worker queueName messagesToSend |
+  | queueName messagesToSend |
 
-	queueName := 'tasks'.
-	confirmationWasReceived := false.
-	messagesToSend := #( 'Do it!' ).
+  queueName := self queueName.
+  messagesToSend := 'Do it!'.
 
-	publisher
-		confirmPublicationWith: [ :command | confirmationWasReceived := true ]
-		otherwise: [ :command | self fail ].
-
-	queue := publisher channel queueDeclare: queueName.
-
-	publisher publish: #( 'Do it!' ) onQueueNamed: queueName.
-
-	self wait.
-
-	queue := publisher channel queueDeclare: queueName.
-
-	self
-		assert: queue method messageCount equals: messagesToSend size;
-		assert: queue method consumerCount equals: 0;
-		assert: confirmationWasReceived.
-
-	worker := RabbitMQWorker
-		          configuredBy: [ :options |
-				          options
-					          at: #queueName put: queueName;
-					          at: #queueDurable put: false
-			          ]
-		          processingMessagesWith: [ :messageReceived |
-				          self
-					          assert: messageReceived body asString equals: 'Do it!';
-					          assert: messageReceived method exchange equals: '';
-					          assert: messageReceived method routingKey equals: queueName;
-					          deny: messageReceived method redelivered
-			          ].
-
-	worker startConsumingFromQueue.
-	[
-		queue := worker channel queueDeclare: queueName.
-
-		self
-			assert: queue method messageCount equals: 0;
-			assert: queue method consumerCount equals: 1
-	] ensure: [ worker stop ]
+  self
+    assertQueueStatusAfterPublishing: messagesToSend on: queueName;
+    assertQueueStatusAfterConsuming: messagesToSend from: queueName
 ]
 
 { #category : 'tests' }
