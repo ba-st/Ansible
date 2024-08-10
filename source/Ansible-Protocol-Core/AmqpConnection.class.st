@@ -8,7 +8,6 @@ Class {
 		'parameters',
 		'virtualHost',
 		'isOpen',
-		'closeReason',
 		'channels',
 		'nextChannel',
 		'protocolClass',
@@ -40,40 +39,46 @@ AmqpConnection class >> to: aHostname
 ]
 
 { #category : 'connection-handling' }
-AmqpConnection >> close [
+AmqpConnection >> becomeCloseAfter: aBlock [
 
-	| connectionClose |
-
-	isOpen ifTrue: [
-		isOpen := false.
-		connectionClose := self protocolClass connectionCloseMethod new
-			                   replyCode: self protocolClass replySuccess;
-			                   replyText: 'Normal shutdown';
-			                   classId: 0;
-			                   methodId: 0.
-		self
-			rpc: connectionClose
-			onChannel: 0
-			ifConnectionClosesWhileWaitingReplyDo: [ :signal | "https://www.rabbitmq.com/amqp-0-9-1-reference.html#connection.close-ok A peer that detects a socket closure without having received a Close-Ok handshake method SHOULD log the error. - jvanecek"
-				LogRecord emitWarning:
-					( 'AMQP connection <1s> closed while waiting for the close-ok reply' expandMacrosWith:
-						  self connectionPairsDescription ).
-				signal return
-				].
-		self internalClose: connectionClose
-		].
-
-	LogRecord emitInfo:
-		( 'AMQP connection <1s> closed normally' expandMacrosWith: self connectionPairsDescription ).
-	heartbeatSender stop.
-	socket close.
-	socketConnectionStatus := HealthyClosedSocketConnection dueTo: 'Normal shutdown'
+  | closingMethod |
+  isOpen ifTrue: [
+      [
+        closingMethod := aBlock value.
+        channels valuesDo: [ :ch | ch internalClose: closingMethod ].
+      ] ensure: [
+          LogRecord emitInfo: ( 'AMQP connection <1s> closed due to <2s>'
+                expandMacrosWith: self connectionPairsDescription
+                with: closingMethod replyText ).
+          heartbeatSender stop.
+          socket close.
+          isOpen := false.
+          socketConnectionStatus := HealthyClosedSocketConnection dueTo: closingMethod replyText 
+        ]
+    ]
 ]
 
 { #category : 'connection-handling' }
-AmqpConnection >> closeReason [
+AmqpConnection >> close [
 
-	^ closeReason
+  self becomeCloseAfter: [
+      | connectionClose |
+      connectionClose := self protocolClass connectionCloseMethod new
+                           replyCode: self protocolClass replySuccess;
+                           replyText: 'Normal shutdown';
+                           classId: 0;
+                           methodId: 0.
+      self
+        rpc: connectionClose
+        onChannel: 0
+        ifConnectionClosesWhileWaitingReplyDo: [ :signal | "https://www.rabbitmq.com/amqp-0-9-1-reference.html#connection.close-ok A peer that detects a socket closure without having received a Close-Ok handshake method SHOULD log the error. - jvanecek"
+            LogRecord emitWarning:
+              ( 'AMQP connection <1s> closed while waiting for the close-ok reply'
+                  expandMacrosWith: self connectionPairsDescription ).
+            signal return
+          ].
+      connectionClose
+    ]
 ]
 
 { #category : 'accessing' }
@@ -117,40 +122,27 @@ AmqpConnection >> ensureChannel: channelNumber [
 { #category : 'connection-handling' }
 AmqpConnection >> ensureOpen [
 
-	closeReason notNil
-		ifTrue: [ AmqpDisconnectedError signal: 'Connection closed' ]
+  ( socket isConnected and: [ socket isOtherEndClosed not ] ) ifFalse: [ 
+      AmqpDisconnectedError signal: 'Connection closed' ]
 ]
 
 { #category : 'connection-handling' }
 AmqpConnection >> handleConnectionClose: cmd [
 
-	self internalClose: cmd method.
-	isOpen := false.
-	self sendMethod: self protocolClass connectionCloseOkMethod new onChannel: 0.
-	socket close
+  self becomeCloseAfter: [
+      self sendMethod: self protocolClass connectionCloseOkMethod new onChannel: 0.
+      cmd method
+    ]
 ]
 
 { #category : 'connection-handling' }
 AmqpConnection >> hardCloseDescribedWith: aDescription [
 
-	| connectionClose |
-
-	isOpen
-		ifTrue: [
-			isOpen := false.
-			connectionClose :=
-				(self protocolClass connectionCloseMethod new)
-					replyCode: self protocolClass internalError;
-					replyText: 'Abnormal disconnection'.
-			self internalClose: connectionClose].
-
-	LogRecord emitWarning: (
-		'AMQP connection <1s> hard closed due to <2s>'
-			expandMacrosWith: self connectionPairsDescription with: aDescription).
-			
-	heartbeatSender stop.
-	socket close.
-	socketConnectionStatus := FailedSocketConnection dueTo: aDescription
+  self becomeCloseAfter: [
+      self protocolClass connectionCloseMethod new
+        replyCode: self protocolClass internalError;
+        replyText: aDescription
+    ]
 ]
 
 { #category : 'initialization' }
@@ -159,7 +151,6 @@ AmqpConnection >> initialize [
 	super initialize.
 	virtualHost := '/'.
 	isOpen := false.
-	closeReason := nil.
 	channels := Dictionary new.
 	nextChannel := 0
 ]
@@ -220,16 +211,6 @@ AmqpConnection >> installChannel0 [
 
 	channel := AmqpChannelHandler new connection: self.
 	channel mapEvent: self protocolClass connectionCloseMethod to: self selector: #handleConnectionClose:
-]
-
-{ #category : 'connection-handling' }
-AmqpConnection >> internalClose: method [
-
-	closeReason
-		ifNil: [ closeReason := method.
-			channels values copy do: [ :ch | ch internalClose: method ].
-			self changed: #connectionClosed
-			]
 ]
 
 { #category : 'connection-handling' }

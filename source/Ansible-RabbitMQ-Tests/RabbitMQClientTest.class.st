@@ -230,7 +230,7 @@ RabbitMQClientTest >> storeText: aString [
 RabbitMQClientTest >> tearDown [
 
 	[ publisher channel queueDelete: self queueName ]
-		on: AmqpDisconnectedError
+		on: AmqpDisconnectedError, NetworkError
 		do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
 	publisher stop.
 	workerProcess terminate.
@@ -264,7 +264,7 @@ RabbitMQClientTest >> testDebuggingLogsEnabled [
 		assertingLogRecordsMatchRegexes:
 			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
 				'\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed normally' }
+				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
 ]
 
 { #category : 'tests' }
@@ -282,7 +282,7 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 			]
 		assertingLogRecordsMatchRegexes:
 			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed normally' }
+				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
 ]
 
 { #category : 'tests' }
@@ -321,11 +321,11 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 						publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
 					]
 				assertingLogRecordsMatchRegexes:
-					{ '\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
+					{
+						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
+						'\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
 						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-						'\[ERROR\] AMQP Heartbeat failed unexpectedly \(connection closed while sending data\)\.' .
-						'\[WARNING\] AMQP connection localhost\:(\d+)->localhost\:5672 hard closed due to connection closed while sending data' .
-						'\[WARNING\] AMQP connection localhost\:(\d+)->localhost\:5672 hard closed due to connection closed while sending data' .
+						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to connection closed while sending data' .
 						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
 		].
 

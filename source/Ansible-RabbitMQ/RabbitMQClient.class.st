@@ -84,7 +84,7 @@ RabbitMQClient >> ensureConnectedAndOpen [
 		
 	connection
 		whenOpen: []
-		whenNot: [connection closeReason ifNil: [connection open] ifNotNil: createConnection]
+		whenNot: [connection open]
 ]
 
 { #category : 'initialization' }
