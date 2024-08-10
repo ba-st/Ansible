@@ -268,7 +268,8 @@ AmqpConnection >> nextFrame [
 { #category : 'opening' }
 AmqpConnection >> open [
 
-  codec := AmqpCodec on: ( ( ZdcSocketStream on: socket )
+  codec := AmqpCodec on: ( ( AmqpSocketStream on: socket )
+                 noTimeout;
                  binary;
                  yourself ).
 
