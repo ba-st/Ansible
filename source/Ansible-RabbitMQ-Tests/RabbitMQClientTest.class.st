@@ -325,7 +325,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
 						'\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
 						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to connection closed while sending data' .
+						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Data send timed out.)' .
 						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
 		].
 
