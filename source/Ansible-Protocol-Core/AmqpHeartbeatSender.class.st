@@ -64,8 +64,8 @@ AmqpHeartbeatSender >> spawnProcessSendingHeartbeatEvery: aTimeInterval [
 
   ^ ( Process
         forContext: [ self mainKeepAliveCycleEvery: aTimeInterval ] asContext
-        priority: Processor userBackgroundPriority )
-      name: 'Heartbeat sender';
+        priority: Processor highIOPriority )
+      name: ( 'Heartbeat on <1p>' expandMacrosWith: connection );
       yourself
 ]
 
