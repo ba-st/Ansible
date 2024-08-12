@@ -1,12 +1,7 @@
-Class {
-	#name : 'AmqpSocketStream',
-	#superclass : 'SocketStream',
-	#category : 'Ansible-Protocol-Core',
-	#package : 'Ansible-Protocol-Core'
-}
+Extension { #name : 'SocketStream' }
 
-{ #category : 'control' }
-AmqpSocketStream >> flush [
+{ #category : '*Ansible-Pharo-Pending-Patches' }
+SocketStream >> flush [
 	"If the other end is connected and we have something
 	to send, then we send it and reset the outBuffer.
 	If the other end is closed and we are signaling errors, do so."

@@ -268,18 +268,20 @@ AmqpConnection >> nextFrame [
 { #category : 'opening' }
 AmqpConnection >> open [
 
-  codec := AmqpCodec on: ( ( AmqpSocketStream on: socket )
-                 noTimeout;
-                 binary;
-                 yourself ).
+	codec := AmqpCodec
+		on:
+			((SocketStream on: socket)
+				noTimeout;
+				binary;
+				yourself).
 
-  self
-    sendProtocolHeader;
-    startConnection;
-    tuneConnection;
-    openConnection.
+	self
+		sendProtocolHeader;
+		startConnection;
+		tuneConnection;
+		openConnection.
 
-  heartbeatSender startBeatingEvery: parameters heartbeat
+	heartbeatSender startBeatingEvery: parameters heartbeat
 ]
 
 { #category : 'private-opening' }

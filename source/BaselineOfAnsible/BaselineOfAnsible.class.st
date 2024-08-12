@@ -55,7 +55,18 @@ BaselineOfAnsible >> setUpDependencies: spec [
 
 { #category : 'baselines' }
 BaselineOfAnsible >> setUpDeploymentPackages: spec [
-
+	
+	spec
+		for: #('pharo7.x' 'pharo8.x' 'pharo9.x' 'pharo10.x' 'pharo11.x')
+		do: [ 
+			spec
+				package: 'Ansible-Pharo-Pending-Patches';
+				group: 'RabbitMQ' with: 'Ansible-Pharo-Pending-Patches'. 
+			spec
+				package: 'Ansible-RabbitMQ'
+				with: [ spec requires: #( 'Ansible-Pharo-Pending-Patches' 'Ansible-Protocol-091' 'Launchpad-Deployment' 'Hyperspace-Deployment' ) ];
+				group: 'RabbitMQ' with: 'Ansible-RabbitMQ' ].
+			
 	spec
 		package: 'Ansible-Protocol-Core';
 		group: 'Deployment-08' with: 'Ansible-Protocol-Core';
