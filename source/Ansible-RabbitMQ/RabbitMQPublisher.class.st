@@ -26,13 +26,6 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	^ self new initializeConfiguredBy: options
 ]
 
-{ #category : 'configuring' }
-RabbitMQPublisher >> confirmPublicationWith: anAckBlock otherwise: aNackBlock [
-
-  channelConfigurationCommands add: [ :theChannel |
-      theChannel confirmPublicationWith: anAckBlock otherwise: aNackBlock ]
-]
-
 { #category : 'initialization' }
 RabbitMQPublisher >> ensureChannelOpen [
 
@@ -46,6 +39,13 @@ RabbitMQPublisher >> initializeConfiguredBy: anOptionsDictionary [
   super initialize.
   options := anOptionsDictionary.
   channelConfigurationCommands := OrderedCollection new
+]
+
+{ #category : 'configuring' }
+RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock [
+
+  channelConfigurationCommands add: [ :theChannel |
+      theChannel onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock ]
 ]
 
 { #category : 'publishing' }

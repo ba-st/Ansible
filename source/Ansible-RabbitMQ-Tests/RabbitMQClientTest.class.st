@@ -76,8 +76,8 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
   messageWasPublished := false.
 
   publisher
-    confirmPublicationWith: [ :command | messageWasPublished := true ]
-    otherwise: [ :command | self fail ].
+    onPublicationConfirmationDo: [ :command | messageWasPublished := true ]
+    onRejectionDo: [ :command | self fail ].
 
   queue := publisher channel queueDeclare: queueName.
 
