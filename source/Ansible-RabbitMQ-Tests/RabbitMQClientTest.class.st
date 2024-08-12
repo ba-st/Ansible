@@ -49,7 +49,8 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
               configuredBy: [ :options |
                   options
                     at: #queueName put: queueName;
-                    at: #queueDurable put: false
+                    at: #queueDurable put: false;
+                    at: #enableDebuggingLogs put: true
                 ]
               processingMessagesWith: [ :messageReceived |
                   messageWasConsumed := true.
@@ -265,6 +266,23 @@ RabbitMQClientTest >> testDebuggingLogsEnabled [
 			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
 				'\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
 				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testDebuggingLogsEnabledInWorker [
+
+  | queueName messagesToSend |
+  queueName := self queueName.
+  messagesToSend := 'Do it!'.
+
+  self assertQueueStatusAfterPublishing: messagesToSend on: queueName.
+
+  self
+    runMemoryLoggerDuring: [ self assertQueueStatusAfterConsuming: messagesToSend from: queueName ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+        '\[DEBUG\] RabbitMQ message consumed \{"messageConsumed"\:"Do it!","routingKey"\:"tasks-for-testDebuggingLogsEnabledInWorker","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
+        '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
 ]
 
 { #category : 'tests' }

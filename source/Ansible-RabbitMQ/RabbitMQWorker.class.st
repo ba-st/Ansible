@@ -62,7 +62,20 @@ RabbitMQWorker >> initializeConfiguredBy: anOptionsDictionary processingMessages
   messageProcessor := aMessageProcessor
 ]
 
-{ #category : 'private' }
+{ #category : 'private - logging' }
+RabbitMQWorker >> logDebuggingInfoFor: aMessage [
+
+  self shouldLogDebuggingInfo then: [
+      LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message consumed' with: [ :data |
+          data
+            at: #messageConsumed put: aMessage body utf8Decoded;
+            at: #routingKey put: self queueName;
+            at: #connectionDescription put: connection connectionPairsDescription
+        ]
+    ]
+]
+
+{ #category : 'private - logging' }
 RabbitMQWorker >> logDisconnectionDueTo: anError [
 
 	LogRecord emitError:
@@ -89,6 +102,7 @@ RabbitMQWorker >> startConsumingFromQueue [
 
   channel prefetchCount: 1.
   channel consumeFrom: self queueName applying: [ :message |
+      self logDebuggingInfoFor: message.
       messageProcessor value: message.
       channel basicAck: message method deliveryTag
     ]

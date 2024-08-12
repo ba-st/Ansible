@@ -41,6 +41,19 @@ RabbitMQPublisher >> initializeConfiguredBy: anOptionsDictionary [
   channelConfigurationCommands := OrderedCollection new
 ]
 
+{ #category : 'private - logging' }
+RabbitMQPublisher >> logDebuggingInfoFor: aMessage publishedTo: aQueueName [
+
+  self shouldLogDebuggingInfo then: [
+      LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
+          data
+            at: #messagePublished put: aMessage;
+            at: #routingKey put: aQueueName;
+            at: #connectionDescription put: connection connectionPairsDescription
+        ]
+    ]
+]
+
 { #category : 'configuring' }
 RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock [
 
@@ -64,7 +77,6 @@ RabbitMQPublisher >> publish: aMessageCollection onQueueNamed: aQueueName [
 RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
 
   | tryToPublishMessage |
-
   self ensureChannelOpen.
   tryToPublishMessage := [
                            channel
@@ -73,15 +85,7 @@ RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
                              routingKey: aQueueName
                              properties: self persistentDeliveryMode
                          ].
-
-  self shouldLogDebuggingInfo then: [
-      LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
-          data
-            at: #messagePublished put: aMessage;
-            at: #routingKey put: aQueueName;
-            at: #connectionDescription put: connection connectionPairsDescription
-        ]
-    ].
+  self logDebuggingInfoFor: aMessage publishedTo: aQueueName.
 
   tryToPublishMessage
     on: self connectivityErrors
