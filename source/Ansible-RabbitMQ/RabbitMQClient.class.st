@@ -134,7 +134,7 @@ RabbitMQClient >> stop [
 { #category : 'private - accessing' }
 RabbitMQClient >> timeframeBetweenAttempts [
 
-  ^ Duration milliSeconds: ( options at: #timeSlotBetweenConnectionRetriesInMs ifAbsent: [ 300 ] )
+  ^ Duration milliSeconds: ( options at: #timeSlotBetweenConnectionRetriesInMs ifAbsent: [ 3000 ] )
 ]
 
 { #category : 'private - connecting' }
