@@ -48,6 +48,12 @@ RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNac
       theChannel onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock ]
 ]
 
+{ #category : 'private - configuring' }
+RabbitMQPublisher >> persistentDeliveryMode [
+
+  ^ connection protocolClass basicPropertiesClass new deliveryMode: 2
+]
+
 { #category : 'publishing' }
 RabbitMQPublisher >> publish: aMessageCollection onQueueNamed: aQueueName [
 
@@ -57,34 +63,33 @@ RabbitMQPublisher >> publish: aMessageCollection onQueueNamed: aQueueName [
 { #category : 'publishing' }
 RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
 
-	| tryToPublishMessage |
+  | tryToPublishMessage |
 
-	self ensureChannelOpen.
-	tryToPublishMessage := [
-		                       channel
-			                       basicPublish: aMessage utf8Encoded
-			                       exchange: ''
-			                       routingKey: aQueueName
-			                       properties:
-			                       ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-	                       ].
+  self ensureChannelOpen.
+  tryToPublishMessage := [
+                           channel
+                             basicPublish: aMessage utf8Encoded
+                             exchange: ''
+                             routingKey: aQueueName
+                             properties: self persistentDeliveryMode
+                         ].
 
-	self shouldLogDebuggingInfo then: [
-			LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
-					data
-						at: #messagePublished put: aMessage;
-						at: #routingKey put: aQueueName;
-						at: #connectionDescription put: connection connectionPairsDescription
-				]
-		].
+  self shouldLogDebuggingInfo then: [
+      LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
+          data
+            at: #messagePublished put: aMessage;
+            at: #routingKey put: aQueueName;
+            at: #connectionDescription put: connection connectionPairsDescription
+        ]
+    ].
 
-	tryToPublishMessage
-		on: self connectivityErrors
-		do: [ :signal |
-				connection hardCloseDescribedWith: signal messageText.
-				self ensureChannelOpen.
-				signal return: tryToPublishMessage value
-			]
+  tryToPublishMessage
+    on: self connectivityErrors
+    do: [ :signal |
+        connection hardCloseDescribedWith: signal messageText.
+        self ensureChannelOpen.
+        signal return: tryToPublishMessage value
+      ]
 ]
 
 { #category : 'connecting' }

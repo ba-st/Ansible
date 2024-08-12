@@ -27,7 +27,7 @@ RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 							            at: 'process' put: 'Text Reverser Worker';
 							            yourself )
 			          ]
-		          doingWithPayload: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
+		          processingPayloadWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
 ]
 
 { #category : 'accessing' }

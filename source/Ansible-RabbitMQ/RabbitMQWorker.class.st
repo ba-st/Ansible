@@ -22,14 +22,6 @@ Class {
 }
 
 { #category : 'testing' }
-RabbitMQWorker class >> configuredBy: aConfigurationAction doingWithPayload: aPayloadProcessor [
-
-  ^ self
-      configuredBy: aConfigurationAction
-      processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
-]
-
-{ #category : 'testing' }
 RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWith: aMessageProcessor [
 
   | options |
@@ -39,6 +31,14 @@ RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWit
     at: #queueName
     ifAbsent: [ InstanceCreationFailed signal: 'Missing name of the queue to consume from' ].
   ^ self new initializeConfiguredBy: options processingMessagesWith: aMessageProcessor
+]
+
+{ #category : 'testing' }
+RabbitMQWorker class >> configuredBy: aConfigurationAction processingPayloadWith: aPayloadProcessor [
+
+  ^ self
+      configuredBy: aConfigurationAction
+      processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
 ]
 
 { #category : 'private' }
