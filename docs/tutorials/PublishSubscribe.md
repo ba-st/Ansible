@@ -70,7 +70,7 @@ logger name: 'Transcript logger'.
 logger resume
 ```
 
-## Receiveing notifications
+## Receiving notifications
 
 Here's the script to spawn a process that will pop up a toast notification on
  every log message received
