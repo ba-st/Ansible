@@ -68,6 +68,7 @@ RabbitMQWorker >> logDebuggingInfoFor: aMessage [
   self shouldLogDebuggingInfo then: [
       LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message consumed' with: [ :data |
           data
+            at: #deliveryTag put: aMessage method deliveryTag;
             at: #messageConsumed put: aMessage body utf8Decoded;
             at: #routingKey put: self queueName;
             at: #connectionDescription put: connection connectionPairsDescription
