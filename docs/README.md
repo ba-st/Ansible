@@ -46,7 +46,8 @@ They are not a rewrite but rather my interpretation.
 
 ## Use RabbitMQ clients reifications
 
-We provide two objects to simplify the instantiations of a publisher and a consumer: 
+We provide two objects to simplify the instantiations of a publisher and a
+consumer:
 
 1. [RabbitMQPublisher](tutorials/RabbitMQPublisher.md)
 2. [RabbitMQWorker](tutorials/RabbitMQWorker.md)
