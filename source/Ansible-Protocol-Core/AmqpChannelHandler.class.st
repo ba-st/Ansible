@@ -5,12 +5,12 @@ Class {
 		'connection',
 		'channelNumber',
 		'inbound',
-		'state',
 		'closeReason',
 		'asyncMap',
 		'currentCommand',
 		'remainingBytes',
-		'bodyPieces'
+		'bodyPieces',
+		'nextFrameHandler'
 	],
 	#category : 'Ansible-Protocol-Core',
 	#package : 'Ansible-Protocol-Core'
@@ -26,7 +26,7 @@ AmqpChannelHandler >> channelNumber [
 AmqpChannelHandler >> checkBodyCompletion [
 
 	remainingBytes > 0
-		ifTrue: [ state := #handleBodyFrame: ]
+		ifTrue: [ nextFrameHandler := #handleBodyFrame: ]
 		ifFalse: [ remainingBytes < 0
 				ifTrue: [ AmqpProtocolSyntaxError signal: 'Received body overrun' ].
 			currentCommand body: bodyPieces contents.
@@ -58,10 +58,10 @@ AmqpChannelHandler >> connection: anObject [
 AmqpChannelHandler >> dispatchCommand [
 
 	( asyncMap includesKey: currentCommand method class )
-		ifTrue: [ | a |
+		ifTrue: [ | messageSend |
 
-			a := asyncMap at: currentCommand method class.
-			a key perform: a value with: currentCommand
+			messageSend := asyncMap at: currentCommand method class.
+			messageSend value: currentCommand
 			]
 		ifFalse: [ inbound add: currentCommand ].
 	self resetState
@@ -87,7 +87,7 @@ AmqpChannelHandler >> handleBodyFrame: frame [
 { #category : 'handling' }
 AmqpChannelHandler >> handleFrame: frame [
 
-	self perform: state with: frame
+	self perform: nextFrameHandler with: frame
 ]
 
 { #category : 'handling' }
@@ -98,7 +98,7 @@ AmqpChannelHandler >> handleMethodFrame: frame [
 	currentCommand := AmqpCommand new.
 	currentCommand method: frame method.
 	frame method hasContents
-		ifTrue: [ state := #handlePropertiesFrame: ]
+		ifTrue: [ nextFrameHandler := #handlePropertiesFrame: ]
 		ifFalse: [ self dispatchCommand ]
 ]
 
@@ -136,13 +136,13 @@ AmqpChannelHandler >> internalClose: method [
 { #category : 'handling' }
 AmqpChannelHandler >> mapEvent: evtClass to: receiver selector: aSymbol [
 
-	asyncMap at: evtClass put: receiver -> aSymbol
+  asyncMap at: evtClass put: ( MessageSend receiver: receiver selector: aSymbol )
 ]
 
 { #category : 'handling' }
 AmqpChannelHandler >> resetState [
 
-	state := #handleMethodFrame:.
+	nextFrameHandler := #handleMethodFrame:.
 	currentCommand := nil.
 	remainingBytes := 0.
 	bodyPieces := nil
