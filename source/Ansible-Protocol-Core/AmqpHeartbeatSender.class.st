@@ -19,7 +19,7 @@ AmqpHeartbeatSender class >> keepingOpen: anAmqpConnection [
 { #category : 'accessing' }
 AmqpHeartbeatSender >> connectivityErrors [
 
-  ^ NetworkError , AmqpDisconnectedError , SocketError , PrimitiveFailed
+  ^ NetworkError , AmqpDisconnectedError , ExpectedSocketFailure
 ]
 
 { #category : 'accessing' }

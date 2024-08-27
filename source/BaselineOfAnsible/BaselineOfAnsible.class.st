@@ -8,18 +8,34 @@ Class {
 { #category : 'baselines' }
 BaselineOfAnsible >> baseline: spec [
 
-	<baseline>
-	spec for: #pharo do: [ 
-		self
-			setUpDependencies: spec;
-			setUpDeploymentPackages: spec;
-			setUpTestPackages: spec;
-			setUpToolsPackages: spec.
-		spec
-			group: 'Deployment' with: #( 'Deployment-08' 'Deployment-091' 'RabbitMQ' );
-			group: 'CI' with: #( 'Tests' );
-			group: 'Development' with: #( 'Tests' 'Tools' )
-		]
+  <baseline>
+  spec for: #pharo do: [
+      self
+        setUpDependencies: spec;
+        setUpDeploymentPackages: spec;
+        setUpTestPackages: spec;
+        setUpToolsPackages: spec.
+      spec
+        group: 'Deployment' with: #( 'Deployment-08' 'Deployment-091' 'RabbitMQ' );
+        group: 'CI' with: #( 'Tests' );
+        group: 'Development' with: #( 'Tests' 'Tools' ).
+      spec postLoadDoIt: #postLoadInitialization
+    ]
+]
+
+{ #category : 'initialization' }
+BaselineOfAnsible >> postLoadInitialization [
+
+  " ExpectedSocketFailure is used to handle socket failures across 
+	different Pharo versions (SocketError was introduced in Pharo 11) "
+
+  Smalltalk
+    at: #ExpectedSocketFailure
+    put:
+    ( Smalltalk
+        at: #SocketError
+        ifPresent: [ :socketError | socketError ]
+        ifAbsent: [ PrimitiveFailed ] )
 ]
 
 { #category : 'accessing' }

@@ -52,7 +52,7 @@ AmqpConnection >> becomeCloseAfter: aBlock [
                 with: closingMethod replyText ).
           heartbeatSender stop.
           [ socket close ]
-            on: PrimitiveFailed, SocketError
+            on: ExpectedSocketFailure
             do: [ :error | 
 					" If the socket was unexpectedly closed, trying to close it again 
 					will raise a SocketError that we want to silence "
