@@ -95,10 +95,10 @@ AmqpConnection >> codec [
 { #category : 'accessing' }
 AmqpConnection >> connectionPairsDescription [
 
-	^ 'localhost:<1p>-><2s>:<3p>'
-		  expandMacrosWith: ([socket port] on: SocketError do: [ :error | error return: 0 ])
-		  with: hostname
-		  with: portNumber
+  ^ 'localhost:<1p>-><2s>:<3p>'
+      expandMacrosWith: self localPortDescription
+      with: hostname
+      with: portNumber
 ]
 
 { #category : 'connection-handling' }
@@ -218,6 +218,12 @@ AmqpConnection >> installChannel0 [
 
 	channel := AmqpChannelHandler new connection: self.
 	channel mapEvent: self protocolClass connectionCloseMethod to: self selector: #handleConnectionClose:
+]
+
+{ #category : 'accessing' }
+AmqpConnection >> localPortDescription [
+
+  ^ socket isConnected then: [ socket localPort ] otherwise: [ 0 ]
 ]
 
 { #category : 'connection-handling' }
