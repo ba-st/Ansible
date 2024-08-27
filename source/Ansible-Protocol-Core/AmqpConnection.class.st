@@ -127,8 +127,10 @@ AmqpConnection >> ensureChannel: channelNumber [
 { #category : 'connection-handling' }
 AmqpConnection >> ensureOpen [
 
-  ( socket isConnected and: [ socket isOtherEndClosed not ] ) ifFalse: [ 
-      AmqpDisconnectedError signal: 'Connection closed' ]
+  ( socket isConnected and: [ socket isOtherEndClosed not ] ) ifFalse: [
+      AmqpDisconnectedError signal: 'Connection closed' ].
+
+  ^ true
 ]
 
 { #category : 'connection-handling' }
@@ -314,14 +316,6 @@ AmqpConnection >> printOn: aStream [
 ]
 
 { #category : 'connection-handling' }
-AmqpConnection >> processAsyncEvents [
-
-	[ self ensureOpen.
-	codec stream isDataAvailable or: [ socket isConnected not ]
-	] whileTrue: [ self mainLoopCycle ]
-]
-
-{ #category : 'connection-handling' }
 AmqpConnection >> protocolClass [
 
 	^ protocolClass
@@ -483,11 +477,7 @@ AmqpConnection >> virtualHost [
 { #category : 'connection-handling' }
 AmqpConnection >> waitForEvent [
 
-	self ensureOpen.
-	[ codec stream peek ]
-		on: ConnectionTimedOut
-		do: [  ].
-	^ self processAsyncEvents
+  [ self ensureOpen ] whileTrue: [ self mainLoopCycle ]
 ]
 
 { #category : 'connection-handling' }

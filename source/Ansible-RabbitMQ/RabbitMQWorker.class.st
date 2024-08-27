@@ -48,13 +48,6 @@ RabbitMQWorker >> declareQueueInChannel [
 ]
 
 { #category : 'private' }
-RabbitMQWorker >> ensureChannelOpen [
-
-  super ensureChannelOpen.
-  self declareQueueInChannel
-]
-
-{ #category : 'private' }
 RabbitMQWorker >> initializeConfiguredBy: anOptionsDictionary processingMessagesWith: aMessageProcessor [
 
   super initialize.
@@ -76,17 +69,29 @@ RabbitMQWorker >> logDebuggingInfoFor: aMessage [
     ]
 ]
 
-{ #category : 'private - logging' }
-RabbitMQWorker >> logDisconnectionDueTo: anError [
-
-	LogRecord emitError:
-		( 'RabbitMQClient disconnected due to <1s>' expandMacrosWith: anError messageText )
-]
-
 { #category : 'accessing' }
 RabbitMQWorker >> queueName [
 
 	^ options at: #queueName
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> restartConsumingFromQueue [
+
+  self
+    ensureChannelOpen;
+    setUpChannelConsumingCallback
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> setUpChannelConsumingCallback [
+
+  channel prefetchCount: 1.
+  channel consumeFrom: self queueName applying: [ :message |
+      self logDebuggingInfoFor: message.
+      messageProcessor value: message.
+      channel basicAck: message method deliveryTag
+    ]
 ]
 
 { #category : 'controlling' }
@@ -99,14 +104,10 @@ RabbitMQWorker >> start [
 { #category : 'private' }
 RabbitMQWorker >> startConsumingFromQueue [
 
-  self ensureChannelOpen.
-
-  channel prefetchCount: 1.
-  channel consumeFrom: self queueName applying: [ :message |
-      self logDebuggingInfoFor: message.
-      messageProcessor value: message.
-      channel basicAck: message method deliveryTag
-    ]
+  self
+    ensureChannelOpen;
+    declareQueueInChannel;
+    setUpChannelConsumingCallback
 ]
 
 { #category : 'private' }
@@ -118,9 +119,9 @@ RabbitMQWorker >> startProcessing [
     [ connection waitForEvent ]
       on: self connectivityErrors
       do: [ :error |
-          self
-            logDisconnectionDueTo: error;
-            startConsumingFromQueue
+          connection hardCloseDescribedWith: error messageText.
+          self restartConsumingFromQueue.
+          error return
         ]
   ] repeat
 ]

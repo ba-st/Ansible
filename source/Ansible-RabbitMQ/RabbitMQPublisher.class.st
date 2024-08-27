@@ -77,23 +77,20 @@ RabbitMQPublisher >> publish: aMessageCollection onQueueNamed: aQueueName [
 RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
 
   | tryToPublishMessage |
-  self ensureChannelOpen.
   tryToPublishMessage := [
+                           self ensureChannelOpen.
                            channel
                              basicPublish: aMessage utf8Encoded
                              exchange: ''
                              routingKey: aQueueName
-                             properties: self persistentDeliveryMode
+                             properties: self persistentDeliveryMode.
+                           self logDebuggingInfoFor: aMessage publishedTo: aQueueName
                          ].
-  self logDebuggingInfoFor: aMessage publishedTo: aQueueName.
 
-  tryToPublishMessage
-    on: self connectivityErrors
-    do: [ :signal |
-        connection hardCloseDescribedWith: signal messageText.
-        self ensureChannelOpen.
-        signal return: tryToPublishMessage value
-      ]
+  self try: tryToPublishMessage onConnectivityErrorDo: [ :attemptNumber :error |
+      connection hardCloseDescribedWith: error messageText.
+      self logFailedConnectionAttempt: attemptNumber dueTo: error
+    ]
 ]
 
 { #category : 'connecting' }

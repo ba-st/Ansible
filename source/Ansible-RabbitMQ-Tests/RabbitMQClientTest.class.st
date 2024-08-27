@@ -95,17 +95,7 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 ]
 
 { #category : 'private - support' }
-RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
-
-	^ OSPlatform current runCommand:
-		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
-			    expandMacrosWith: aRabbitmqContainerId
-			    with: aUsername
-			    with: aCloseReason )
-]
-
-{ #category : 'private - support' }
-RabbitMQClientTest >> closeAllUserConnections [
+RabbitMQClientTest >> closeAllConnectionsFromTheBrokerSide [
 
 	| rabbitmqContainerId closeReason |
 
@@ -121,6 +111,24 @@ RabbitMQClientTest >> closeAllUserConnections [
 				for: self defaultRabbitMQWorkerUsername
 				because: closeReason
 			]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> closeAllConnectionsFromTheClientSide [
+
+  Socket allInstances
+    select: [ :socket | socket isConnected and: [ socket remotePort = 5672 ] ]
+    thenDo: #closeAndDestroy
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
+
+	^ OSPlatform current runCommand:
+		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
+			    expandMacrosWith: aRabbitmqContainerId
+			    with: aUsername
+			    with: aCloseReason )
 ]
 
 { #category : 'private - accessing' }
@@ -142,14 +150,6 @@ RabbitMQClientTest >> defaultRabbitMQPublisher [
 RabbitMQClientTest >> defaultRabbitMQWorkerUsername [
 
 	^ AmqpConnectionBuilder usingAMQP091Protocol credentials username
-]
-
-{ #category : 'private - support' }
-RabbitMQClientTest >> largerWait [
-	
-	"This delay aims to replicate the time required to successfully close all the RabbitMQ connections."
-
-	( Delay forSeconds: 120 ) wait
 ]
 
 { #category : 'private - accessing' }
@@ -317,40 +317,74 @@ RabbitMQClientTest >> testPublisherConfirmationWhenMessageProcessed [
 ]
 
 { #category : 'tests' }
+RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnection [
+
+  self resumeWorkerDuring: [
+      publisher
+        publishOnly: 'Hello' onQueueNamed: self queueName;
+        publishOnly: 'World' onQueueNamed: self queueName.
+
+      self wait.
+
+      self
+        assert: reversedTexts size equals: 2;
+        assert: reversedTexts first equals: 'olleH';
+        assert: reversedTexts last equals: 'dlroW'.
+
+      self
+        runMemoryLoggerDuring: [
+            self
+              closeAllConnectionsFromTheClientSide;
+              waitUntilAllRabbitMQConnectionsClose.
+            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+          ]
+        assertingLogRecordsMatchRegexes:
+          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Connection close while waiting for data.' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+            '\[ERROR\] AMQP Heartbeat failed unexpectedly \(connection closed while sending data\).' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to connection closed while sending data' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+    ].
+
+  self
+    assert: reversedTexts size equals: 3;
+    assert: reversedTexts last equals: 'derotser noitcennoc tseT'
+]
+
+{ #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 
-	self resumeWorkerDuring: [
-			publisher
-				publishOnly: 'Hello' onQueueNamed: self queueName;
-				publishOnly: 'World' onQueueNamed: self queueName.
+  self resumeWorkerDuring: [
+      publisher
+        publishOnly: 'Hello' onQueueNamed: self queueName;
+        publishOnly: 'World' onQueueNamed: self queueName.
 
-			self wait.
+      self wait.
 
-			self
-				assert: reversedTexts size equals: 2;
-				assert: reversedTexts first equals: 'olleH';
-				assert: reversedTexts last equals: 'dlroW'.
+      self
+        assert: reversedTexts size equals: 2;
+        assert: reversedTexts first equals: 'olleH';
+        assert: reversedTexts last equals: 'dlroW'.
 
-			self
-				runMemoryLoggerDuring: [
-						self
-							closeAllUserConnections;
-							largerWait.
-						publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
-					]
-				assertingLogRecordsMatchRegexes:
-					{
-						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
-						'\[ERROR\] RabbitMQClient disconnected due to Connection closed' .
-						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
-						'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
-		].
+      self
+        runMemoryLoggerDuring: [
+            self
+              closeAllConnectionsFromTheBrokerSide;
+              waitUntilAllRabbitMQConnectionsClose.
+            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+          ]
+        assertingLogRecordsMatchRegexes:
+          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
+			'\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+    ].
 
 
-	self
-		assert: reversedTexts size equals: 3;
-		assert: reversedTexts last equals: 'derotser noitcennoc tseT'
+  self
+    assert: reversedTexts size equals: 3;
+    assert: reversedTexts last equals: 'derotser noitcennoc tseT'
 ]
 
 { #category : 'tests' }
@@ -378,4 +412,12 @@ RabbitMQClientTest >> testPublishingOneMessage [
 RabbitMQClientTest >> wait [
 
 	( Delay forMilliseconds: 200 ) wait
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> waitUntilAllRabbitMQConnectionsClose [
+	
+	"This delay aims to replicate the time required to successfully close all the RabbitMQ connections."
+
+	( Delay forSeconds: 120 ) wait
 ]
