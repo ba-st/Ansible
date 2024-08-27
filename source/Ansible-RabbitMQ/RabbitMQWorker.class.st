@@ -44,7 +44,10 @@ RabbitMQWorker class >> configuredBy: aConfigurationAction processingPayloadWith
 { #category : 'private' }
 RabbitMQWorker >> declareQueueInChannel [
 
-  channel queueDeclare: self queueName durable: ( options at: #queueDurable ifAbsent: [ true ] )
+  channel declareQueueApplying: [ :builder |
+      builder name: self queueName.
+      self makeQueueDurable then: [ builder beDurable ]
+    ]
 ]
 
 { #category : 'private' }
@@ -67,6 +70,12 @@ RabbitMQWorker >> logDebuggingInfoFor: aMessage [
             at: #connectionDescription put: connection connectionPairsDescription
         ]
     ]
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> makeQueueDurable [
+
+  ^ options at: #queueDurable ifAbsent: [ true ]
 ]
 
 { #category : 'accessing' }

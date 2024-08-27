@@ -76,3 +76,9 @@ AmqpQueueDeclareBuilder >> name: aQueueName [
 	
 	queueName := aQueueName
 ]
+
+{ #category : 'configuring' }
+AmqpQueueDeclareBuilder >> useAsArguments: aDictionary [
+
+  arguments := aDictionary
+]

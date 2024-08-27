@@ -55,3 +55,9 @@ AmqpExchangeDeclareBuilder >> initializeNamed: aName of: aType for: aProtocolVer
 	passive := false.
 	arguments := nil
 ]
+
+{ #category : 'building' }
+AmqpExchangeDeclareBuilder >> useAsArguments: aDictionary [
+
+  arguments := aDictionary
+]

@@ -62,7 +62,7 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
                 ].
   worker startConsumingFromQueue.
   [
-    queue := worker channel queueDeclare: queueName.
+    queue := worker channel declareQueueApplying: [ :builder | builder name: queueName ].
     self
       assert: messageWasConsumed;
       assert: queue method messageCount equals: 0;
@@ -80,13 +80,13 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
     onPublicationConfirmationDo: [ :command | messageWasPublished := true ]
     onRejectionDo: [ :command | self fail ].
 
-  queue := publisher channel queueDeclare: queueName.
+  queue := publisher channel declareQueueApplying: [ :builder | builder name: queueName ].
 
   publisher publishOnly: messagesToSend onQueueNamed: queueName.
 
   self wait.
 
-  queue := publisher channel queueDeclare: queueName.
+  queue := publisher channel declareQueueApplying: [ :builder | builder name: queueName ].
 
   self
     assert: queue method messageCount equals: 1;

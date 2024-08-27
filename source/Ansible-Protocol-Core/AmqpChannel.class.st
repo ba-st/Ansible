@@ -228,56 +228,6 @@ AmqpChannel >> declareQueueApplying: aBlock [
 ]
 
 { #category : 'AMQP exchange management' }
-AmqpChannel >> exchangeDeclare: exchangeName type: typeString [
-
-	^ self
-		exchangeDeclare: exchangeName
-		type: typeString
-		durable: false
-		autoDelete: false
-		passive: false
-		arguments: nil
-]
-
-{ #category : 'AMQP exchange management' }
-AmqpChannel >> exchangeDeclare: exchangeName type: typeString durable: durable [
-
-	^ self
-		exchangeDeclare: exchangeName
-		type: typeString
-		durable: durable
-		autoDelete: false
-		passive: false
-		arguments: nil
-]
-
-{ #category : 'AMQP exchange management' }
-AmqpChannel >> exchangeDeclare: exchangeName type: typeString durable: durable autoDelete: autoDelete passive: passive [
-
-	^ self
-		exchangeDeclare: exchangeName
-		type: typeString
-		durable: durable
-		autoDelete: autoDelete
-		passive: passive
-		arguments: nil
-]
-
-{ #category : 'AMQP exchange management' }
-AmqpChannel >> exchangeDeclare: exchangeName type: typeString durable: durable autoDelete: autoDelete passive: passive arguments: aDictionary [
-
-	^ self
-		rpc:
-			( protocolVersion exchangeDeclareMethod new
-				exchange: exchangeName;
-				type: typeString;
-				passive: passive;
-				durable: durable;
-				autoDelete: autoDelete;
-				arguments: aDictionary )
-]
-
-{ #category : 'AMQP exchange management' }
 AmqpChannel >> exchangeDelete: exchangeName [
 
 	^ self exchangeDelete: exchangeName ifUnused: false
@@ -384,44 +334,6 @@ AmqpChannel >> queueBind: queue exchange: exchange routingKey: routingKey argume
 				queue: queue;
 				exchange: exchange;
 				routingKey: routingKey;
-				arguments: aDictionary )
-]
-
-{ #category : 'AMQP queue management' }
-AmqpChannel >> queueDeclare: queueName [
-
-	^ self
-		queueDeclare: queueName
-		durable: false
-		exclusive: false
-		autoDelete: false
-		passive: false
-		arguments: nil
-]
-
-{ #category : 'AMQP queue management' }
-AmqpChannel >> queueDeclare: queueName durable: durable [
-
-	^ self
-		queueDeclare: queueName
-		durable: durable
-		exclusive: false
-		autoDelete: false
-		passive: false
-		arguments: nil
-]
-
-{ #category : 'AMQP queue management' }
-AmqpChannel >> queueDeclare: queueName durable: durable exclusive: exclusive autoDelete: autoDelete passive: passive arguments: aDictionary [
-
-	^ self
-		rpc:
-			( protocolVersion queueDeclareMethod new
-				queue: queueName;
-				passive: passive;
-				durable: durable;
-				exclusive: exclusive;
-				autoDelete: autoDelete;
 				arguments: aDictionary )
 ]
 
