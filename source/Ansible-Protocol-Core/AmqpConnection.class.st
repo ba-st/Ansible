@@ -45,15 +45,20 @@ AmqpConnection >> becomeCloseAfter: aBlock [
   isOpen ifTrue: [
       [
         closingMethod := aBlock value.
-        channels valuesDo: [ :ch | ch internalClose: closingMethod ].
+        channels valuesDo: [ :ch | ch internalClose: closingMethod ]
       ] ensure: [
           LogRecord emitInfo: ( 'AMQP connection <1s> closed due to <2s>'
                 expandMacrosWith: self connectionPairsDescription
                 with: closingMethod replyText ).
           heartbeatSender stop.
-          socket close.
+          [ socket close ]
+            on: SocketError
+            do: [ :error | 
+					" If the socket was unexpectedly closed, trying to close it again 
+					will raise a SocketError that we want to silence "
+					error return ].
           isOpen := false.
-          socketConnectionStatus := HealthyClosedSocketConnection dueTo: closingMethod replyText 
+          socketConnectionStatus := ClosedSocketConnection dueTo: closingMethod replyText
         ]
     ]
 ]
@@ -91,7 +96,7 @@ AmqpConnection >> codec [
 AmqpConnection >> connectionPairsDescription [
 
 	^ 'localhost:<1p>-><2s>:<3p>'
-		  expandMacrosWith: socket port
+		  expandMacrosWith: ([socket port] on: SocketError do: [ :error | error return: 0 ])
 		  with: hostname
 		  with: portNumber
 ]
@@ -175,7 +180,7 @@ AmqpConnection >> initializeSocketConnection [
   ]
     on: NetworkError
     do: [ :error |
-        socketConnectionStatus := FailedSocketConnection dueTo: error.
+        socketConnectionStatus := ClosedSocketConnection dueTo: error.
         LogRecord emitInfo: ( 'AMQP connection to <1s>:<2s> failed to establish because <3s>'
               expandMacrosWith: hostname
               with: portNumber printString

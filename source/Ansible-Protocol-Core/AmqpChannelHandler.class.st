@@ -169,7 +169,7 @@ AmqpChannelHandler >> waitForReply: acceptableReplies [
 
 		self ensureOpen.
 		currentConnection := connection mainLoopCycle.
-		currentConnection socketConnectionStatus
+		currentConnection
 			whenConnected: [  ]
 			whenNot: [ :error | AmqpDisconnectedError signal: error ]
 		].

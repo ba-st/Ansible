@@ -1,5 +1,5 @@
 Class {
-	#name : 'HealthyClosedSocketConnection',
+	#name : 'ClosedSocketConnection',
 	#superclass : 'SocketConnectionStatus',
 	#instVars : [
 		'error'
@@ -9,19 +9,19 @@ Class {
 }
 
 { #category : 'instance creation' }
-HealthyClosedSocketConnection class >> dueTo: anError [
+ClosedSocketConnection class >> dueTo: anError [
 
 	^ self new initializeDueTo: anError
 ]
 
 { #category : 'initialization' }
-HealthyClosedSocketConnection >> initializeDueTo: anError [
+ClosedSocketConnection >> initializeDueTo: anError [
 
 	error := anError
 ]
 
 { #category : 'initialization' }
-HealthyClosedSocketConnection >> whenConnected: aBlock whenNot: anotherBlock [
+ClosedSocketConnection >> whenConnected: aBlock whenNot: anotherBlock [
 
 	^ anotherBlock cull: error
 ]
