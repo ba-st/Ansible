@@ -29,8 +29,8 @@ BaselineOfAnsible >> postLoadInitialization [
 	different Pharo versions (SocketError was introduced in Pharo 11) "
 
   Smalltalk at: #ExpectedSocketFailure put: ( ( Smalltalk includesKey: #SocketError )
-        then: [ Smalltalk at: #SocketError ]
-        otherwise: [ PrimitiveFailed ] )
+        ifTrue: [ Smalltalk at: #SocketError ]
+        ifFalse: [ PrimitiveFailed ] )
 ]
 
 { #category : 'accessing' }
