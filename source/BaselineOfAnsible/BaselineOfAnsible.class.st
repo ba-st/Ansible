@@ -25,17 +25,12 @@ BaselineOfAnsible >> baseline: spec [
 
 { #category : 'initialization' }
 BaselineOfAnsible >> postLoadInitialization [
-
   " ExpectedSocketFailure is used to handle socket failures across 
 	different Pharo versions (SocketError was introduced in Pharo 11) "
 
-  Smalltalk
-    at: #ExpectedSocketFailure
-    put:
-    ( Smalltalk
-        at: #SocketError
-        ifPresent: [ :socketError | socketError ]
-        ifAbsent: [ PrimitiveFailed ] )
+  Smalltalk at: #ExpectedSocketFailure put: ( ( Smalltalk includesKey: #SocketError )
+        then: [ Smalltalk at: #SocketError ]
+        otherwise: [ PrimitiveFailed ] )
 ]
 
 { #category : 'accessing' }
