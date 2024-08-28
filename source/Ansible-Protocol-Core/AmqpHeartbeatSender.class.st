@@ -83,7 +83,7 @@ AmqpHeartbeatSender >> startBeatingEvery: aTimeInSeconds [
 AmqpHeartbeatSender >> stop [
 
   isStarted then: [
-      process ifNotNil: #terminate.
-      isStarted := false
+      isStarted := false.
+      process ifNotNil: #terminate
     ]
 ]
