@@ -16,6 +16,13 @@ Class {
 	#package : 'Ansible-Protocol-Core'
 }
 
+{ #category : 'handling' }
+AmqpChannelHandler >> assertChannelOpen [
+
+	closeReason notNil
+		ifTrue: [ AmqpDisconnectedError signal: 'Channel closed' ]
+]
+
 { #category : 'accessing' }
 AmqpChannelHandler >> channelNumber [
 
@@ -65,13 +72,6 @@ AmqpChannelHandler >> dispatchCommand [
 			]
 		ifFalse: [ inbound add: currentCommand ].
 	self resetState
-]
-
-{ #category : 'handling' }
-AmqpChannelHandler >> ensureOpen [
-
-	closeReason notNil
-		ifTrue: [ AmqpDisconnectedError signal: 'Channel closed' ]
 ]
 
 { #category : 'handling' }
@@ -167,7 +167,7 @@ AmqpChannelHandler >> waitForReply: acceptableReplies [
 	[ i > inbound size ] whileTrue: [
 		| currentConnection |
 
-		self ensureOpen.
+		self assertChannelOpen.
 		currentConnection := connection mainLoopCycle.
 		currentConnection
 			whenConnected: [  ]

@@ -39,6 +39,22 @@ AmqpConnection class >> to: aHostname
 ]
 
 { #category : 'connection-handling' }
+AmqpConnection >> assertChannelOpen: channelNumber [
+
+	self assertSocketConnected.
+	^ ( channels at: channelNumber ) assertChannelOpen
+]
+
+{ #category : 'connection-handling' }
+AmqpConnection >> assertSocketConnected [
+
+  ( socket isConnected and: [ socket isOtherEndClosed not ] ) ifFalse: [
+      AmqpDisconnectedError signal: 'Connection closed' ].
+
+  ^ true
+]
+
+{ #category : 'connection-handling' }
 AmqpConnection >> becomeCloseAfter: aBlock [
 
   | closingMethod |
@@ -106,7 +122,7 @@ AmqpConnection >> createChannel [
 
 	| handler |
 
-	self ensureOpen.
+	self assertSocketConnected.
 	handler := AmqpChannelHandler new connection: self.
 	^ AmqpChannel using: handler
 ]
@@ -115,22 +131,6 @@ AmqpConnection >> createChannel [
 AmqpConnection >> credentials [
 
 	^ credentials
-]
-
-{ #category : 'connection-handling' }
-AmqpConnection >> ensureChannel: channelNumber [
-
-	self ensureOpen.
-	^ ( channels at: channelNumber ) ensureOpen
-]
-
-{ #category : 'connection-handling' }
-AmqpConnection >> ensureOpen [
-
-  ( socket isConnected and: [ socket isOtherEndClosed not ] ) ifFalse: [
-      AmqpDisconnectedError signal: 'Connection closed' ].
-
-  ^ true
 ]
 
 { #category : 'connection-handling' }
@@ -347,7 +347,7 @@ AmqpConnection >> rpc: aRequestMethod onChannel: aChannelNumber ifConnectionClos
 
   ^ [
       | ch |
-      ch := self ensureChannel: aChannelNumber.
+      ch := self assertChannelOpen: aChannelNumber.
       self sendMethod: aRequestMethod onChannel: aChannelNumber.
       ch waitForReply: aRequestMethod acceptableResponseClasses
     ]
@@ -395,7 +395,7 @@ AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray o
 
 	| pos |
 
-	self ensureChannel: channelNumber.
+	self assertChannelOpen: channelNumber.
 	self
 		sendFrame:
 			( AmqpMethodFrame new
@@ -483,7 +483,7 @@ AmqpConnection >> virtualHost [
 { #category : 'connection-handling' }
 AmqpConnection >> waitForEvent [
 
-  [ self ensureOpen ] whileTrue: [ self mainLoopCycle ]
+  [ self assertSocketConnected ] whileTrue: [ self mainLoopCycle ]
 ]
 
 { #category : 'connection-handling' }
