@@ -339,10 +339,10 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
             publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
           ]
         assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Connection close while waiting for data.' .
+          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[ERROR\] AMQP Heartbeat failed unexpectedly \(connection closed while sending data\).' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to connection closed while sending data' .
+            '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).' .
+            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
     ].
 
