@@ -50,7 +50,6 @@ AmqpConnection >> becomeCloseAfter: aBlock [
           LogRecord emitInfo: ( 'AMQP connection <1s> closed due to <2s>'
                 expandMacrosWith: self connectionPairsDescription
                 with: closingMethod replyText ).
-          heartbeatSender stop.
           [ socket close ]
             on: ExpectedSocketFailure
             do: [ :error | 
@@ -58,7 +57,8 @@ AmqpConnection >> becomeCloseAfter: aBlock [
 					will raise a SocketError that we want to silence "
 					error return ].
           isOpen := false.
-          socketConnectionStatus := ClosedSocketConnection dueTo: closingMethod replyText
+          socketConnectionStatus := ClosedSocketConnection dueTo: closingMethod replyText.
+          heartbeatSender stop.
         ]
     ]
 ]
