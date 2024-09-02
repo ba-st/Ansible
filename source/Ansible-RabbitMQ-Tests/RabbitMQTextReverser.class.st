@@ -1,39 +1,43 @@
 Class {
-	#name : #RabbitMQTextReverser,
-	#superclass : #RabbitMQWorker,
+	#name : 'RabbitMQTextReverser',
+	#superclass : 'Object',
 	#instVars : [
-		'testCase'
+		'testCase',
+		'worker'
 	],
-	#category : #'Ansible-RabbitMQ-Tests'
+	#category : 'Ansible-RabbitMQ-Tests',
+	#package : 'Ansible-RabbitMQ-Tests'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 RabbitMQTextReverser class >> workingWith: aTestCase [
 
 	^self new initializeWorkingWith: aTestCase
 ]
 
-{ #category : #private }
-RabbitMQTextReverser >> configureConnection: builder [
-
-	
-]
-
-{ #category : #initialization }
+{ #category : 'initialization' }
 RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 
-	testCase := aTestCase.
-	self initializeConnection
+	worker := RabbitMQWorker
+		          configuredBy: [ :options |
+				          options
+					          at: #hostname put: 'localhost';
+					          at: #queueName put: aTestCase queueName;
+					          at: #extraClientProperties put: ( Dictionary new
+							            at: 'process' put: 'Text Reverser Worker';
+							            yourself )
+			          ]
+		          processingPayloadWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
 ]
 
-{ #category : #private }
-RabbitMQTextReverser >> process: payload [
+{ #category : 'accessing' }
+RabbitMQTextReverser >> start [
 
-	testCase storeText: payload utf8Decoded reversed
+  ^ worker start
 ]
 
-{ #category : #accessing }
-RabbitMQTextReverser >> queueName [
+{ #category : 'accessing' }
+RabbitMQTextReverser >> stop [
 
-	^ testCase queueName
+  ^ worker stop
 ]

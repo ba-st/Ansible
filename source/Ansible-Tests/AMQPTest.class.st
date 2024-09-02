@@ -1,10 +1,11 @@
 Class {
-	#name : #AMQPTest,
-	#superclass : #TestCase,
-	#category : #'Ansible-Tests'
+	#name : 'AMQPTest',
+	#superclass : 'TestCase',
+	#category : 'Ansible-Tests',
+	#package : 'Ansible-Tests'
 }
 
-{ #category : #'tests - asserting' }
+{ #category : 'tests - asserting' }
 AMQPTest >> assert: aMessageCollection has: anAmount messagesAndAreEqualsTo: anOrderedCollection [
 
 	self
@@ -13,7 +14,7 @@ AMQPTest >> assert: aMessageCollection has: anAmount messagesAndAreEqualsTo: anO
 			hasSameElements: anOrderedCollection
 ]
 
-{ #category : #'tests - asserting' }
+{ #category : 'tests - asserting' }
 AMQPTest >> assertContentsFor: messageReceived [
 
 	self
@@ -24,20 +25,20 @@ AMQPTest >> assertContentsFor: messageReceived [
 		assert: messageReceived method messageCount equals: 0
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> assertQueueNamed: queueName IsEmtpyOn: channel [
 
-	| queue |
+  | queue |
 
-	queue := channel queueDeclare: queueName.
+  queue := channel declareQueueApplying: [ :builder | builder name: queueName ].
 
-	self
-		assert: queue method messageCount equals: 0;
-		assert: queue method consumerCount equals: 0.
-	^ queue
+  self
+    assert: queue method messageCount equals: 0;
+    assert: queue method consumerCount equals: 0.
+  ^ queue
 ]
 
-{ #category : #'tests - accessing' }
+{ #category : 'tests - accessing' }
 AMQPTest >> messageAs: aLevelDescription from: aSourceIdentifier to: aTargetIdentifier [
 
 	^ (WriteStream on: String new)
@@ -47,7 +48,7 @@ AMQPTest >> messageAs: aLevelDescription from: aSourceIdentifier to: aTargetIden
 		contents
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType [
 
 	self
@@ -57,7 +58,7 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anEx
 		of: anExchangeType
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 
 	self
@@ -65,7 +66,7 @@ AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 			| channel queue |
 
 			channel := connection createChannel.
-			channel queueDeclare: aQueueName.
+			channel declareQueueApplying: [ :builder | builder name: aQueueName ].
 
 			aMessageCollection
 				do: [ :message | 
@@ -77,7 +78,7 @@ AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 					].
 
 			( Delay forMilliseconds: 100 ) wait.
-			queue := channel queueDeclare: aQueueName.
+			queue := channel declareQueueApplying: [ :builder | builder name: aQueueName ].
 
 			self
 				assert: queue method messageCount equals: aMessageCollection size;
@@ -85,7 +86,7 @@ AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
 			]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeName of: anExchangeType [ 
 
 	self
@@ -99,7 +100,7 @@ AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeNa
 				withProperties: connection protocolClass basicPropertiesClass new ]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection 
 	to: aRoute 
 	onExchangeNamed: anExchangeName 
@@ -129,7 +130,7 @@ AMQPTest >> publish: aMessageCollection
 		assert: queue method consumerCount equals: 0	"The Queue will always be empty as it does not maintain old messages."
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchangeNamed: anExchangeName [
 
 	self
@@ -143,7 +144,7 @@ AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchan
 				withProperties: ( connection protocolClass basicPropertiesClass new headers: aHeadersDictionary )]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> setUp [
 
 	"Clean up the queues in case any of the previous tests failed."
@@ -157,7 +158,7 @@ AMQPTest >> setUp [
 			]
 ]
 
-{ #category : #'tests - accessing' }
+{ #category : 'tests - accessing' }
 AMQPTest >> sourceIdentifiedBy: source and: target [
 
 	^ (WriteStream on: String new)
@@ -167,7 +168,7 @@ AMQPTest >> sourceIdentifiedBy: source and: target [
 		contents
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName 
 	boundToHeadersExchangeNamed: anExchangeName 
 	matchingToAllOf: aHeadersDictionary 
@@ -182,7 +183,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 		applying: aBlock
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName 
 	boundToHeadersExchangeNamed: anExchangeName 
 	matchingToAnyOf: aHeadersDictionary 
@@ -197,7 +198,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 		applying: aBlock
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: aBlock [
 
 	self
@@ -206,7 +207,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: a
 
 			channel := connection createChannel.
 			channel
-				queueDeclare: aQueueName;
+				declareQueueApplying: [ :builder | builder name: aQueueName ];
 				prefetchCount: 1;
 				consumeFrom: 'tasks'
 					applying: [ :messageReceived | 
@@ -231,7 +232,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: a
 			]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName 
 	consumingFromAll: aRouteSet 
 	boundToExchangeNamed: anExchangeName 
@@ -247,7 +248,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 		applying: aBlock
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aProcessName 
 	consumingFromAll: aRouteSet 
 	boundToExchangeNamed: anExchangeName 
@@ -294,7 +295,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 			]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> spawnWorkerNamed: aWorkerName consumingFromExchangeNamed: anExchangeName of: anExchangeType applying: aBlock [
 
 	^ self 
@@ -305,7 +306,7 @@ AMQPTest >> spawnWorkerNamed: aWorkerName consumingFromExchangeNamed: anExchange
 		applying: aBlock
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testBasicConsume [
 
 	| channel queue |
@@ -315,7 +316,7 @@ AMQPTest >> testBasicConsume [
 	self
 		withLocalhostConnectionDo: [ :connection | 
 			channel := connection createChannel.
-			queue := channel queueDeclare: 'tasks'.
+			queue := channel declareQueueApplying: [ :builder | builder name: 'tasks' ].
 
 			channel prefetchCount: 1.
 
@@ -331,7 +332,7 @@ AMQPTest >> testBasicConsume [
 					channel basicAck: messageReceived method deliveryTag
 					].
 
-			queue := channel queueDeclare: 'tasks'.
+			queue := channel declareQueueApplying: [ :builder | builder name: 'tasks' ].
 
 			self
 				assert: queue method messageCount equals: 0;
@@ -341,7 +342,7 @@ AMQPTest >> testBasicConsume [
 			]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testBasicConsumeWithMultipleWorkers [
 
 	| firstWorkerMessages secondWorkerMessages firstWorker secondWorker |
@@ -383,7 +384,7 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 		assert: firstWorkerMessages size + secondWorkerMessages size equals: 6
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testBasicGet [
 
 	self
@@ -395,7 +396,7 @@ AMQPTest >> testBasicGet [
 			]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testBasicGetWithExplicitAcknowledge [
 
 	self
@@ -415,7 +416,7 @@ AMQPTest >> testBasicGetWithExplicitAcknowledge [
 			]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testBasicGetWithImplicitAcknowledge [
 
 	self
@@ -433,7 +434,7 @@ AMQPTest >> testBasicGetWithImplicitAcknowledge [
 			]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 
 	| firstWorkerMessages secondWorkerMessages firstWorker secondWorker |
@@ -468,7 +469,7 @@ AMQPTest >> testPublisherSubscriberUsingFanoutExchange [
 		assert: secondWorkerMessages size equals: 5
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAllProperties [
 
 	| exchangeName sourceAtarget1InfoMessages sourceBInfoMessages errorMessages loggers |
@@ -548,7 +549,7 @@ AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAllProperties [
 					with: (self messageAs: 'error' from: $B to: $2))
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAnyProperty [
 
 	| exchangeName sourceAtarget1InfoMessages sourceAtarget1ErrorMessages sourceAtarget2AllMessages sourceBtarget1AllMessages loggers |
@@ -642,7 +643,7 @@ AMQPTest >> testPublisherSubscriberUsingHeadersExchangeMatchingAnyProperty [
 					with: (self messageAs: 'error' from: $B to: $1))
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 
 	| errorLoggerMessages loggerMessages errorLogger logger |
@@ -698,7 +699,7 @@ AMQPTest >> testPublisherSubscriberUsingRoutesBoundToDirectExchange [
 		assert: loggerMessages size equals: 9
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 
 	| publicErrorLoggerMessages anonymousInfoLoggerMessages publicErrorLogger anonymousInfoLogger |
@@ -756,7 +757,7 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 		assert: anonymousInfoLoggerMessages size equals: 6
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> withLocalhostConnectionDo: block [
 
 	| connection |
@@ -771,22 +772,21 @@ AMQPTest >> withLocalhostConnectionDo: block [
 		whenNot: [ :error | self fail: error messageText ]
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock [
 
 	self withQueueNamed: aQueueName declaredOnChannelDo: aBlock deleteQueueOnReturn: true
 ]
 
-{ #category : #'tests - support' }
+{ #category : 'tests - support' }
 AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock deleteQueueOnReturn: aBoolean [
 
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			| channel |
-
-			channel := connection createChannel.
-			aBlock value: ( channel queueDeclare: aQueueName ) value: channel.
-			aBoolean
-				ifTrue: [ channel queueDelete: aQueueName ]
-			]
+  self withLocalhostConnectionDo: [ :connection |
+      | channel |
+      channel := connection createChannel.
+      aBlock
+        value: ( channel declareQueueApplying: [ :builder | builder name: aQueueName ] )
+        value: channel.
+      aBoolean ifTrue: [ channel queueDelete: aQueueName ]
+    ]
 ]

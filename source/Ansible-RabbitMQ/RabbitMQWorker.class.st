@@ -12,43 +12,125 @@ This concept is especially useful in web applications where it's impossible to h
 task during a short HTTP request window.
 "
 Class {
-	#name : #RabbitMQWorker,
-	#superclass : #RabbitMQClient,
-	#category : #'Ansible-RabbitMQ'
+	#name : 'RabbitMQWorker',
+	#superclass : 'RabbitMQClient',
+	#instVars : [
+		'messageProcessor'
+	],
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #testing }
-RabbitMQWorker class >> isAbstract [
+{ #category : 'testing' }
+RabbitMQWorker class >> configuredBy: aConfigurationAction processingMessagesWith: aMessageProcessor [
 
-	<ignoreForCoverage>
-	^ self = RabbitMQWorker
+  | options |
+  options := Dictionary new.
+  aConfigurationAction cull: options.
+  options
+    at: #queueName
+    ifAbsent: [ InstanceCreationFailed signal: 'Missing name of the queue to consume from' ].
+  ^ self new initializeConfiguredBy: options processingMessagesWith: aMessageProcessor
 ]
 
-{ #category : #private }
-RabbitMQWorker >> process: payload [
+{ #category : 'testing' }
+RabbitMQWorker class >> configuredBy: aConfigurationAction processingPayloadWith: aPayloadProcessor [
 
-	"A message was received including the bytes in `payload`"
-
-	self subclassResponsibility
+  ^ self
+      configuredBy: aConfigurationAction
+      processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
 ]
 
-{ #category : #accessing }
+{ #category : 'private' }
+RabbitMQWorker >> declareQueueInChannel [
+
+  channel declareQueueApplying: [ :builder |
+      builder name: self queueName.
+      self makeQueueDurable then: [ builder beDurable ]
+    ]
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> initializeConfiguredBy: anOptionsDictionary processingMessagesWith: aMessageProcessor [
+
+  super initialize.
+  options := anOptionsDictionary.
+  messageProcessor := aMessageProcessor
+]
+
+{ #category : 'private - logging' }
+RabbitMQWorker >> logDebuggingInfoFor: aMessage [
+
+  self shouldLogDebuggingInfo then: [
+      LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message consumed' with: [ :data |
+          data
+            at: #deliveryTag put: aMessage method deliveryTag;
+            at: #messageConsumed put: aMessage body utf8Decoded;
+            at: #routingKey put: self queueName;
+            at: #connectionDescription put: connection connectionPairsDescription
+        ]
+    ]
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> makeQueueDurable [
+
+  ^ options at: #queueDurable ifAbsent: [ true ]
+]
+
+{ #category : 'accessing' }
 RabbitMQWorker >> queueName [
 
-	^ self subclassResponsibility
+	^ options at: #queueName
 ]
 
-{ #category : #private }
+{ #category : 'private' }
+RabbitMQWorker >> restartConsumingFromQueue [
+
+  self
+    ensureChannelOpen;
+    setUpChannelConsumingCallback
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> setUpChannelConsumingCallback [
+
+  channel prefetchCount: 1.
+  channel consumeFrom: self queueName applying: [ :message |
+      self logDebuggingInfoFor: message.
+      messageProcessor value: message.
+      channel basicAck: message method deliveryTag
+    ]
+]
+
+{ #category : 'controlling' }
+RabbitMQWorker >> start [
+
+  super start.
+  self startProcessing
+]
+
+{ #category : 'private' }
+RabbitMQWorker >> startConsumingFromQueue [
+
+  self
+    ensureChannelOpen;
+    declareQueueInChannel;
+    setUpChannelConsumingCallback
+]
+
+{ #category : 'private' }
 RabbitMQWorker >> startProcessing [
 
-	| channel |
+  self startConsumingFromQueue.
 
-	channel := connection createChannel.
-	channel queueDeclare: self queueName durable: true.
-	channel prefetchCount: 1.
-	channel consumeFrom: self queueName applying: [ :message | 
-		self process: message body.
-		channel basicAck: message method deliveryTag
-		].
-	[ connection waitForEvent ] repeat
+  [
+    [ connection waitForEvent ]
+      on: self connectivityErrors
+      do: [ :error |
+          connection hardCloseDescribedWith: error messageText.
+          self restartConsumingFromQueue.
+          error return
+        ]
+  ] repeat
 ]

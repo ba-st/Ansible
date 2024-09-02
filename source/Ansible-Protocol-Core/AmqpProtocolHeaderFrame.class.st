@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpProtocolHeaderFrame,
-	#superclass : #AmqpFrame,
+	#name : 'AmqpProtocolHeaderFrame',
+	#superclass : 'AmqpFrame',
 	#instVars : [
 		'majorVersion',
 		'minorVersion',
@@ -8,10 +8,11 @@ Class {
 		'transportVersion',
 		'isObsoleteProtocolVariant'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpProtocolHeaderFrame >> encodeBodyOn: codec [
 
 	"do nothing."
@@ -19,7 +20,7 @@ AmqpProtocolHeaderFrame >> encodeBodyOn: codec [
 	
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpProtocolHeaderFrame >> readFrom: connection length: length [
 
 	| codec |

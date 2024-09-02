@@ -1,1 +1,1 @@
-Package { #name : #'Ansible-Tests' }
+Package { #name : 'Ansible-Tests' }

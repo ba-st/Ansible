@@ -5,126 +5,146 @@ I know how to connect to Rabbit MQ.
 My subclasses will act as different roles depending on the system needs.
 "
 Class {
-	#name : #RabbitMQClient,
-	#superclass : #Object,
+	#name : 'RabbitMQClient',
+	#superclass : 'Object',
 	#instVars : [
-		'connection'
+		'connection',
+		'channel',
+		'options'
 	],
-	#category : #'Ansible-RabbitMQ'
+	#category : 'Ansible-RabbitMQ',
+	#package : 'Ansible-RabbitMQ'
 }
 
-{ #category : #testing }
+{ #category : 'testing' }
 RabbitMQClient class >> isAbstract [
 
 	<ignoreForCoverage>
 	^ self = RabbitMQClient
 ]
 
-{ #category : #'private - configuring' }
-RabbitMQClient >> configureConnection: builder [
+{ #category : 'publishing' }
+RabbitMQClient >> channel [
 
-	self subclassResponsibility
+  ^ channel
 ]
 
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> connectivityErrors [
 
-	^ NetworkError
+  ^ NetworkError , AmqpDisconnectedError , ExpectedSocketFailure
 ]
 
-{ #category : #initialization }
-RabbitMQClient >> initializeConnection [
+{ #category : 'initialization' }
+RabbitMQClient >> createAMQPConnection [
 
 	| builder |
 
 	builder := AmqpConnectionBuilder usingAMQP091Protocol.
-	self configureConnection: builder.
-	connection := builder build
+	builder hostname: ( options at: #hostname ifAbsent: [ 'localhost' ] ).
+	builder portNumber: ( options at: #port ifAbsent: [ 5672 ] ).
+	builder username: ( options at: #username ifAbsent: [ 'guest' ] ).
+	builder password: ( options at: #password ifAbsent: [ 'guest' ] ).
+	options at: 'extraClientProperties' ifPresent: [ :extraProperties |
+			extraProperties keysAndValuesDo: [ :propertyName :propertyValue |
+					builder atClientProperty: propertyName put: propertyValue ]
+		].
+
+	^ builder build
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private' }
+RabbitMQClient >> ensureChannelOpen [
+
+	| reconnect |
+
+	reconnect := [
+	             self ensureConnectedAndOpen.
+	             channel := connection createChannel
+	             ].
+	channel ifNil: reconnect ifNotNil: [ channel whenOpenDo: [  ] whenClosedDo: reconnect ]
+]
+
+{ #category : 'private' }
+RabbitMQClient >> ensureConnectedAndOpen [
+
+	| createConnection |
+
+	createConnection := [
+		self
+			try: [
+				connection := self createAMQPConnection.
+				connection open]
+			onConnectivityErrorDo: [:attemptNumber :error |
+				self logFailedConnectionAttempt: attemptNumber dueTo: error]].
+
+	connection
+		ifNil: createConnection
+		ifNotNil: [connection whenConnected: [] whenNot: createConnection].
+		
+	connection
+		whenOpen: []
+		whenNot: [connection open]
+]
+
+{ #category : 'initialization' }
+RabbitMQClient >> initialize [
+
+  options := Dictionary new
+]
+
+{ #category : 'private - connecting' }
 RabbitMQClient >> logFailedConnectionAttempt: attemptNumber dueTo: error [
 
-	LaunchpadLogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
+	LogRecord emitError: ( 'Attempt #<1p>/<2p> to connect to RabbitMQ failed: <3s>'
 			  expandMacrosWith: attemptNumber
-			  with: self retryCount + 1
+			  with: self retryCount 
 			  with: error messageText )
 ]
 
-{ #category : #'private - connecting' }
-RabbitMQClient >> openConnection [
-
-	self withSuccessfulConnectionDo: [ :succesfulConnection | 
-		LaunchpadLogRecord emitInfo: 'Connecting to RabbitMQ' during: [ 
-			self
-				try: [ succesfulConnection open ]
-				onConnectivityErrorDo: [ :attemptNumber :error | 
-				self logFailedConnectionAttempt: attemptNumber dueTo: error ]
-			]
-		]
-]
-
-{ #category : #'private - configuring' }
-RabbitMQClient >> options [
-
-	^ Dictionary new
-]
-
-{ #category : #'private - configuring' }
+{ #category : 'private - configuring' }
 RabbitMQClient >> retryCount [
 
-	^ self options at: #retryCount ifAbsent: [ 2 ]
+  ^ options at: #maximumConnectionAttemps ifAbsent: [ 3 ]
 ]
 
-{ #category : #controlling }
+{ #category : 'private - testing' }
+RabbitMQClient >> shouldLogDebuggingInfo [
+
+  ^ options at: #enableDebuggingLogs ifAbsent: [ false ]
+]
+
+{ #category : 'controlling' }
 RabbitMQClient >> start [
 
-	self openConnection.
-	connection
-		whenConnected: [ 
-			LaunchpadLogRecord emitInfo: 'Connected to RabbitMQ'.
-			self startProcessing
-			]
-		whenNot: [ :error | 
-			LaunchpadLogRecord emitError:
-				( 'Cannot connect to RabbitMQ, <1s>' expandMacrosWith: error messageText ).
-			AmqpDisconnectedError signal: error messageText
-			]
+	self ensureChannelOpen
 ]
 
-{ #category : #private }
-RabbitMQClient >> startProcessing [
-
-	self subclassResponsibility
-]
-
-{ #category : #controlling }
+{ #category : 'controlling' }
 RabbitMQClient >> stop [
 
 	connection
-		whenConnected: [ connection close ]
-		whenNot: [ LaunchpadLogRecord emitWarning: 'RabbitMQ connection was already closed.' ]
+		ifNil: []
+		ifNotNil: [
+			connection
+				whenConnected: [connection close]
+				whenNot: [LogRecord emitWarning: 'RabbitMQ connection was already closed.']]
 ]
 
-{ #category : #'private - connecting' }
+{ #category : 'private - accessing' }
+RabbitMQClient >> timeframeBetweenAttempts [
+
+  ^ Duration milliSeconds: ( options at: #timeSlotBetweenConnectionRetriesInMs ifAbsent: [ 3000 ] )
+]
+
+{ #category : 'private - connecting' }
 RabbitMQClient >> try: aBlock onConnectivityErrorDo: failBlock [
 
-	Retry value: aBlock configuredBy: [ :retry | 
-		retry
-			upTo: self retryCount;
-			on: self connectivityErrors evaluating: failBlock.
-		self options at: #retry ifPresent: [ :action | action value: retry ]
-		]
-]
-
-{ #category : #'private - connecting' }
-RabbitMQClient >> withSuccessfulConnectionDo: aBlock [
-
-	self
-		try: [ connection whenConnected: [ aBlock value: connection ] whenNot: [ :error | error signal ] ]
-		onConnectivityErrorDo: [ :attemptNumber :error | 
-			self logFailedConnectionAttempt: attemptNumber dueTo: error.
-			LaunchpadLogRecord emitWarning: 'Reconnecting socket to RabbitMQ'.
-			connection initializeSocketConnection
-			]
+  Retry value: aBlock configuredBy: [ :retry |
+      retry
+        upTo: self retryCount;
+        backoffExponentiallyWithTimeSlot: self timeframeBetweenAttempts;
+        on: self connectivityErrors evaluating: failBlock.
+      options at: #retry ifPresent: [ :action | action value: retry ]
+    ]
 ]

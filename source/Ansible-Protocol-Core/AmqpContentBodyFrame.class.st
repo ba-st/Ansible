@@ -1,13 +1,14 @@
 Class {
-	#name : #AmqpContentBodyFrame,
-	#superclass : #AmqpFrame,
+	#name : 'AmqpContentBodyFrame',
+	#superclass : 'AmqpFrame',
 	#instVars : [
 		'fragment'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentBodyFrame >> encodeBodyOn: codec [
 
 	"do nothing."
@@ -15,25 +16,25 @@ AmqpContentBodyFrame >> encodeBodyOn: codec [
 	
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentBodyFrame >> encodedBody [
 
 	^ fragment
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentBodyFrame >> fragment [
 
 	^ fragment
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentBodyFrame >> fragment: anObject [
 
 	fragment := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpContentBodyFrame >> readFrom: connection length: length [
 
 	fragment := connection codec next: length

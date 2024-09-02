@@ -44,6 +44,14 @@ They are not a rewrite but rather my interpretation.
  reading it to get a complete understanding. They also provide this [great tool](http://tryrabbitmq.com)
  to help you explore different messaging patterns.
 
+## Use RabbitMQ clients reifications
+
+We provide two objects to simplify the instantiations of a publisher and a
+consumer:
+
+1. [RabbitMQPublisher](tutorials/RabbitMQPublisher.md)
+2. [RabbitMQWorker](tutorials/RabbitMQWorker.md)
+
  ---
 
 To use the project as a dependency of your project, take a look at:

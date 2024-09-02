@@ -1,31 +1,39 @@
 Class {
-	#name : #AmqpChannelHandler,
-	#superclass : #Object,
+	#name : 'AmqpChannelHandler',
+	#superclass : 'Object',
 	#instVars : [
 		'connection',
 		'channelNumber',
 		'inbound',
-		'state',
 		'closeReason',
 		'asyncMap',
 		'currentCommand',
 		'remainingBytes',
-		'bodyPieces'
+		'bodyPieces',
+		'nextFrameHandler'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'handling' }
+AmqpChannelHandler >> assertChannelOpen [
+
+	closeReason notNil
+		ifTrue: [ AmqpDisconnectedError signal: 'Channel closed' ]
+]
+
+{ #category : 'accessing' }
 AmqpChannelHandler >> channelNumber [
 
 	^ channelNumber
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpChannelHandler >> checkBodyCompletion [
 
 	remainingBytes > 0
-		ifTrue: [ state := #handleBodyFrame: ]
+		ifTrue: [ nextFrameHandler := #handleBodyFrame: ]
 		ifFalse: [ remainingBytes < 0
 				ifTrue: [ AmqpProtocolSyntaxError signal: 'Received body overrun' ].
 			currentCommand body: bodyPieces contents.
@@ -33,19 +41,19 @@ AmqpChannelHandler >> checkBodyCompletion [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpChannelHandler >> closeReason [
 
 	^ closeReason
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpChannelHandler >> connection [
 
 	^ connection
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpChannelHandler >> connection: anObject [
 
 	connection := anObject.
@@ -53,27 +61,20 @@ AmqpChannelHandler >> connection: anObject [
 	connection setChannel: channelNumber to: self
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> dispatchCommand [
 
 	( asyncMap includesKey: currentCommand method class )
-		ifTrue: [ | a |
+		ifTrue: [ | messageSend |
 
-			a := asyncMap at: currentCommand method class.
-			a key perform: a value with: currentCommand
+			messageSend := asyncMap at: currentCommand method class.
+			messageSend value: currentCommand
 			]
 		ifFalse: [ inbound add: currentCommand ].
 	self resetState
 ]
 
-{ #category : #handling }
-AmqpChannelHandler >> ensureOpen [
-
-	closeReason notNil
-		ifTrue: [ AmqpDisconnectedError signal: 'Channel closed' ]
-]
-
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> handleBodyFrame: frame [
 
 	( frame isKindOf: AmqpContentBodyFrame )
@@ -83,13 +84,13 @@ AmqpChannelHandler >> handleBodyFrame: frame [
 	self checkBodyCompletion
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> handleFrame: frame [
 
-	self perform: state with: frame
+	self perform: nextFrameHandler with: frame
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> handleMethodFrame: frame [
 
 	( frame isKindOf: AmqpMethodFrame )
@@ -97,11 +98,11 @@ AmqpChannelHandler >> handleMethodFrame: frame [
 	currentCommand := AmqpCommand new.
 	currentCommand method: frame method.
 	frame method hasContents
-		ifTrue: [ state := #handlePropertiesFrame: ]
+		ifTrue: [ nextFrameHandler := #handlePropertiesFrame: ]
 		ifFalse: [ self dispatchCommand ]
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> handlePropertiesFrame: frame [
 
 	( frame isKindOf: AmqpContentHeaderFrame )
@@ -112,7 +113,7 @@ AmqpChannelHandler >> handlePropertiesFrame: frame [
 	self checkBodyCompletion
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpChannelHandler >> initialize [
 
 	super initialize.
@@ -122,7 +123,7 @@ AmqpChannelHandler >> initialize [
 	self resetState
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> internalClose: method [
 
 	closeReason
@@ -132,28 +133,28 @@ AmqpChannelHandler >> internalClose: method [
 			]
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> mapEvent: evtClass to: receiver selector: aSymbol [
 
-	asyncMap at: evtClass put: receiver -> aSymbol
+  asyncMap at: evtClass put: ( MessageSend receiver: receiver selector: aSymbol )
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> resetState [
 
-	state := #handleMethodFrame:.
+	nextFrameHandler := #handleMethodFrame:.
 	currentCommand := nil.
 	remainingBytes := 0.
 	bodyPieces := nil
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> rpc: requestMethod [
 
 	^ connection rpc: requestMethod onChannel: channelNumber
 ]
 
-{ #category : #handling }
+{ #category : 'handling' }
 AmqpChannelHandler >> waitForReply: acceptableReplies [
 
 	| i |
@@ -162,19 +163,33 @@ AmqpChannelHandler >> waitForReply: acceptableReplies [
 	acceptableReplies ifEmpty: [ ^ nil ].
 
 	i := 1.
-	[ [ i > inbound size ]
-		whileTrue: [ self ensureOpen.
-			connection mainLoopCycle
-			].
-	[ i <= inbound size ]
-		whileTrue: [ | cmd |
+	[
+	[ i > inbound size ] whileTrue: [
+		| currentConnection |
 
-			cmd := inbound at: i.
-			( acceptableReplies includes: cmd method class )
-				ifTrue: [ inbound removeAt: i.
-					^ cmd
-					].
-			i := i + 1
-			]
+		self assertChannelOpen.
+		currentConnection := connection mainLoopCycle.
+		currentConnection
+			whenConnected: [  ]
+			whenNot: [ :error | AmqpDisconnectedError signal: error ]
+		].
+	[ i <= inbound size ] whileTrue: [
+		| cmd |
+
+		cmd := inbound at: i.
+		( acceptableReplies includes: cmd method class ) ifTrue: [
+			inbound removeAt: i.
+			^ cmd
+			].
+		i := i + 1
+		]
 	] repeat
+]
+
+{ #category : 'accessing' }
+AmqpChannelHandler >> whenOpenDo: aBlock whenClosedDo: aClosedHandler [
+
+	^ closeReason
+		  ifNil: [ connection whenConnected: aBlock whenNot: aClosedHandler ]
+		  ifNotNil: aClosedHandler
 ]

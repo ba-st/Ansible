@@ -1,32 +1,33 @@
 Class {
-	#name : #AmqpFrame,
-	#superclass : #Object,
+	#name : 'AmqpFrame',
+	#superclass : 'Object',
 	#instVars : [
 		'frameType',
 		'channelNumber'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> channelNumber [
 
 	^ channelNumber
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> channelNumber: anObject [
 
 	channelNumber := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> encodeBodyOn: codec [
 
 	self subclassResponsibility
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> encodeOn: codec [
 
 	codec
@@ -35,7 +36,7 @@ AmqpFrame >> encodeOn: codec [
 		nextLongstrPut: self encodedBody
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> encodedBody [
 
 	| stream codec |
@@ -47,19 +48,19 @@ AmqpFrame >> encodedBody [
 	^ stream contents
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> frameType [
 
 	^ frameType
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> frameType: anObject [
 
 	frameType := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFrame >> readFrom: connection length: length [
 
 	self subclassResponsibility

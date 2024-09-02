@@ -1,45 +1,46 @@
 Class {
-	#name : #AmqpCommand,
-	#superclass : #Object,
+	#name : 'AmqpCommand',
+	#superclass : 'Object',
 	#instVars : [
 		'method',
 		'properties',
 		'body'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> body [
 
 	^ body
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> body: anObject [
 
 	body := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> method [
 
 	^ method
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> method: anObject [
 
 	method := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> properties [
 
 	^ properties
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpCommand >> properties: anObject [
 
 	properties := anObject

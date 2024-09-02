@@ -1,19 +1,20 @@
 Class {
-	#name : #AmqpProtocolMismatchError,
-	#superclass : #AmqpError,
+	#name : 'AmqpProtocolMismatchError',
+	#superclass : 'AmqpError',
 	#instVars : [
 		'serverProtocolHeader'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpProtocolMismatchError >> serverProtocolHeader [
 
 	^ serverProtocolHeader
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpProtocolMismatchError >> serverProtocolHeader: anObject [
 
 	serverProtocolHeader := anObject

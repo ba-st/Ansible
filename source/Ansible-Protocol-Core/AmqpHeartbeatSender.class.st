@@ -1,21 +1,28 @@
 Class {
-	#name : #AmqpHeartbeatSender,
-	#superclass : #Object,
+	#name : 'AmqpHeartbeatSender',
+	#superclass : 'Object',
 	#instVars : [
 		'connection',
 		'process',
 		'isStarted'
 	],
-	#category : #'Ansible-Protocol-Core'
+	#category : 'Ansible-Protocol-Core',
+	#package : 'Ansible-Protocol-Core'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpHeartbeatSender class >> keepingOpen: anAmqpConnection [
 
 	^ self new initializeKeepingOpen: anAmqpConnection
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
+AmqpHeartbeatSender >> connectivityErrors [
+
+  ^ NetworkError , AmqpDisconnectedError , ExpectedSocketFailure
+]
+
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> heartbeatFrame [
 
 	^ AmqpHeartbeatFrame new
@@ -24,43 +31,59 @@ AmqpHeartbeatSender >> heartbeatFrame [
 		yourself
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpHeartbeatSender >> initializeKeepingOpen: anAmqpConnection [
 
 	connection := anAmqpConnection.
 	isStarted := false 
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
+AmqpHeartbeatSender >> mainKeepAliveCycleEvery: aTimeInterval [
+
+  ^ [
+      [
+        ( Delay forSeconds: aTimeInterval ) wait.
+        [
+          connection sendFrame: self heartbeatFrame.
+          connection codec flush
+        ]
+          on: self connectivityErrors
+          do: [ :signal |
+              LogRecord emitError:
+                ( 'AMQP Heartbeat failed unexpectedly (<1s>).' expandMacrosWith: signal messageText ).
+              connection hardCloseDescribedWith: signal messageText.
+              ^ self
+            ]
+      ] repeat
+    ] ensure: [ self stop ]
+]
+
+{ #category : 'accessing' }
 AmqpHeartbeatSender >> spawnProcessSendingHeartbeatEvery: aTimeInterval [
 
-	^ ( Process
-			forContext: [ 
-				[ 
-					[ 
-						( Delay forSeconds: aTimeInterval ) wait.
-						connection sendFrame: self heartbeatFrame.
-						connection codec flush
-					] repeat
-				] ensure: [ process terminate ]
-			] asContext
-		priority: Processor userBackgroundPriority )
-		name: 'Heartbeat sender';
-		yourself
+  ^ ( Process
+        forContext: [ self mainKeepAliveCycleEvery: aTimeInterval ] asContext
+        priority: Processor highIOPriority )
+      name: ( 'Heartbeat on <1p>' expandMacrosWith: connection );
+      yourself
 ]
 
-{ #category : #'startup-shutdown' }
-AmqpHeartbeatSender >> startBeatingEvery: aTimeInterval [
+{ #category : 'startup-shutdown' }
+AmqpHeartbeatSender >> startBeatingEvery: aTimeInSeconds [
 
-	aTimeInterval ~= 0
-		ifTrue: [ process := self spawnProcessSendingHeartbeatEvery: aTimeInterval.
-			process resume.
-			isStarted := true
-			]
+  ( aTimeInSeconds strictlyPositive and: [ isStarted not ] ) then: [
+      process := self spawnProcessSendingHeartbeatEvery: aTimeInSeconds.
+      process resume.
+      isStarted := true
+    ]
 ]
 
-{ #category : #'startup-shutdown' }
+{ #category : 'startup-shutdown' }
 AmqpHeartbeatSender >> stop [
 
-	process terminate
+  isStarted then: [
+      isStarted := false.
+      process ifNotNil: #terminate
+    ]
 ]
