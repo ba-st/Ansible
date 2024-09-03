@@ -41,7 +41,7 @@ RabbitMQWorker class >> configuredBy: aConfigurationAction processingPayloadWith
       processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
 ]
 
-{ #category : 'Configuring' }
+{ #category : 'configuring' }
 RabbitMQWorker >> bindQueueTo: anExchange routedBy: aRoutingKey [
 
   self
@@ -143,4 +143,10 @@ RabbitMQWorker >> startProcessing [
           error return
         ]
   ] repeat
+]
+
+{ #category : 'configuring' }
+RabbitMQWorker >> unbindQueueTo: anExchange routedBy: aRoutingKey [
+
+  channel queueUnbind: self queueName exchange: anExchange routingKey: aRoutingKey
 ]

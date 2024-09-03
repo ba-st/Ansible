@@ -216,7 +216,10 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: 
                              ]
                            processingPayloadWith: aProcessingBlock.
                worker bindQueueTo: anExchange routedBy: aRoutingKey.
-               [ worker start ] ensure: [ worker stop ]
+               [ worker start ] ensure: [
+                   worker unbindQueueTo: anExchange routedBy: aRoutingKey.
+                   worker stop
+                 ]
              ] newProcess.
   process
     name: aName;
