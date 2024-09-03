@@ -453,14 +453,14 @@ RabbitMQClientTest >> testPublishingToFanoutExchange [
     consumingFrom: 'reverser-queue'
     bindedTo: 'amq.fanout'
     routedBy: routingKey
-    doing: [ :message | firstWorkerMessages add: message reversed ]
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
           bindedTo: 'amq.fanout'
           routedBy: routingKey
-          doing: [ :message | secondWorkerMessages add: message ]
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
           during: [ publisher publish: 'Hello' toExchange: 'amq.fanout' usingRoutingKey: routingKey ]
       ].
 
