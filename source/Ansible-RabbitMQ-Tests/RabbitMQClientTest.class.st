@@ -82,7 +82,7 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 
   queue := publisher channel declareQueueApplying: [ :builder | builder name: queueName ].
 
-  publisher publishOnly: messagesToSend onQueueNamed: queueName.
+  publisher publish: messagesToSend toQueue: queueName.
 
   self wait.
 
@@ -200,6 +200,38 @@ RabbitMQClientTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRege
 ]
 
 { #category : 'running' }
+RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: anExchange routedBy: aRoutingKey doing: aProcessingBlock during: aBlock [
+
+  | process |
+  process := [
+               | worker |
+               worker := RabbitMQWorker
+                           configuredBy: [ :options |
+                               options
+                                 at: #hostname put: 'localhost';
+                                 at: #queueName put: aQueueName;
+                                 at: #extraClientProperties put: ( Dictionary new
+                                       at: 'process' put: aName;
+                                       yourself )
+                             ]
+                           processingPayloadWith: aProcessingBlock.
+               worker bindQueueTo: anExchange routedBy: aRoutingKey.
+               [ worker start ] ensure: [ worker stop ]
+             ] newProcess.
+  process
+    name: aName;
+    priority: Processor userBackgroundPriority.
+
+  [
+    process resume.
+    Processor yield.
+    self wait.
+    aBlock value.
+    self wait
+  ] ensure: [ process terminate ]
+]
+
+{ #category : 'running' }
 RabbitMQClientTest >> setUp [
 
 	super setUp.
@@ -259,7 +291,7 @@ RabbitMQClientTest >> testDebuggingLogsEnabled [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publishOnly: 'Hello!' onQueueNamed: self queueName.
+				anotherPublisher publish: 'Hello!' toQueue: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -295,7 +327,7 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publishOnly: 'Hello!' onQueueNamed: self queueName.
+				anotherPublisher publish: 'Hello!' toQueue: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -321,8 +353,8 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
 
   self resumeWorkerDuring: [
       publisher
-        publishOnly: 'Hello' onQueueNamed: self queueName;
-        publishOnly: 'World' onQueueNamed: self queueName.
+        publish: 'Hello' toQueue: self queueName;
+        publish: 'World' toQueue: self queueName.
 
       self wait.
 
@@ -336,7 +368,7 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
             self
               closeAllConnectionsFromTheClientSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+            publisher publish: 'Test connection restored' toQueue: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
@@ -356,8 +388,8 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 
   self resumeWorkerDuring: [
       publisher
-        publishOnly: 'Hello' onQueueNamed: self queueName;
-        publishOnly: 'World' onQueueNamed: self queueName.
+        publish: 'Hello' toQueue: self queueName;
+        publish: 'World' toQueue: self queueName.
 
       self wait.
 
@@ -371,7 +403,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
             self
               closeAllConnectionsFromTheBrokerSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+            publisher publish: 'Test connection restored' toQueue: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
@@ -390,7 +422,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessages [
 
-	self resumeWorkerDuring: [ publisher publish: #( 'Hello' 'World' ) onQueueNamed: self queueName ].
+	self resumeWorkerDuring: [ publisher publishAll: #( 'Hello' 'World' ) toQueue: self queueName ].
 
 	self
 		assert: reversedTexts size equals: 2;
@@ -401,11 +433,40 @@ RabbitMQClientTest >> testPublishingMessages [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingOneMessage [
 
-	self resumeWorkerDuring: [ publisher publishOnly: 'Hello' onQueueNamed: self queueName ].
+	self resumeWorkerDuring: [ publisher publish: 'Hello' toQueue: self queueName ].
 
 	self
 		withTheOnlyOneIn: reversedTexts
 		do: [ :reversedText | self assert: reversedText equals: 'olleH' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToFanoutExchange [
+
+  | routingKey firstWorkerMessages secondWorkerMessages |
+  routingKey := self queueName.
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: 'amq.fanout'
+    routedBy: routingKey
+    doing: [ :message | firstWorkerMessages add: message reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: 'amq.fanout'
+          routedBy: routingKey
+          doing: [ :message | secondWorkerMessages add: message ]
+          during: [ publisher publish: 'Hello' toExchange: 'amq.fanout' usingRoutingKey: routingKey ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
 ]
 
 { #category : 'private - support' }

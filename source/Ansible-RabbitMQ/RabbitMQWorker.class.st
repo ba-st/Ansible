@@ -41,6 +41,16 @@ RabbitMQWorker class >> configuredBy: aConfigurationAction processingPayloadWith
       processingMessagesWith: [ :message | aPayloadProcessor value: message body ]
 ]
 
+{ #category : 'Configuring' }
+RabbitMQWorker >> bindQueueTo: anExchange routedBy: aRoutingKey [
+
+  self
+    ensureChannelOpen;
+    declareQueueInChannel.
+
+  channel queueBind: self queueName exchange: anExchange routingKey: aRoutingKey
+]
+
 { #category : 'private' }
 RabbitMQWorker >> declareQueueInChannel [
 
@@ -78,7 +88,7 @@ RabbitMQWorker >> makeQueueDurable [
   ^ options at: #queueDurable ifAbsent: [ true ]
 ]
 
-{ #category : 'accessing' }
+{ #category : 'private' }
 RabbitMQWorker >> queueName [
 
 	^ options at: #queueName
