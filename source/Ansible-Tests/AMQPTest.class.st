@@ -117,7 +117,7 @@ AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchan
 ]
 
 { #category : 'tests - support' }
-AMQPTest >> publishAll: aMessageCollection toQueue: aQueueName [
+AMQPTest >> publishAll: aMessageCollection to: aQueueName [
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -311,7 +311,7 @@ AMQPTest >> testBasicConsume [
 
 	| channel queue |
 
-	self publishAll: #('Do it!') toQueue: 'tasks'.
+	self publishAll: #('Do it!') to: 'tasks'.
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -352,7 +352,7 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 
 	self
 		publishAll: #('Do it!' 'Do it.!' 'Do it..!' 'Do it...!' 'Do it....!' 'Do it.....!')
-		toQueue: 'tasks'.
+		to: 'tasks'.
 
 	firstWorker := self
 		spawnWorkerNamed: 'first_worker'

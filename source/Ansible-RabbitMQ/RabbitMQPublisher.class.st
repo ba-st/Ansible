@@ -69,17 +69,23 @@ RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNac
 ]
 
 { #category : 'publishing' }
-RabbitMQPublisher >> publish: aMessage toExchange: anExchangeName usingRoutingKey: aRoutingKey [
+RabbitMQPublisher >> publish: aMessage to: aQueueName [
+
+  self publish: aMessage to: aQueueName through: self directExchange
+]
+
+{ #category : 'publishing' }
+RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName [
 
   self
     publish: aMessage
-    toExchange: anExchangeName
-    usingRoutingKey: aRoutingKey
+    to: aRoutingKey
+    through: anExchangeName
     configuredWith: [ :properties | properties bePersistent ]
 ]
 
 { #category : 'publishing' }
-RabbitMQPublisher >> publish: aMessage toExchange: anExchangeName usingRoutingKey: aRoutingKey configuredWith: aConfigurationBlock [
+RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName configuredWith: aConfigurationBlock [
 
   | properties tryToPublishMessage |
   properties := connection protocolClass basicPropertiesClass new.
@@ -105,15 +111,9 @@ RabbitMQPublisher >> publish: aMessage toExchange: anExchangeName usingRoutingKe
 ]
 
 { #category : 'publishing' }
-RabbitMQPublisher >> publish: aMessage toQueue: aQueueName [
+RabbitMQPublisher >> publishAll: aMessageCollection to: aQueueName [
 
-  self publish: aMessage toExchange: self directExchange usingRoutingKey: aQueueName
-]
-
-{ #category : 'publishing' }
-RabbitMQPublisher >> publishAll: aMessageCollection toQueue: aQueueName [
-
-	aMessageCollection do: [:message | self publish: message toQueue: aQueueName]
+	aMessageCollection do: [:message | self publish: message to: aQueueName]
 ]
 
 { #category : 'connecting' }

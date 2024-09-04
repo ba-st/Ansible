@@ -82,7 +82,7 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 
   queue := publisher channel declareQueueApplying: [ :builder | builder name: queueName ].
 
-  publisher publish: messagesToSend toQueue: queueName.
+  publisher publish: messagesToSend to: queueName.
 
   self wait.
 
@@ -294,7 +294,7 @@ RabbitMQClientTest >> testDebuggingLogsEnabled [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publish: 'Hello!' toQueue: self queueName.
+				anotherPublisher publish: 'Hello!' to: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -330,7 +330,7 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publish: 'Hello!' toQueue: self queueName.
+				anotherPublisher publish: 'Hello!' to: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -356,8 +356,8 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
 
   self resumeWorkerDuring: [
       publisher
-        publish: 'Hello' toQueue: self queueName;
-        publish: 'World' toQueue: self queueName.
+        publish: 'Hello' to: self queueName;
+        publish: 'World' to: self queueName.
 
       self wait.
 
@@ -371,7 +371,7 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
             self
               closeAllConnectionsFromTheClientSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publish: 'Test connection restored' toQueue: self queueName
+            publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
@@ -391,8 +391,8 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 
   self resumeWorkerDuring: [
       publisher
-        publish: 'Hello' toQueue: self queueName;
-        publish: 'World' toQueue: self queueName.
+        publish: 'Hello' to: self queueName;
+        publish: 'World' to: self queueName.
 
       self wait.
 
@@ -406,7 +406,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
             self
               closeAllConnectionsFromTheBrokerSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publish: 'Test connection restored' toQueue: self queueName
+            publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
@@ -425,7 +425,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessages [
 
-	self resumeWorkerDuring: [ publisher publishAll: #( 'Hello' 'World' ) toQueue: self queueName ].
+	self resumeWorkerDuring: [ publisher publishAll: #( 'Hello' 'World' ) to: self queueName ].
 
 	self
 		assert: reversedTexts size equals: 2;
@@ -436,7 +436,7 @@ RabbitMQClientTest >> testPublishingMessages [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingOneMessage [
 
-	self resumeWorkerDuring: [ publisher publish: 'Hello' toQueue: self queueName ].
+	self resumeWorkerDuring: [ publisher publish: 'Hello' to: self queueName ].
 
 	self
 		withTheOnlyOneIn: reversedTexts
@@ -446,8 +446,8 @@ RabbitMQClientTest >> testPublishingOneMessage [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingToFanoutExchange [
 
-  | routingKey firstWorkerMessages secondWorkerMessages |
-  routingKey := self queueName.
+  | route firstWorkerMessages secondWorkerMessages |
+  route := self queueName.
   firstWorkerMessages := OrderedCollection new.
   secondWorkerMessages := OrderedCollection new.
 
@@ -455,16 +455,16 @@ RabbitMQClientTest >> testPublishingToFanoutExchange [
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
     bindedTo: 'amq.fanout'
-    routedBy: routingKey
+    routedBy: route
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
           bindedTo: 'amq.fanout'
-          routedBy: routingKey
+          routedBy: route
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher publish: 'Hello' toExchange: 'amq.fanout' usingRoutingKey: routingKey ]
+          during: [ publisher publish: 'Hello' to: route through: 'amq.fanout' ]
       ].
 
   self
