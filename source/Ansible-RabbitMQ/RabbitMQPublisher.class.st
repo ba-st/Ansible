@@ -28,7 +28,12 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 
 { #category : 'private - accessing' }
 RabbitMQPublisher >> directExchange [
-
+	
+	"Ref: https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-default 
+	The default exchange is a direct exchange with no name (empty string) pre-declared by the broker. 
+	It has one special property that makes it very useful for simple applications: 
+	every queue that is created is automatically bound to it with a routing key which is the same as the queue name. "
+	
   ^ ''
 ]
 
