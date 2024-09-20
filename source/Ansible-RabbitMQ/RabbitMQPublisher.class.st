@@ -26,6 +26,14 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	^ self new initializeConfiguredBy: options
 ]
 
+{ #category : 'publish - exchange fanout' }
+RabbitMQPublisher >> broadcast: aMessage toAllQueuesBindedTo: aFanoutExchange [
+	
+	" Ref: https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-topic.  
+	A fanout exchange routes messages to all of the queues that are bound to it and the routing key is ignored. "
+	self publish: aMessage to: '' through: aFanoutExchange
+]
+
 { #category : 'private - accessing' }
 RabbitMQPublisher >> directExchange [
 	
@@ -73,13 +81,13 @@ RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNac
       theChannel onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock ]
 ]
 
-{ #category : 'publishing' }
+{ #category : 'publish - exchange default' }
 RabbitMQPublisher >> publish: aMessage to: aQueueName [
 
   self publish: aMessage to: aQueueName through: self directExchange
 ]
 
-{ #category : 'publishing' }
+{ #category : 'publish - exchange topic/direct' }
 RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName [
 
   self
@@ -89,7 +97,7 @@ RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName [
     configuredWith: [ :properties | properties bePersistent ]
 ]
 
-{ #category : 'publishing' }
+{ #category : 'publish - exchange topic/direct' }
 RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName configuredWith: aConfigurationBlock [
 
   | properties tryToPublishMessage |
@@ -115,7 +123,7 @@ RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName c
     ]
 ]
 
-{ #category : 'publishing' }
+{ #category : 'publish - exchange default' }
 RabbitMQPublisher >> publishAll: aMessageCollection to: aQueueName [
 
 	aMessageCollection do: [:message | self publish: message to: aQueueName]

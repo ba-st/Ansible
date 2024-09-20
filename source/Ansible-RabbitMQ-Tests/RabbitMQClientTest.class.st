@@ -434,7 +434,7 @@ RabbitMQClientTest >> testPublishingMessages [
 ]
 
 { #category : 'tests' }
-RabbitMQClientTest >> testPublishingOneMessage [
+RabbitMQClientTest >> testPublishingToDefaultExchange [
 
 	self resumeWorkerDuring: [ publisher publish: 'Hello' to: self queueName ].
 
@@ -444,7 +444,36 @@ RabbitMQClientTest >> testPublishingOneMessage [
 ]
 
 { #category : 'tests' }
-RabbitMQClientTest >> testPublishingToFanoutExchange [
+RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithDifferentRoutingKey [
+
+  |  firstWorkerMessages secondWorkerMessages |
+
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: 'amq.direct'
+    routedBy: 'the-reverse-key'
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: 'amq.direct'
+          routedBy: 'the-appender-key'
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [ publisher publish: 'Hello' to: 'the-reverse-key' through: 'amq.direct' ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ]; 
+	 assert: secondWorkerMessages isEmpty
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithSameRoutingKey [
 
   | route firstWorkerMessages secondWorkerMessages |
   route := self queueName.
@@ -454,17 +483,75 @@ RabbitMQClientTest >> testPublishingToFanoutExchange [
   self
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
-    bindedTo: 'amq.fanout'
+    bindedTo: 'amq.direct'
     routedBy: route
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
-          bindedTo: 'amq.fanout'
+          bindedTo: 'amq.direct'
           routedBy: route
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher publish: 'Hello' to: route through: 'amq.fanout' ]
+          during: [ publisher publish: 'Hello' to: route through: 'amq.direct' ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToFanoutExchange [
+
+  | firstWorkerMessages secondWorkerMessages |
+
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: 'amq.fanout'
+    routedBy: ('queue-<1p>' expandMacrosWith: Random new next)
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: 'amq.fanout'
+          routedBy: ('queue-<1p>' expandMacrosWith: Random new next)
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [ publisher broadcast: 'Hello' toAllQueuesBindedTo: 'amq.fanout' ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToTopicExchange [
+
+  | firstWorkerMessages secondWorkerMessages |
+
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: 'amq.topic'
+    routedBy: '*.reverser'
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: 'amq.topic'
+          routedBy: 'textprocessing.*'
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [ publisher publish: 'Hello' to: 'textprocessing.reverser' through: 'amq.topic' ]
       ].
 
   self
