@@ -5,7 +5,8 @@ Class {
 		'reversedTexts',
 		'workerProcess',
 		'loggingAsserter',
-		'publisher'
+		'publisher',
+		'semaphore'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -132,6 +133,18 @@ RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername
 ]
 
 { #category : 'private - accessing' }
+RabbitMQClientTest >> defaultDirectExchangeName [
+
+  ^ 'amq.direct'
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> defaultFanoutExchangeName [
+
+  ^ 'amq.fanout'
+]
+
+{ #category : 'private - accessing' }
 RabbitMQClientTest >> defaultRabbitMQPublisher [
 
 	^ RabbitMQPublisher configuredBy: [ :options |
@@ -150,6 +163,12 @@ RabbitMQClientTest >> defaultRabbitMQPublisher [
 RabbitMQClientTest >> defaultRabbitMQWorkerUsername [
 
 	^ AmqpConnectionBuilder usingAMQP091Protocol credentials username
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> defaultTopicExchangeName [
+
+  ^ 'amq.topic'
 ]
 
 { #category : 'private - accessing' }
@@ -446,30 +465,30 @@ RabbitMQClientTest >> testPublishingToDefaultExchange [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithDifferentRoutingKey [
 
-  |  firstWorkerMessages secondWorkerMessages |
-
+  | firstWorkerMessages secondWorkerMessages |
   firstWorkerMessages := OrderedCollection new.
   secondWorkerMessages := OrderedCollection new.
 
   self
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
-    bindedTo: 'amq.direct'
+    bindedTo: self defaultDirectExchangeName
     routedBy: 'the-reverse-key'
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
-          bindedTo: 'amq.direct'
+          bindedTo: self defaultDirectExchangeName
           routedBy: 'the-appender-key'
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher publish: 'Hello' to: 'the-reverse-key' through: 'amq.direct' ]
+          during: [
+            publisher publish: 'Hello' to: 'the-reverse-key' through: self defaultDirectExchangeName ]
       ].
 
   self
-    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ]; 
-	 assert: secondWorkerMessages isEmpty
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    assert: secondWorkerMessages isEmpty
 ]
 
 { #category : 'tests' }
@@ -483,17 +502,17 @@ RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithSameR
   self
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
-    bindedTo: 'amq.direct'
+    bindedTo: self defaultDirectExchangeName
     routedBy: route
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
-          bindedTo: 'amq.direct'
+          bindedTo: self defaultDirectExchangeName
           routedBy: route
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher publish: 'Hello' to: route through: 'amq.direct' ]
+          during: [ publisher publish: 'Hello' to: route through: self defaultDirectExchangeName ]
       ].
 
   self
@@ -505,24 +524,24 @@ RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithSameR
 RabbitMQClientTest >> testPublishingToFanoutExchange [
 
   | firstWorkerMessages secondWorkerMessages |
-
   firstWorkerMessages := OrderedCollection new.
   secondWorkerMessages := OrderedCollection new.
 
   self
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
-    bindedTo: 'amq.fanout'
-    routedBy: ('queue-<1p>' expandMacrosWith: Random new next)
+    bindedTo: self defaultFanoutExchangeName
+    routedBy: ( 'queue-<1p>' expandMacrosWith: Random new next )
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
-          bindedTo: 'amq.fanout'
-          routedBy: ('queue-<1p>' expandMacrosWith: Random new next)
+          bindedTo: self defaultFanoutExchangeName
+          routedBy: ( 'queue-<1p>' expandMacrosWith: Random new next )
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher broadcast: 'Hello' toAllQueuesBindedTo: 'amq.fanout' ]
+          during: [
+            publisher broadcast: 'Hello' toAllQueuesBindedTo: self defaultFanoutExchangeName ]
       ].
 
   self
@@ -534,24 +553,27 @@ RabbitMQClientTest >> testPublishingToFanoutExchange [
 RabbitMQClientTest >> testPublishingToTopicExchange [
 
   | firstWorkerMessages secondWorkerMessages |
-
   firstWorkerMessages := OrderedCollection new.
   secondWorkerMessages := OrderedCollection new.
 
   self
     runWorkerNamed: 'Reverser'
     consumingFrom: 'reverser-queue'
-    bindedTo: 'amq.topic'
+    bindedTo: self defaultTopicExchangeName
     routedBy: '*.reverser'
     doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
     during: [
         self
           runWorkerNamed: 'Appender'
           consumingFrom: 'appender-queue'
-          bindedTo: 'amq.topic'
+          bindedTo: self defaultTopicExchangeName
           routedBy: 'textprocessing.*'
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
-          during: [ publisher publish: 'Hello' to: 'textprocessing.reverser' through: 'amq.topic' ]
+          during: [
+            publisher
+              publish: 'Hello'
+              to: 'textprocessing.reverser'
+              through: self defaultTopicExchangeName ]
       ].
 
   self
