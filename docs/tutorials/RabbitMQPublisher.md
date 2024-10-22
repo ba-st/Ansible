@@ -17,3 +17,45 @@ Accepts the following options:
 | #enableDebuggingLogs | A boolean indicating whether to log debugging events | Optional | false |
 | #extraClientProperties | A dictionary with keys and values to set the [client properties](https://www.rabbitmq.com/docs/connections#capabilities) |Optional | Empty |
 | #retry | A block that can configure the internal `Retry` instance | Optional | `[]` |
+
+## Usage
+
+You need to instantiate the publisher with the options above and then send `#start` to ensure the [channel](https://www.rabbitmq.com/docs/channels) is open.
+
+```smalltalk
+| publisher | 
+publisher := RabbitMQPublisher configuredBy: [ :options | 
+    options
+        at: #username put: 'guest';
+        at: #password put: 'guest';
+        at: #hostname put: 'localhost'
+].
+
+publisher start.
+```
+
+Once the publisher is started, you can use its protocol to send messages.
+
+* Publish directly to a specific queue using the [default exchange](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-default).
+
+```smalltalk
+publisher publish: 'The message' to: 'the-queue'. 
+```
+
+* Publish to a routing key through a [direct](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-direct) or [topic](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-topic) exchange.
+
+```smalltalk
+publisher publish: 'The message' to: 'a-routing-key' through: 'the-exchange'.
+```
+
+* Publish to all queues bound to a [fanout exchange](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-fanout).
+
+```smalltalk
+publisher broadcast: 'The message' toAllQueuesBindedTo: 'a-fanout-exchange'.
+```
+
+For proper shutdown and connection closure, you need to run:
+
+```smalltalk
+publisher stop.
+```
