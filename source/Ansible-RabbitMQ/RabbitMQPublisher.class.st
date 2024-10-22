@@ -27,7 +27,7 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 ]
 
 { #category : 'publish - exchange fanout' }
-RabbitMQPublisher >> broadcast: aMessage toAllQueuesBindedTo: aFanoutExchange [
+RabbitMQPublisher >> broadcast: aMessage toAllQueuesBoundTo: aFanoutExchange [
 	
 	" Ref: https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-topic.  
 	A fanout exchange routes messages to all of the queues that are bound to it and the routing key is ignored. "

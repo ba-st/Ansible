@@ -541,7 +541,7 @@ RabbitMQClientTest >> testPublishingToFanoutExchange [
           routedBy: ( 'queue-<1p>' expandMacrosWith: Random new next )
           doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
           during: [
-            publisher broadcast: 'Hello' toAllQueuesBindedTo: self defaultFanoutExchangeName ]
+            publisher broadcast: 'Hello' toAllQueuesBoundTo: self defaultFanoutExchangeName ]
       ].
 
   self
