@@ -59,34 +59,6 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anEx
 ]
 
 { #category : 'tests - support' }
-AMQPTest >> publish: aMessageCollection onQueueNamed: aQueueName [
-
-	self
-		withLocalhostConnectionDo: [ :connection | 
-			| channel queue |
-
-			channel := connection createChannel.
-			channel declareQueueApplying: [ :builder | builder name: aQueueName ].
-
-			aMessageCollection
-				do: [ :message | 
-					channel
-						basicPublish: message utf8Encoded
-						exchange: ''
-						routingKey: aQueueName
-						properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
-					].
-
-			( Delay forMilliseconds: 100 ) wait.
-			queue := channel declareQueueApplying: [ :builder | builder name: aQueueName ].
-
-			self
-				assert: queue method messageCount equals: aMessageCollection size;
-				assert: queue method consumerCount equals: 0
-			]
-]
-
-{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeName of: anExchangeType [ 
 
 	self
@@ -142,6 +114,34 @@ AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchan
 				of: 'headers' 
 				over: connection
 				withProperties: ( connection protocolClass basicPropertiesClass new headers: aHeadersDictionary )]
+]
+
+{ #category : 'tests - support' }
+AMQPTest >> publishAll: aMessageCollection to: aQueueName [
+
+	self
+		withLocalhostConnectionDo: [ :connection | 
+			| channel queue |
+
+			channel := connection createChannel.
+			channel declareQueueApplying: [ :builder | builder name: aQueueName ].
+
+			aMessageCollection
+				do: [ :message | 
+					channel
+						basicPublish: message utf8Encoded
+						exchange: ''
+						routingKey: aQueueName
+						properties: ( connection protocolClass basicPropertiesClass new deliveryMode: 2 )
+					].
+
+			( Delay forMilliseconds: 100 ) wait.
+			queue := channel declareQueueApplying: [ :builder | builder name: aQueueName ].
+
+			self
+				assert: queue method messageCount equals: aMessageCollection size;
+				assert: queue method consumerCount equals: 0
+			]
 ]
 
 { #category : 'tests - support' }
@@ -311,7 +311,7 @@ AMQPTest >> testBasicConsume [
 
 	| channel queue |
 
-	self publish: #('Do it!') onQueueNamed: 'tasks'.
+	self publishAll: #('Do it!') to: 'tasks'.
 
 	self
 		withLocalhostConnectionDo: [ :connection | 
@@ -351,8 +351,8 @@ AMQPTest >> testBasicConsumeWithMultipleWorkers [
 	secondWorkerMessages := OrderedCollection new.
 
 	self
-		publish: #('Do it!' 'Do it.!' 'Do it..!' 'Do it...!' 'Do it....!' 'Do it.....!')
-		onQueueNamed: 'tasks'.
+		publishAll: #('Do it!' 'Do it.!' 'Do it..!' 'Do it...!' 'Do it....!' 'Do it.....!')
+		to: 'tasks'.
 
 	firstWorker := self
 		spawnWorkerNamed: 'first_worker'

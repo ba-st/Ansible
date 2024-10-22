@@ -19,3 +19,38 @@ Accepts the following options:
 | #retry | A block that can configure the internal `Retry` instance | Optional | `[]` |
 | #queueName | Queue name where to consume from | Mandatory | |
 | #queueDurable | When false sets the [queue durability](https://www.rabbitmq.com/docs/queues#durability) to transient, otherwise will be durable | Optional | true |
+
+## Usage
+
+You need to instantiate the worker with the options above.
+
+```smalltalk
+| worker |
+worker := RabbitMQWorker configuredBy: [ :options |
+    options
+        at: #hostname put: 'localhost';
+        at: #queueName put: aQueueName;
+        at: #extraClientProperties put: (
+            Dictionary new
+                at: 'process' put: 'aName';
+                yourself )
+    ]
+    processingPayloadWith: [:message | message inspect ].
+```
+
+Before sending `#start`, you need to consider [bind the queue](https://www.rabbitmq.com/tutorials/tutorial-four-python#bindings) to an exchange if necessary.
+
+```smalltalk
+worker bindQueueTo: 'an-exchange-name' routedBy: 'a-routing-key'.
+```
+
+The #start method will block the socket, waiting for any new event, so it's recommended to fork the process and ensure that, before terminating, you unbind the queue and close the connection properly.
+
+```smalltalk
+workerProcess := [
+    [ worker start ] ensure: [
+        worker unbindQueueTo: 'an-exchange-name' routedBy: 'a-routing-key'.
+        worker stop
+        ]
+] fork
+```

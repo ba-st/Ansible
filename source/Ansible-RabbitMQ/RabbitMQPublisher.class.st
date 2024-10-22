@@ -26,6 +26,25 @@ RabbitMQPublisher class >> configuredBy: aConfigurationAction [
 	^ self new initializeConfiguredBy: options
 ]
 
+{ #category : 'publish - exchange fanout' }
+RabbitMQPublisher >> broadcast: aMessage toAllQueuesBoundTo: aFanoutExchange [
+	
+	" Ref: https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-topic.  
+	A fanout exchange routes messages to all of the queues that are bound to it and the routing key is ignored. "
+	self publish: aMessage to: '' through: aFanoutExchange
+]
+
+{ #category : 'private - accessing' }
+RabbitMQPublisher >> directExchange [
+	
+	"Ref: https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-default 
+	The default exchange is a direct exchange with no name (empty string) pre-declared by the broker. 
+	It has one special property that makes it very useful for simple applications: 
+	every queue that is created is automatically bound to it with a routing key which is the same as the queue name. "
+	
+  ^ ''
+]
+
 { #category : 'initialization' }
 RabbitMQPublisher >> ensureChannelOpen [
 
@@ -42,13 +61,14 @@ RabbitMQPublisher >> initializeConfiguredBy: anOptionsDictionary [
 ]
 
 { #category : 'private - logging' }
-RabbitMQPublisher >> logDebuggingInfoFor: aMessage publishedTo: aQueueName [
+RabbitMQPublisher >> logDebuggingInfoFor: aMessage publishedTo: anExchange using: aRoutingKey [
 
   self shouldLogDebuggingInfo then: [
       LogRecord emitStructuredDebuggingInfo: 'RabbitMQ message published' with: [ :data |
+          data at: #messagePublished put: aMessage.
+          anExchange = self directExchange ifFalse: [ data at: #exchange put: anExchange ].
           data
-            at: #messagePublished put: aMessage;
-            at: #routingKey put: aQueueName;
+            at: #routingKey put: aRoutingKey;
             at: #connectionDescription put: connection connectionPairsDescription
         ]
     ]
@@ -61,36 +81,52 @@ RabbitMQPublisher >> onPublicationConfirmationDo: anAckBlock onRejectionDo: aNac
       theChannel onPublicationConfirmationDo: anAckBlock onRejectionDo: aNackBlock ]
 ]
 
-{ #category : 'private - configuring' }
-RabbitMQPublisher >> persistentDeliveryMode [
+{ #category : 'publish - exchange default' }
+RabbitMQPublisher >> publish: aMessage to: aQueueName [
 
-  ^ connection protocolClass basicPropertiesClass new deliveryMode: 2
+  self publish: aMessage to: aQueueName through: self directExchange
 ]
 
-{ #category : 'publishing' }
-RabbitMQPublisher >> publish: aMessageCollection onQueueNamed: aQueueName [
+{ #category : 'publish - exchange topic/direct' }
+RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName [
 
-	aMessageCollection do: [:message | self publishOnly: message onQueueNamed: aQueueName]
+  self
+    publish: aMessage
+    to: aRoutingKey
+    through: anExchangeName
+    configuredWith: [ :properties | properties bePersistent ]
 ]
 
-{ #category : 'publishing' }
-RabbitMQPublisher >> publishOnly: aMessage onQueueNamed: aQueueName [
+{ #category : 'publish - exchange topic/direct' }
+RabbitMQPublisher >> publish: aMessage to: aRoutingKey through: anExchangeName configuredWith: aConfigurationBlock [
 
-  | tryToPublishMessage |
+  | properties tryToPublishMessage |
+  properties := connection protocolClass basicPropertiesClass new.
+  aConfigurationBlock value: properties.
+
   tryToPublishMessage := [
                            self ensureChannelOpen.
                            channel
                              basicPublish: aMessage utf8Encoded
-                             exchange: ''
-                             routingKey: aQueueName
-                             properties: self persistentDeliveryMode.
-                           self logDebuggingInfoFor: aMessage publishedTo: aQueueName
+                             exchange: anExchangeName
+                             routingKey: aRoutingKey
+                             properties: properties.
+                           self
+                             logDebuggingInfoFor: aMessage
+                             publishedTo: anExchangeName
+                             using: aRoutingKey
                          ].
 
   self try: tryToPublishMessage onConnectivityErrorDo: [ :attemptNumber :error |
       connection hardCloseDescribedWith: error messageText.
       self logFailedConnectionAttempt: attemptNumber dueTo: error
     ]
+]
+
+{ #category : 'publish - exchange default' }
+RabbitMQPublisher >> publishAll: aMessageCollection to: aQueueName [
+
+	aMessageCollection do: [:message | self publish: message to: aQueueName]
 ]
 
 { #category : 'connecting' }

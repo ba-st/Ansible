@@ -5,7 +5,8 @@ Class {
 		'reversedTexts',
 		'workerProcess',
 		'loggingAsserter',
-		'publisher'
+		'publisher',
+		'semaphore'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -82,7 +83,7 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 
   queue := publisher channel declareQueueApplying: [ :builder | builder name: queueName ].
 
-  publisher publishOnly: messagesToSend onQueueNamed: queueName.
+  publisher publish: messagesToSend to: queueName.
 
   self wait.
 
@@ -132,6 +133,18 @@ RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername
 ]
 
 { #category : 'private - accessing' }
+RabbitMQClientTest >> defaultDirectExchangeName [
+
+  ^ 'amq.direct'
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> defaultFanoutExchangeName [
+
+  ^ 'amq.fanout'
+]
+
+{ #category : 'private - accessing' }
 RabbitMQClientTest >> defaultRabbitMQPublisher [
 
 	^ RabbitMQPublisher configuredBy: [ :options |
@@ -150,6 +163,12 @@ RabbitMQClientTest >> defaultRabbitMQPublisher [
 RabbitMQClientTest >> defaultRabbitMQWorkerUsername [
 
 	^ AmqpConnectionBuilder usingAMQP091Protocol credentials username
+]
+
+{ #category : 'private - accessing' }
+RabbitMQClientTest >> defaultTopicExchangeName [
+
+  ^ 'amq.topic'
 ]
 
 { #category : 'private - accessing' }
@@ -197,6 +216,41 @@ RabbitMQClientTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRege
   loggingAsserter
     runMemoryLoggerDuring: aBlock;
     assertLogRecordsMatchUsing: expectedLogEntriesWithTimestamp
+]
+
+{ #category : 'running' }
+RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: anExchange routedBy: aRoutingKey doing: aProcessingBlock during: aBlock [
+
+  | process |
+  process := [
+               | worker |
+               worker := RabbitMQWorker
+                           configuredBy: [ :options |
+                               options
+                                 at: #hostname put: 'localhost';
+                                 at: #queueName put: aQueueName;
+                                 at: #extraClientProperties put: ( Dictionary new
+                                       at: 'process' put: aName;
+                                       yourself )
+                             ]
+                           processingPayloadWith: aProcessingBlock.
+               worker bindQueueTo: anExchange routedBy: aRoutingKey.
+               [ worker start ] ensure: [
+                   worker unbindQueueTo: anExchange routedBy: aRoutingKey.
+                   worker stop
+                 ]
+             ] newProcess.
+  process
+    name: aName;
+    priority: Processor userBackgroundPriority.
+
+  [
+    process resume.
+    Processor yield.
+    self wait.
+    aBlock value.
+    self wait
+  ] ensure: [ process terminate ]
 ]
 
 { #category : 'running' }
@@ -259,7 +313,7 @@ RabbitMQClientTest >> testDebuggingLogsEnabled [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publishOnly: 'Hello!' onQueueNamed: self queueName.
+				anotherPublisher publish: 'Hello!' to: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -295,7 +349,7 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 	self
 		runMemoryLoggerDuring: [
 				anotherPublisher start.
-				anotherPublisher publishOnly: 'Hello!' onQueueNamed: self queueName.
+				anotherPublisher publish: 'Hello!' to: self queueName.
 				anotherPublisher stop
 			]
 		assertingLogRecordsMatchRegexes:
@@ -321,8 +375,8 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
 
   self resumeWorkerDuring: [
       publisher
-        publishOnly: 'Hello' onQueueNamed: self queueName;
-        publishOnly: 'World' onQueueNamed: self queueName.
+        publish: 'Hello' to: self queueName;
+        publish: 'World' to: self queueName.
 
       self wait.
 
@@ -336,7 +390,7 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
             self
               closeAllConnectionsFromTheClientSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+            publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
@@ -356,8 +410,8 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 
   self resumeWorkerDuring: [
       publisher
-        publishOnly: 'Hello' onQueueNamed: self queueName;
-        publishOnly: 'World' onQueueNamed: self queueName.
+        publish: 'Hello' to: self queueName;
+        publish: 'World' to: self queueName.
 
       self wait.
 
@@ -371,7 +425,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
             self
               closeAllConnectionsFromTheBrokerSide;
               waitUntilAllRabbitMQConnectionsClose.
-            publisher publishOnly: 'Test connection restored' onQueueNamed: self queueName
+            publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
@@ -390,7 +444,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessages [
 
-	self resumeWorkerDuring: [ publisher publish: #( 'Hello' 'World' ) onQueueNamed: self queueName ].
+	self resumeWorkerDuring: [ publisher publishAll: #( 'Hello' 'World' ) to: self queueName ].
 
 	self
 		assert: reversedTexts size equals: 2;
@@ -399,13 +453,132 @@ RabbitMQClientTest >> testPublishingMessages [
 ]
 
 { #category : 'tests' }
-RabbitMQClientTest >> testPublishingOneMessage [
+RabbitMQClientTest >> testPublishingToDefaultExchange [
 
-	self resumeWorkerDuring: [ publisher publishOnly: 'Hello' onQueueNamed: self queueName ].
+	self resumeWorkerDuring: [ publisher publish: 'Hello' to: self queueName ].
 
 	self
 		withTheOnlyOneIn: reversedTexts
 		do: [ :reversedText | self assert: reversedText equals: 'olleH' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithDifferentRoutingKey [
+
+  | firstWorkerMessages secondWorkerMessages |
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: self defaultDirectExchangeName
+    routedBy: 'the-reverse-key'
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: self defaultDirectExchangeName
+          routedBy: 'the-appender-key'
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [
+            publisher publish: 'Hello' to: 'the-reverse-key' through: self defaultDirectExchangeName ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    assert: secondWorkerMessages isEmpty
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToDirectExchangeWithTwoQueuesBindedWithSameRoutingKey [
+
+  | route firstWorkerMessages secondWorkerMessages |
+  route := self queueName.
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: self defaultDirectExchangeName
+    routedBy: route
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: self defaultDirectExchangeName
+          routedBy: route
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [ publisher publish: 'Hello' to: route through: self defaultDirectExchangeName ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToFanoutExchange [
+
+  | firstWorkerMessages secondWorkerMessages |
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: self defaultFanoutExchangeName
+    routedBy: ( 'queue-<1p>' expandMacrosWith: Random new next )
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: self defaultFanoutExchangeName
+          routedBy: ( 'queue-<1p>' expandMacrosWith: Random new next )
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [
+            publisher broadcast: 'Hello' toAllQueuesBoundTo: self defaultFanoutExchangeName ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testPublishingToTopicExchange [
+
+  | firstWorkerMessages secondWorkerMessages |
+  firstWorkerMessages := OrderedCollection new.
+  secondWorkerMessages := OrderedCollection new.
+
+  self
+    runWorkerNamed: 'Reverser'
+    consumingFrom: 'reverser-queue'
+    bindedTo: self defaultTopicExchangeName
+    routedBy: '*.reverser'
+    doing: [ :message | firstWorkerMessages add: message utf8Decoded reversed ]
+    during: [
+        self
+          runWorkerNamed: 'Appender'
+          consumingFrom: 'appender-queue'
+          bindedTo: self defaultTopicExchangeName
+          routedBy: 'textprocessing.*'
+          doing: [ :message | secondWorkerMessages add: message utf8Decoded ]
+          during: [
+            publisher
+              publish: 'Hello'
+              to: 'textprocessing.reverser'
+              through: self defaultTopicExchangeName ]
+      ].
+
+  self
+    withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
+    withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
 ]
 
 { #category : 'private - support' }
