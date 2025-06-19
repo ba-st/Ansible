@@ -3,7 +3,6 @@ Class {
 	#superclass : 'TestCase',
 	#instVars : [
 		'reversedTexts',
-		'workerProcess',
 		'loggingAsserter',
 		'publisher',
 		'semaphore'
@@ -197,16 +196,6 @@ RabbitMQClientTest >> rabbitMQPublisherWithDebuggingLogs [
 ]
 
 { #category : 'private - support' }
-RabbitMQClientTest >> resumeWorkerDuring: aBlock [
-
-	workerProcess resume.
-	Processor yield.
-	self wait.
-	aBlock value.
-	self wait
-]
-
-{ #category : 'private - support' }
 RabbitMQClientTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRegexes: expectedLogEntries [ 
 
   | expectedLogEntriesWithTimestamp |
@@ -234,9 +223,9 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: 
                                        yourself )
                              ]
                            processingPayloadWith: aProcessingBlock.
-               worker bindQueueTo: anExchange routedBy: aRoutingKey.
+               anExchange ifNotNil: [ worker bindQueueTo: anExchange routedBy: aRoutingKey ].
                [ worker start ] ensure: [
-                   worker unbindQueueTo: anExchange routedBy: aRoutingKey.
+                   anExchange ifNotNil: [ worker unbindQueueTo: anExchange routedBy: aRoutingKey ].
                    worker stop
                  ]
              ] newProcess.
@@ -254,6 +243,18 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: 
 ]
 
 { #category : 'running' }
+RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName doing: aProcessingBlock during: aBlock [
+
+  self
+    runWorkerNamed: aName
+    consumingFrom: aQueueName
+    bindedTo: nil
+    routedBy: nil
+    doing: aProcessingBlock
+    during: aBlock
+]
+
+{ #category : 'running' }
 RabbitMQClientTest >> setUp [
 
 	super setUp.
@@ -261,24 +262,8 @@ RabbitMQClientTest >> setUp [
 	loggingAsserter := LoggingAsserter on: self.
 	reversedTexts := OrderedCollection new.
 
-	workerProcess :=
-		[| worker |
-			worker := RabbitMQTextReverser workingWith: self.
-			[worker start] ensure: [worker stop]]
-				newProcess.
-				
-	workerProcess
-		name: 'Text reverser worker';
-		priority: Processor userBackgroundPriority.
-
 	publisher := self defaultRabbitMQPublisher.
 	publisher start
-]
-
-{ #category : 'private - accessing' }
-RabbitMQClientTest >> storeText: aString [
-
-	reversedTexts add: aString
 ]
 
 { #category : 'running' }
@@ -288,7 +273,6 @@ RabbitMQClientTest >> tearDown [
 		on: AmqpDisconnectedError, NetworkError
 		do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
 	publisher stop.
-	workerProcess terminate.
 	super tearDown
 ]
 
@@ -374,33 +358,37 @@ RabbitMQClientTest >> testPublisherConfirmationWhenMessageProcessed [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnection [
 
-  self resumeWorkerDuring: [
-      publisher
-        publish: 'Hello' to: self queueName;
-        publish: 'World' to: self queueName.
+  self
+    runWorkerNamed: 'Text reverser worker'
+    consumingFrom: self queueName
+    doing: [ :payload | reversedTexts add: payload utf8Decoded reversed ]
+    during: [
+        publisher
+          publish: 'Hello' to: self queueName;
+          publish: 'World' to: self queueName.
 
-      self wait.
+        self wait.
 
-      self
-        assert: reversedTexts size equals: 2;
-        assert: reversedTexts first equals: 'olleH';
-        assert: reversedTexts last equals: 'dlroW'.
+        self
+          assert: reversedTexts size equals: 2;
+          assert: reversedTexts first equals: 'olleH';
+          assert: reversedTexts last equals: 'dlroW'.
 
-      self
-        runMemoryLoggerDuring: [
-            self
-              closeAllConnectionsFromTheClientSide;
-              waitUntilAllRabbitMQConnectionsClose.
-            publisher publish: 'Test connection restored' to: self queueName
-          ]
-        assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-            '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
-    ].
+        self
+          runMemoryLoggerDuring: [
+              self
+                closeAllConnectionsFromTheClientSide;
+                waitUntilAllRabbitMQConnectionsClose.
+              publisher publish: 'Test connection restored' to: self queueName
+            ]
+          assertingLogRecordsMatchRegexes:
+            { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+              '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
+              '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+      ].
 
   self
     assert: reversedTexts size equals: 3;
@@ -410,34 +398,37 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 
-  self resumeWorkerDuring: [
-      publisher
-        publish: 'Hello' to: self queueName;
-        publish: 'World' to: self queueName.
+  self
+    runWorkerNamed: 'Text reverser worker'
+    consumingFrom: self queueName
+    doing: [ :payload | reversedTexts add: payload utf8Decoded reversed ]
+    during: [
+        publisher
+          publish: 'Hello' to: self queueName;
+          publish: 'World' to: self queueName.
 
-      self wait.
+        self wait.
 
-      self
-        assert: reversedTexts size equals: 2;
-        assert: reversedTexts first equals: 'olleH';
-        assert: reversedTexts last equals: 'dlroW'.
+        self
+          assert: reversedTexts size equals: 2;
+          assert: reversedTexts first equals: 'olleH';
+          assert: reversedTexts last equals: 'dlroW'.
 
-      self
-        runMemoryLoggerDuring: [
-            self
-              closeAllConnectionsFromTheBrokerSide;
-              waitUntilAllRabbitMQConnectionsClose.
-            publisher publish: 'Test connection restored' to: self queueName
-          ]
-        assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
-            '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
-    ].
-
+        self
+          runMemoryLoggerDuring: [
+              self
+                closeAllConnectionsFromTheBrokerSide;
+                waitUntilAllRabbitMQConnectionsClose.
+              publisher publish: 'Test connection restored' to: self queueName
+            ]
+          assertingLogRecordsMatchRegexes:
+            { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+              '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
+              '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
+              '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+      ].
 
   self
     assert: reversedTexts size equals: 3;
@@ -447,22 +438,30 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingMessages [
 
-	self resumeWorkerDuring: [ publisher publishAll: #( 'Hello' 'World' ) to: self queueName ].
+  self
+    runWorkerNamed: 'Text reverser worker'
+    consumingFrom: self queueName
+    doing: [ :payload | reversedTexts add: payload utf8Decoded reversed ]
+    during: [ publisher publishAll: #( 'Hello' 'World' ) to: self queueName ].
 
-	self
-		assert: reversedTexts size equals: 2;
-		assert: reversedTexts first equals: 'olleH';
-		assert: reversedTexts second equals: 'dlroW'
+  self
+    assert: reversedTexts size equals: 2;
+    assert: reversedTexts first equals: 'olleH';
+    assert: reversedTexts second equals: 'dlroW'
 ]
 
 { #category : 'tests' }
 RabbitMQClientTest >> testPublishingToDefaultExchange [
 
-	self resumeWorkerDuring: [ publisher publish: 'Hello' to: self queueName ].
+  self
+    runWorkerNamed: 'Text reverser worker'
+    consumingFrom: self queueName
+    doing: [ :payload | reversedTexts add: payload utf8Decoded reversed ]
+    during: [ publisher publish: 'Hello' to: self queueName ].
 
-	self
-		withTheOnlyOneIn: reversedTexts
-		do: [ :reversedText | self assert: reversedText equals: 'olleH' ]
+  self
+    withTheOnlyOneIn: reversedTexts
+    do: [ :reversedText | self assert: reversedText equals: 'olleH' ]
 ]
 
 { #category : 'tests' }
