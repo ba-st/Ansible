@@ -335,6 +335,7 @@ RabbitMQClientTest >> testDebuggingLogsEnabledInWorker [
     runMemoryLoggerDuring: [ self assertQueueStatusAfterConsuming: messagesToSend from: queueName ]
     assertingLogRecordsMatchRegexes:
       { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+        '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
         '\[DEBUG\] RabbitMQ message consumed \{"deliveryTag"\:1,"messageConsumed"\:"Do it!","routingKey"\:"tasks-for-testDebuggingLogsEnabledInWorker","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
         '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
 ]
@@ -395,6 +396,7 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+            '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
             '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
@@ -430,8 +432,9 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
         assertingLogRecordsMatchRegexes:
           { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
+            '\[DEBUG\] AMQP consumer started working \{"consumerTag"\:"(.+)","channelNumber"\:1,"connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
-			'\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
+            '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
             '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
     ].
 

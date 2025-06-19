@@ -105,11 +105,18 @@ RabbitMQWorker >> restartConsumingFromQueue [
 { #category : 'private' }
 RabbitMQWorker >> setUpChannelConsumingCallback [
 
+  | consumerTag |
   channel prefetchCount: 1.
-  channel consumeFrom: self queueName applying: [ :message |
-      self logDebuggingInfoFor: message.
-      messageProcessor value: message.
-      channel basicAck: message method deliveryTag
+  consumerTag := channel consumeFrom: self queueName applying: [ :message |
+                     self logDebuggingInfoFor: message.
+                     messageProcessor value: message.
+                     channel basicAck: message method deliveryTag
+                   ].
+  LogRecord emitStructuredDebuggingInfo: 'AMQP consumer started working' with: [ :data |
+      data
+        at: #consumerTag put: consumerTag;
+        at: #channelNumber put: channel channelNumber;
+        at: #connectionDescription put: connection connectionPairsDescription
     ]
 ]
 
