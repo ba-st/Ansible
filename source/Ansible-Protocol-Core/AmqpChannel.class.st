@@ -82,16 +82,15 @@ AmqpChannel >> basicPublish: aByteArray exchange: exchangeName routingKey: routi
 { #category : 'AMQP sending messages' }
 AmqpChannel >> basicPublish: aByteArray exchange: exchangeName routingKey: routingKey properties: aBasicProperties mandatory: mandatory immediate: immediate [
 
-	handler connection
-		sendMethod:
-			( protocolVersion basicPublishMethod new
-				exchange: exchangeName;
-				routingKey: routingKey;
-				mandatory: mandatory;
-				immediate: immediate )
-		properties: aBasicProperties
-		body: aByteArray
-		onChannel: handler channelNumber
+  handler connection
+    sendMethod: ( protocolVersion basicPublishMethod new
+          exchange: exchangeName;
+          routingKey: routingKey;
+          mandatory: mandatory;
+          immediate: immediate )
+    properties: aBasicProperties
+    body: aByteArray
+    onChannel: self channelNumber
 ]
 
 { #category : 'AMQP receiving messages' }
@@ -121,6 +120,12 @@ AmqpChannel >> cancelConsumer: consumerTag [
 
 	self rpc: ( protocolVersion basicCancelMethod new consumerTag: consumerTag ).
 	callbacks removeKey: consumerTag ifAbsent: [  ]
+]
+
+{ #category : 'AMQP sending messages' }
+AmqpChannel >> channelNumber [
+
+  ^ handler channelNumber
 ]
 
 { #category : 'AMQP closing' }
@@ -255,10 +260,10 @@ AmqpChannel >> handleBasicDeliver: cmd [
 { #category : 'AMQP server-generated events' }
 AmqpChannel >> handleChannelClose: cmd [
 
-	handler internalClose: cmd method.
-	handler connection
-		sendMethod: protocolVersion channelCloseOkMethod new
-		onChannel: handler channelNumber	"TODO: notify callbacks of closure"
+  handler internalClose: cmd method.
+  handler connection
+    sendMethod: protocolVersion channelCloseOkMethod new
+    onChannel: self channelNumber "TODO: notify callbacks of closure"
 ]
 
 { #category : 'initialization' }
@@ -300,13 +305,13 @@ AmqpChannel >> prefetchCount: prefetchCount prefetchSize: prefetchSize global: a
 { #category : 'AMQP receiving messages' }
 AmqpChannel >> printOn: aStream [
 
-	aStream nextPutAll: ( 'AMPQ Channel <1p> on <2p> (<3s>)'
-			  expandMacrosWith: handler channelNumber
-			  with: handler connection
-			  with:
-			  ( self
-				    whenOpenDo: [ 'Open' ]
-				    whenClosedDo: [ :reason | 'Closed due <1p>' expandMacrosWith: reason ] ) )
+  aStream nextPutAll: ( 'AMPQ Channel <1p> on <2p> (<3s>)'
+        expandMacrosWith: self channelNumber
+        with: handler connection
+        with:
+        ( self
+            whenOpenDo: [ 'Open' ]
+            whenClosedDo: [ :reason | 'Closed due <1p>' expandMacrosWith: reason ] ) )
 ]
 
 { #category : 'AMQP private' }
