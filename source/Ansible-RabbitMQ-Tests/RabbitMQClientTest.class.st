@@ -5,7 +5,8 @@ Class {
 		'reversedTexts',
 		'loggingAsserter',
 		'publisher',
-		'semaphore'
+		'semaphore',
+		'workersByName'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -97,20 +98,13 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 { #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsFromTheBrokerSide [
 
-	| rabbitmqContainerId closeReason |
+  | closeReason aUsername |
 
-	rabbitmqContainerId := self rabbitMQContainerID.
+  closeReason := 'CloseConnectionsTest'.
+  aUsername := self defaultRabbitMQWorkerUsername.
 
-	closeReason := 'CloseConnectionsTest'.
-
-	rabbitmqContainerId isEmpty
-		then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
-		otherwise: [
-			self
-				closeAllConnectionsOf: rabbitmqContainerId
-				for: self defaultRabbitMQWorkerUsername
-				because: closeReason
-			]
+  self executeInRabbitMQCommandLineTool:
+    ( 'close_all_user_connections <1s> <2s>' expandMacrosWith: aUsername with: closeReason )
 ]
 
 { #category : 'tests' }
@@ -168,6 +162,15 @@ RabbitMQClientTest >> defaultRabbitMQWorkerUsername [
 RabbitMQClientTest >> defaultTopicExchangeName [
 
   ^ 'amq.topic'
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> executeInRabbitMQCommandLineTool: aCommand [
+
+  self withRabbitContainerIDDo: [ :rabbitContainerID |
+      OSPlatform current runCommand:
+        ( 'docker exec <1s> rabbitmqctl <2s>' expandMacrosWith: rabbitContainerID with: aCommand )
+    ]
 ]
 
 { #category : 'private - accessing' }
@@ -595,4 +598,15 @@ RabbitMQClientTest >> waitUntilAllRabbitMQConnectionsClose [
 	"This delay aims to replicate the time required to successfully close all the RabbitMQ connections."
 
 	( Delay forSeconds: 120 ) wait
+]
+
+{ #category : 'private - support' }
+RabbitMQClientTest >> withRabbitContainerIDDo: aBlock [
+
+  | rabbitmqContainerId |
+  rabbitmqContainerId := self rabbitMQContainerID.
+
+  rabbitmqContainerId isEmpty
+    then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
+    otherwise: [ aBlock value: rabbitmqContainerId ]
 ]
