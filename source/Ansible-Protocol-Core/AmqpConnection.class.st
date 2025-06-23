@@ -229,10 +229,18 @@ AmqpConnection >> localPortDescription [
 { #category : 'connection-handling' }
 AmqpConnection >> mainLoopCycle [
 
-	self withNextFrameDo: [ :nextFrame |
-		( nextFrame isKindOf: AmqpHeartbeatFrame ) ifFalse: [
-			( channels at: nextFrame channelNumber ) handleFrame: nextFrame ]
-		]
+  self withNextFrameDo: [ :nextFrame |
+      ( nextFrame isKindOf: AmqpHeartbeatFrame ) ifFalse: [
+          channels
+            at: nextFrame channelNumber
+            ifPresent: [ :channel | channel handleFrame: nextFrame ]
+            ifAbsent: [
+                LogRecord emitWarning:
+                  ( 'Received a frame for channel <1p> when no handler configured for it'
+                      expandMacrosWith: nextFrame channelNumber )
+              ]
+        ]
+    ]
 ]
 
 { #category : 'connection-handling' }

@@ -77,11 +77,13 @@ AmqpChannelHandler >> dispatchCommand [
 { #category : 'handling' }
 AmqpChannelHandler >> handleBodyFrame: frame [
 
-	( frame isKindOf: AmqpContentBodyFrame )
-		ifFalse: [ AmqpProtocolSyntaxError signal: 'Unexpected frame kind' ].
-	remainingBytes := remainingBytes - frame fragment size.
-	bodyPieces nextPutAll: frame fragment.
-	self checkBodyCompletion
+  ( frame isKindOf: AmqpContentBodyFrame ) ifFalse: [
+      ( frame method isA: Amqp091ChannelClose ) then: [ ^ self internalClose: frame ].
+      AmqpProtocolSyntaxError signal: 'Unexpected frame kind'
+    ].
+  remainingBytes := remainingBytes - frame fragment size.
+  bodyPieces nextPutAll: frame fragment.
+  self checkBodyCompletion
 ]
 
 { #category : 'handling' }
