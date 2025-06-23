@@ -226,10 +226,12 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: 
                                        yourself )
                              ]
                            processingPayloadWith: aProcessingBlock.
+               workersByName at: aName put: worker.
                anExchange ifNotNil: [ worker bindQueueTo: anExchange routedBy: aRoutingKey ].
                [ worker start ] ensure: [
                    anExchange ifNotNil: [ worker unbindQueueTo: anExchange routedBy: aRoutingKey ].
-                   worker stop
+                   worker stop.
+                   workersByName removeKey: aName
                  ]
              ] newProcess.
   process
@@ -257,6 +259,14 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName doing: aPr
     during: aBlock
 ]
 
+{ #category : 'private - support' }
+RabbitMQClientTest >> setConsumerTimeoutInServerTo: aTimeoutInMilliseconds [
+
+  self executeInRabbitMQCommandLineTool:
+    ( 'eval ''application:set_env(rabbit, consumer_timeout, <1p>).''' expandMacrosWith:
+        aTimeoutInMilliseconds )
+]
+
 { #category : 'running' }
 RabbitMQClientTest >> setUp [
 
@@ -266,17 +276,23 @@ RabbitMQClientTest >> setUp [
 	reversedTexts := OrderedCollection new.
 
 	publisher := self defaultRabbitMQPublisher.
-	publisher start
+	publisher start. 
+	
+	workersByName := Dictionary new. 
 ]
 
 { #category : 'running' }
 RabbitMQClientTest >> tearDown [
 
-	[ publisher channel queueDelete: self queueName ]
-		on: AmqpDisconnectedError, NetworkError
-		do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
-	publisher stop.
-	super tearDown
+  [
+    self setHeartbeatInServerTo: 60000.
+    self setConsumerTimeoutInServerTo: 18000000.
+    publisher channel queueDelete: self queueName.
+    publisher stop
+  ]
+    on: Error
+    do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
+  super tearDown
 ]
 
 { #category : 'tests' }
@@ -343,6 +359,30 @@ RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 		assertingLogRecordsMatchRegexes:
 			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
 				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testHandleConsumerTimeout [
+
+  self setConsumerTimeoutInServerTo: 1000.
+
+  self
+    runWorkerNamed: 'Text reverser worker'
+    consumingFrom: self queueName
+    doing: [ :payload |
+        reversedTexts add: payload utf8Decoded reversed.
+        self waitUntilAllRabbitMQConnectionsClose
+      ]
+    during: [
+        publisher publish: 'Hello' to: self queueName.
+        self wait.
+        publisher publish: 'World' to: self queueName.
+        self waitUntilAllRabbitMQConnectionsClose
+      ].
+
+  self
+    assert: reversedTexts size equals: 1;
+    assert: reversedTexts first equals: 'olleH'
 ]
 
 { #category : 'tests' }
