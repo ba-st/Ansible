@@ -6,6 +6,12 @@ Class {
 }
 
 { #category : 'accessing' }
+AmqpHeartbeatFrame >> beHandledBy: aChannelHandler [
+
+	" do nothing "
+]
+
+{ #category : 'accessing' }
 AmqpHeartbeatFrame >> encodeBodyOn: codec [
 
 	"do nothing."
