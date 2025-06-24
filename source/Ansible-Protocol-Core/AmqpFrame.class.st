@@ -10,6 +10,12 @@ Class {
 }
 
 { #category : 'accessing' }
+AmqpFrame >> beHandledBy: aChannelHandler [
+
+  self subclassResponsibility
+]
+
+{ #category : 'accessing' }
 AmqpFrame >> channelNumber [
 
 	^ channelNumber

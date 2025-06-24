@@ -10,6 +10,12 @@ Class {
 	#package : 'Ansible-Protocol-Core'
 }
 
+{ #category : 'as yet unclassified' }
+AmqpContentHeaderFrame >> beHandledBy: anAmqpChannelHandler [
+
+  ^ anAmqpChannelHandler handlePropertiesFrame: self
+]
+
 { #category : 'accessing' }
 AmqpContentHeaderFrame >> bodySize [
 

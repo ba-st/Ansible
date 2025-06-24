@@ -7,14 +7,18 @@ Class {
 		'inbound',
 		'closeReason',
 		'asyncMap',
-		'currentCommand',
-		'remainingBytes',
-		'bodyPieces',
-		'nextFrameHandler'
+		'nextFrameHandler',
+		'commandBuilder'
 	],
 	#category : 'Ansible-Protocol-Core',
 	#package : 'Ansible-Protocol-Core'
 }
+
+{ #category : 'instance creation' }
+AmqpChannelHandler class >> on: aConnection [
+
+  ^ self new initializeOn: aConnection
+]
 
 { #category : 'handling' }
 AmqpChannelHandler >> assertChannelOpen [
@@ -32,13 +36,9 @@ AmqpChannelHandler >> channelNumber [
 { #category : 'accessing' }
 AmqpChannelHandler >> checkBodyCompletion [
 
-	remainingBytes > 0
-		ifTrue: [ nextFrameHandler := #handleBodyFrame: ]
-		ifFalse: [ remainingBytes < 0
-				ifTrue: [ AmqpProtocolSyntaxError signal: 'Received body overrun' ].
-			currentCommand body: bodyPieces contents.
-			self dispatchCommand
-			]
+  commandBuilder
+    withCommandDo: [ :command | self dispatchCommand: command ]
+    ifUncompletedDo: [ nextFrameHandler := #handleBodyFrame: ]
 ]
 
 { #category : 'accessing' }
@@ -53,76 +53,61 @@ AmqpChannelHandler >> connection [
 	^ connection
 ]
 
-{ #category : 'accessing' }
-AmqpChannelHandler >> connection: anObject [
+{ #category : 'handling' }
+AmqpChannelHandler >> dispatchCommand: aCommand [
 
-	connection := anObject.
-	channelNumber := connection nextChannel.
-	connection setChannel: channelNumber to: self
+  asyncMap
+    at: aCommand method class
+    ifPresent: [ :messageSend | messageSend value: aCommand ]
+    ifAbsent: [ inbound add: aCommand ].
+
+  self resetState
 ]
 
-{ #category : 'handling' }
-AmqpChannelHandler >> dispatchCommand [
-
-	( asyncMap includesKey: currentCommand method class )
-		ifTrue: [ | messageSend |
-
-			messageSend := asyncMap at: currentCommand method class.
-			messageSend value: currentCommand
-			]
-		ifFalse: [ inbound add: currentCommand ].
-	self resetState
-]
-
-{ #category : 'handling' }
+{ #category : 'handling - frames' }
 AmqpChannelHandler >> handleBodyFrame: frame [
 
-  ( frame isKindOf: AmqpContentBodyFrame ) ifFalse: [
-      ( frame method isA: Amqp091ChannelClose ) then: [ ^ self internalClose: frame ].
-      AmqpProtocolSyntaxError signal: 'Unexpected frame kind'
-    ].
-  remainingBytes := remainingBytes - frame fragment size.
-  bodyPieces nextPutAll: frame fragment.
+  commandBuilder appendBodyFrame: frame.
+
   self checkBodyCompletion
 ]
 
-{ #category : 'handling' }
+{ #category : 'handling - frames' }
 AmqpChannelHandler >> handleFrame: frame [
 
-	self perform: nextFrameHandler with: frame
+  frame beHandledBy: self
 ]
 
-{ #category : 'handling' }
+{ #category : 'handling - frames' }
 AmqpChannelHandler >> handleMethodFrame: frame [
 
-	( frame isKindOf: AmqpMethodFrame )
-		ifFalse: [ AmqpProtocolSyntaxError signal: 'Unexpected frame kind' ].
-	currentCommand := AmqpCommand new.
-	currentCommand method: frame method.
-	frame method hasContents
-		ifTrue: [ nextFrameHandler := #handlePropertiesFrame: ]
-		ifFalse: [ self dispatchCommand ]
+  commandBuilder := AmqpCommandBuilder new.
+  commandBuilder setMethodFrame: frame.
+
+  commandBuilder
+    withCommandDo: [ :command | self dispatchCommand: command ]
+    ifUncompletedDo: [ nextFrameHandler := #handlePropertiesFrame: ]
 ]
 
-{ #category : 'handling' }
+{ #category : 'handling - frames' }
 AmqpChannelHandler >> handlePropertiesFrame: frame [
 
-	( frame isKindOf: AmqpContentHeaderFrame )
-		ifFalse: [ AmqpProtocolSyntaxError signal: 'Unexpected frame kind' ].
-	currentCommand properties: frame properties.
-	remainingBytes := frame bodySize.
-	bodyPieces := WriteStream on: ByteArray new.
-	self checkBodyCompletion
+  commandBuilder setHeaderFrame: frame.
+
+  self checkBodyCompletion
 ]
 
 { #category : 'accessing' }
-AmqpChannelHandler >> initialize [
+AmqpChannelHandler >> initializeOn: aConnection [
 
-	super initialize.
-	asyncMap := Dictionary new.
-	closeReason := nil.
-	inbound := OrderedCollection new.
-	self resetState
+  super initialize.
+  connection := aConnection.
+  channelNumber := connection nextChannel.
+  connection setChannel: channelNumber to: self.
+  asyncMap := Dictionary new.
+  closeReason := nil.
+  inbound := OrderedCollection new.
+  self resetState
 ]
 
 { #category : 'handling' }
@@ -144,10 +129,8 @@ AmqpChannelHandler >> mapEvent: evtClass to: receiver selector: aSymbol [
 { #category : 'handling' }
 AmqpChannelHandler >> resetState [
 
-	nextFrameHandler := #handleMethodFrame:.
-	currentCommand := nil.
-	remainingBytes := 0.
-	bodyPieces := nil
+  nextFrameHandler := #handleMethodFrame:.
+  commandBuilder := AmqpCommandBuilder new
 ]
 
 { #category : 'handling' }

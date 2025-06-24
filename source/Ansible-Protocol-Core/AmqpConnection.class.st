@@ -65,16 +65,15 @@ AmqpConnection >> becomeCloseAfter: aBlock [
       ] ensure: [
           LogRecord emitInfo: ( 'AMQP connection <1s> closed due to <2s>'
                 expandMacrosWith: self connectionPairsDescription
-                with: closingMethod replyText ).
+                with: ( closingMethod ifNil: 'Unknown' ifNotNil: #replyText ) ).
           [ socket close ]
             on: ExpectedSocketFailure
-            do: [ :error | 
-					" If the socket was unexpectedly closed, trying to close it again 
+            do: [ :error | " If the socket was unexpectedly closed, trying to close it again 
 					will raise a SocketError that we want to silence "
-					error return ].
+                error return ].
           isOpen := false.
           socketConnectionStatus := ClosedSocketConnection dueTo: closingMethod replyText.
-          heartbeatSender stop.
+          heartbeatSender stop
         ]
     ]
 ]
@@ -120,11 +119,10 @@ AmqpConnection >> connectionPairsDescription [
 { #category : 'connection-handling' }
 AmqpConnection >> createChannel [
 
-	| handler |
-
-	self assertSocketConnected.
-	handler := AmqpChannelHandler new connection: self.
-	^ AmqpChannel using: handler
+  | handler |
+  self assertSocketConnected.
+  handler := AmqpChannelHandler on: self.
+  ^ AmqpChannel using: handler
 ]
 
 { #category : 'accessing' }
@@ -214,10 +212,13 @@ AmqpConnection >> initializeTo: aHostname
 { #category : 'private-opening' }
 AmqpConnection >> installChannel0 [
 
-	| channel |
+  | channel |
 
-	channel := AmqpChannelHandler new connection: self.
-	channel mapEvent: self protocolClass connectionCloseMethod to: self selector: #handleConnectionClose:
+  channel := AmqpChannelHandler on: self.
+  channel
+    mapEvent: self protocolClass connectionCloseMethod
+    to: self
+    selector: #handleConnectionClose:
 ]
 
 { #category : 'accessing' }
@@ -230,16 +231,14 @@ AmqpConnection >> localPortDescription [
 AmqpConnection >> mainLoopCycle [
 
   self withNextFrameDo: [ :nextFrame |
-      ( nextFrame isKindOf: AmqpHeartbeatFrame ) ifFalse: [
-          channels
-            at: nextFrame channelNumber
-            ifPresent: [ :channel | channel handleFrame: nextFrame ]
-            ifAbsent: [
-                LogRecord emitWarning:
-                  ( 'Received a frame for channel <1p> when no handler configured for it'
-                      expandMacrosWith: nextFrame channelNumber )
-              ]
-        ]
+      channels
+        at: nextFrame channelNumber
+        ifPresent: [ :channel | channel handleFrame: nextFrame ]
+        ifAbsent: [
+            LogRecord emitWarning:
+              ( 'Received a frame for channel <1p> when no handler configured for it'
+                  expandMacrosWith: nextFrame channelNumber )
+          ]
     ]
 ]
 

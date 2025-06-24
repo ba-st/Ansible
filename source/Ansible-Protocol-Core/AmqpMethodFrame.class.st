@@ -9,6 +9,12 @@ Class {
 	#package : 'Ansible-Protocol-Core'
 }
 
+{ #category : 'as yet unclassified' }
+AmqpMethodFrame >> beHandledBy: anAmqpChannelHandler [
+
+  ^ anAmqpChannelHandler handleMethodFrame: self
+]
+
 { #category : 'accessing' }
 AmqpMethodFrame >> encodeBodyOn: codec [
 
