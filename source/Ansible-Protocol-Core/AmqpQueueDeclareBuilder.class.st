@@ -64,7 +64,7 @@ AmqpQueueDeclareBuilder >> initializeFor: aProtocolVersion [
 	protocolVersion := aProtocolVersion.
 	"Initialize default values."
 	queueName := ''.
-	durable := false.
+	durable := true.
 	exclusive := false.
 	autoDelete := false.
 	passive := false.
