@@ -48,11 +48,11 @@ BaselineOfAnsible >> setUpDependencies: spec [
 		project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: #( 'Core' ) ].
 
 	spec
-		baseline: 'Bell' with: [ spec repository: 'github://ba-st/Bell:v3' ];
+		baseline: 'Bell' with: [ spec repository: 'github://ba-st/Bell:v4' ];
 		project: 'Bell-SUnit' copyFrom: 'Bell' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
 		
 	spec
-		baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v6' ];
+		baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v7' ];
 		project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
 
 	spec
@@ -60,7 +60,7 @@ BaselineOfAnsible >> setUpDependencies: spec [
 		project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
 
 	spec
-		baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v6' ];
+		baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v7' ];
 		project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
 ]
 
