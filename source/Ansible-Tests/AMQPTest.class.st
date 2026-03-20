@@ -5,6 +5,15 @@ Class {
 	#package : 'Ansible-Tests'
 }
 
+{ #category : 'enumerating' }
+AMQPTest class >> withHostnameDo: aBlock [
+
+  LanguagePlatform current os
+    environmentAt: 'ANSIBLE_RABBITMQ_HOSTNAME'
+    ifPresent: aBlock
+    ifAbsent: [  ]
+]
+
 { #category : 'tests - asserting' }
 AMQPTest >> assert: aMessageCollection has: anAmount messagesAndAreEqualsTo: anOrderedCollection [
 
@@ -62,7 +71,7 @@ AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anEx
 AMQPTest >> publish: aMessageCollection to: aRoute onExchangeNamed: anExchangeName of: anExchangeType [ 
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			self
 				publish: aMessageCollection 
 				to: aRoute 
@@ -106,7 +115,7 @@ AMQPTest >> publish: aMessageCollection
 AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchangeNamed: anExchangeName [
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			self
 				publish: aMessageCollection 
 				to: ''
@@ -120,7 +129,7 @@ AMQPTest >> publish: aMessageCollection with: aHeadersDictionary onHeadersExchan
 AMQPTest >> publishAll: aMessageCollection to: aQueueName [
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			| channel queue |
 
 			channel := connection createChannel.
@@ -144,14 +153,14 @@ AMQPTest >> publishAll: aMessageCollection to: aQueueName [
 			]
 ]
 
-{ #category : 'tests - support' }
+{ #category : 'running' }
 AMQPTest >> setUp [
 
 	"Clean up the queues in case any of the previous tests failed."
 
 	super setUp.
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			connection createChannel
 				queueDelete: 'tasks';
 				queueDelete: 'hello'
@@ -202,7 +211,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 AMQPTest >> spawnWorkerNamed: aProcessName consumingFrom: aQueueName applying: aBlock [
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			| process channel |
 
 			channel := connection createChannel.
@@ -257,7 +266,7 @@ AMQPTest >> spawnWorkerNamed: aProcessName
 	applying: aBlock [
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			| process channel queue |
 
 			channel := connection createChannel.
@@ -314,7 +323,7 @@ AMQPTest >> testBasicConsume [
 	self publishAll: #('Do it!') to: 'tasks'.
 
 	self
-		withLocalhostConnectionDo: [ :connection | 
+		withConnectionDo: [ :connection | 
 			channel := connection createChannel.
 			queue := channel declareQueueApplying: [ :builder | builder name: 'tasks' ].
 
@@ -758,18 +767,19 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 ]
 
 { #category : 'tests - support' }
-AMQPTest >> withLocalhostConnectionDo: block [
+AMQPTest >> withConnectionDo: block [
 
-	| connection |
-
-	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
-	connection open.
-	connection
-		whenConnected: [ 
-			block value: connection.
-			connection close
-			]
-		whenNot: [ :error | self fail: error messageText ]
+  | connectionBuilder connection |
+  connectionBuilder := AmqpConnectionBuilder usingAMQP091Protocol.
+  self class withHostnameDo: [ :hostname | connectionBuilder hostname: hostname ].
+  connection := connectionBuilder build.
+  connection open.
+  connection
+    whenConnected: [
+        block value: connection.
+        connection close
+      ]
+    whenNot: [ :error | self fail: error messageText ]
 ]
 
 { #category : 'tests - support' }
@@ -781,7 +791,7 @@ AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock [
 { #category : 'tests - support' }
 AMQPTest >> withQueueNamed: aQueueName declaredOnChannelDo: aBlock deleteQueueOnReturn: aBoolean [
 
-  self withLocalhostConnectionDo: [ :connection |
+  self withConnectionDo: [ :connection |
       | channel |
       channel := connection createChannel.
       aBlock

@@ -18,16 +18,17 @@ RabbitMQTextReverser class >> workingWith: aTestCase [
 { #category : 'initialization' }
 RabbitMQTextReverser >> initializeWorkingWith: aTestCase [
 
-	worker := RabbitMQWorker
-		          configuredBy: [ :options |
-				          options
-					          at: #hostname put: 'localhost';
-					          at: #queueName put: aTestCase queueName;
-					          at: #extraClientProperties put: ( Dictionary new
-							            at: 'process' put: 'Text Reverser Worker';
-							            yourself )
-			          ]
-		          processingPayloadWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
+  worker := RabbitMQWorker
+              configuredBy: [ :options |
+                  AMQPTest withHostnameDo: [ :hostname | options at: #hostname put: hostname ].
+                  options
+                    at: #hostname ifAbsentPut: 'localhost';
+                    at: #queueName put: aTestCase queueName;
+                    at: #extraClientProperties put: ( Dictionary new
+                          at: 'process' put: 'Text Reverser Worker';
+                          yourself )
+                ]
+              processingPayloadWith: [ :payload | aTestCase storeText: payload utf8Decoded reversed ]
 ]
 
 { #category : 'accessing' }

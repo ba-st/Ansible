@@ -5,8 +5,7 @@ Class {
 		'reversedTexts',
 		'workerProcess',
 		'loggingAsserter',
-		'publisher',
-		'semaphore'
+		'publisher'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -30,15 +29,16 @@ RabbitMQClientTest >> addTimestampRegexTo: aLogEntryCollection [
 { #category : 'private - accessing' }
 RabbitMQClientTest >> anotherRabbitMQPublisher [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 1234;
-				  at: #username put: 'bugs';
-				  at: #password put: 'bunny';
-				  at: #maximumConnectionAttemps put: 1;
-				  at: #timeSlotBetweenConnectionRetriesInMs put: 1
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        AMQPTest withHostnameDo: [ :hostname | options at: #hostname put: hostname ].
+        options
+          at: #hostname ifAbsentPut: 'localhost';
+          at: #port put: 1234;
+          at: #username put: 'bugs';
+          at: #password put: 'bunny';
+          at: #maximumConnectionAttemps put: 1;
+          at: #timeSlotBetweenConnectionRetriesInMs put: 1
+      ]
 ]
 
 { #category : 'tests' }
@@ -147,16 +147,17 @@ RabbitMQClientTest >> defaultFanoutExchangeName [
 { #category : 'private - accessing' }
 RabbitMQClientTest >> defaultRabbitMQPublisher [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 5672;
-				  at: #username: put: 'guest';
-				  at: #password put: 'guest';
-				  at: #extraClientProperties put: ( Dictionary new
-						    at: 'process' put: 'RabbitMQClientTest Publisher';
-						    yourself )
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        AMQPTest withHostnameDo: [ :hostname | options at: #hostname put: hostname ].
+        options
+          at: #hostname ifAbsentPut: 'localhost';
+          at: #port put: 5672;
+          at: #username: put: 'guest';
+          at: #password put: 'guest';
+          at: #extraClientProperties put: ( Dictionary new
+                at: 'process' put: 'RabbitMQClientTest Publisher';
+                yourself )
+      ]
 ]
 
 { #category : 'private - accessing' }
@@ -186,14 +187,15 @@ RabbitMQClientTest >> rabbitMQContainerID [
 { #category : 'private - accessing' }
 RabbitMQClientTest >> rabbitMQPublisherWithDebuggingLogs [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 5672;
-				  at: #username: put: 'guest';
-				  at: #password put: 'guest';
-				  at: #enableDebuggingLogs put: true
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        AMQPTest withHostnameDo: [ :hostname | options at: #hostname put: hostname ].
+        options
+          at: #hostname ifAbsentPut: 'localhost';
+          at: #port put: 5672;
+          at: #username: put: 'guest';
+          at: #password put: 'guest';
+          at: #enableDebuggingLogs put: true
+      ]
 ]
 
 { #category : 'private - support' }
