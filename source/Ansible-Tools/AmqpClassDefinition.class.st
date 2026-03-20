@@ -1,26 +1,27 @@
 Class {
-	#name : #AmqpClassDefinition,
-	#superclass : #AmqpEntityDefinition,
+	#name : 'AmqpClassDefinition',
+	#superclass : 'AmqpEntityDefinition',
 	#instVars : [
 		'methods',
 		'contentProperties'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpClassDefinition >> contentProperties [
 
 	^ contentProperties
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpClassDefinition >> hasProperties [
 
 	^ self contentProperties isNotEmpty
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpClassDefinition >> loadFrom: anXmlNode [
 
 	super loadFrom: anXmlNode.
@@ -46,13 +47,13 @@ AmqpClassDefinition >> loadFrom: anXmlNode [
 			] 
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpClassDefinition >> methods [
 
 	^ methods
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpClassDefinition >> propertiesAndMasksDo: aBlock [
 
 	| i bitIndex bitMask |
@@ -69,7 +70,7 @@ AmqpClassDefinition >> propertiesAndMasksDo: aBlock [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpClassDefinition >> resolveDomainUsing: spec [
 
 	methods valuesDo: [ :each | each resolveDomainUsing: spec ].

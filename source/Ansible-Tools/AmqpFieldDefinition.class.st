@@ -1,58 +1,59 @@
 Class {
-	#name : #AmqpFieldDefinition,
-	#superclass : #AmqpEntityDefinition,
+	#name : 'AmqpFieldDefinition',
+	#superclass : 'AmqpEntityDefinition',
 	#instVars : [
 		'container',
 		'domain',
 		'reserved'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> container [
 
 	^ container
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> container: anObject [
 
 	container := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> domain [
 
 	^ domain
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> domain: anObject [
 
 	domain := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> domainName [
 
 	^ domain name
 	
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> domainType [
 
 	^ domain type
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpFieldDefinition >> isReserved [
 
 	^ reserved
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpFieldDefinition >> loadFrom: anXmlNode [
 
 	super loadFrom: anXmlNode.
@@ -62,7 +63,7 @@ AmqpFieldDefinition >> loadFrom: anXmlNode [
 	reserved := ( xml attributeAt: #reserved ) = '1'
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpFieldDefinition >> resolveDomainUsing: aSpec [
 
 	domain := aSpec resolveDomainUsing: domain

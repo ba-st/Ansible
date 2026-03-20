@@ -1,45 +1,46 @@
 Class {
-	#name : #AmqpDomainDefinition,
-	#superclass : #Object,
+	#name : 'AmqpDomainDefinition',
+	#superclass : 'Object',
 	#instVars : [
 		'name',
 		'type'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpDomainDefinition class >> named: aName of: aType [
 
 	^ self new initializeNamed: aName of: aType
 ]
 
-{ #category : #comparing }
+{ #category : 'comparing' }
 AmqpDomainDefinition >> = anObject [
 
 	^ self class = anObject class and: [ self name = anObject name ]
 ]
 
-{ #category : #comparing }
+{ #category : 'comparing' }
 AmqpDomainDefinition >> hash [
 
 	^ name hash 
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpDomainDefinition >> initializeNamed: aName of: aType [
 
 	name := AmqpName from: aName.
 	type := aType
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpDomainDefinition >> name [
 
 	^ name
 ]
 
-{ #category : #printing }
+{ #category : 'printing' }
 AmqpDomainDefinition >> printOn: aStream [
 
 	aStream
@@ -51,7 +52,7 @@ AmqpDomainDefinition >> printOn: aStream [
 		nextPutAll: type
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpDomainDefinition >> type [
 
 	^ type

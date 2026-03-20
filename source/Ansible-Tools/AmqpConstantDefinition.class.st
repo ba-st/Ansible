@@ -1,33 +1,34 @@
 Class {
-	#name : #AmqpConstantDefinition,
-	#superclass : #Object,
+	#name : 'AmqpConstantDefinition',
+	#superclass : 'Object',
 	#instVars : [
 		'name',
 		'value'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpConstantDefinition class >> named: aName holding: aValue [
 
 	^ self new initializeNamed: aName holding: aValue
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpConstantDefinition >> initializeNamed: aName holding: aValue [
 
 	name := AmqpName from: aName.
 	value := aValue
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConstantDefinition >> name [
 
 	^ name
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpConstantDefinition >> value [ 
 	
 	^ value 

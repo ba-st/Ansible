@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpMethodDefinition,
-	#superclass : #AmqpEntityDefinition,
+	#name : 'AmqpMethodDefinition',
+	#superclass : 'AmqpEntityDefinition',
 	#instVars : [
 		'classDef',
 		'fields',
@@ -10,52 +10,53 @@ Class {
 		'synchronous',
 		'responses'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> classDef [
 
 	^ classDef
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> classDef: anObject [
 
 	classDef := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> fields [
 
 	^ fields
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> hasContents [
 
 	^ hasContents
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> isClientMethod [
 
 	^ clientMethod
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> isServerMethod [
 
 	^ serverMethod
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> isSynchronous [
 
 	^ synchronous
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> loadFrom: anXmlNode [
 
 	super loadFrom: anXmlNode.
@@ -87,19 +88,19 @@ AmqpMethodDefinition >> loadFrom: anXmlNode [
 		do: [ :each | responses add: ( AmqpName from: ( each attributeAt: #name ) ) ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> methodId [
 
 	^ ( self classDef index bitShift: 16 ) bitOr: self index
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> resolveDomainUsing: spec [
 
 	fields do: [ :each | each resolveDomainUsing: spec ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpMethodDefinition >> responses [
 
 	^ responses

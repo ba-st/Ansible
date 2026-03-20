@@ -1,6 +1,6 @@
 Class {
-	#name : #AmqpSpecification,
-	#superclass : #Object,
+	#name : 'AmqpSpecification',
+	#superclass : 'Object',
 	#instVars : [
 		'classDefinitions',
 		'majorVersion',
@@ -10,16 +10,17 @@ Class {
 		'domainDefinitions',
 		'constantDefinitions'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpSpecification class >> loadFrom: aUrl [
 
 	^ self new initializeLoadFromXml: aUrl asUrl retrieveContents contents readStream
 ]
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpSpecification class >> official08 [
 
 	^ self
@@ -27,7 +28,7 @@ AmqpSpecification class >> official08 [
 			'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-8.stripped.xml'
 ]
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpSpecification class >> official091 [
 
 	^ self
@@ -35,7 +36,7 @@ AmqpSpecification class >> official091 [
 			'https://raw.githubusercontent.com/fortizpenaloza/Lepus/release-candidate/assets/specs/amqp0-9-1.stripped.xml'
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> addElementaryDomains [
 
 	"For the benefit of the 0-8 spec, which is missing these ground definitions."
@@ -45,31 +46,31 @@ AmqpSpecification >> addElementaryDomains [
 			[ :elementaryType | domainDefinitions add: ( AmqpDomainDefinition named: elementaryType of: elementaryType ) ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> allMethods [
 
 	^ ( classDefinitions values collect: [ :each | each methods values ] ) flattened
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> classDefinitions [
 
 	^ classDefinitions
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> constants [
 
 	^ constantDefinitions
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> domains [
 
 	^ domainDefinitions
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializeClassDefinitionsFrom: root [
 
 	classDefinitions := Dictionary new.
@@ -82,7 +83,7 @@ AmqpSpecification >> initializeClassDefinitionsFrom: root [
 			]
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializeConstantsFrom: root [
 
 	constantDefinitions := OrderedCollection new.
@@ -97,7 +98,7 @@ AmqpSpecification >> initializeConstantsFrom: root [
 			]
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializeDomainsFrom: root [
 
 	domainDefinitions := Set new.
@@ -111,7 +112,7 @@ AmqpSpecification >> initializeDomainsFrom: root [
 			]
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializeLoadFromXml: aStream [
 
 	| document root |
@@ -127,13 +128,13 @@ AmqpSpecification >> initializeLoadFromXml: aStream [
 		resolve
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializePortNumberFrom: root [
 
 	portNumber := ( root attributeAt: #port ) asInteger
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpSpecification >> initializeVersionFrom: root [
 
 	majorVersion := ( root attributeAt: #major ) asInteger.
@@ -146,49 +147,49 @@ AmqpSpecification >> initializeVersionFrom: root [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> isObsoleteProtocolVariant [
 
 	^ majorVersion = 0 and: [ minorVersion < 9 ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> majorVersion [
 
 	^ majorVersion
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> minorVersion [
 
 	^ minorVersion
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> portNumber [
 
 	^ portNumber
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> resolve [
 
 	classDefinitions valuesDo: [ :each | each resolveDomainUsing: self ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> resolveDomainUsing: aDomainName [
 
 	^ domainDefinitions detect: [ :domain | domain name = ( AmqpName from: aDomainName ) ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> revision [
 
 	^ revision
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecification >> versionString [
 
 	^ majorVersion asString , minorVersion asString

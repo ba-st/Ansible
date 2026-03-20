@@ -1,15 +1,16 @@
 Class {
-	#name : #AmqpSpecCompiler,
-	#superclass : #Object,
+	#name : 'AmqpSpecCompiler',
+	#superclass : 'Object',
 	#instVars : [
 		'spec',
 		'prefix',
 		'definitionCategory'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 
 	^ String
@@ -37,22 +38,19 @@ AmqpSpecCompiler >> acceptableResponseClassesSource: methodDefinition [
 			]
 ]
 
-{ #category : #'code generation' }
+{ #category : 'code generation' }
 AmqpSpecCompiler >> applyFormatting [
 
-	( RBPackageEnvironment packageName: definitionCategory )
-		classesDo: [ :class | 
-			class
-				methodsDo: [ :method | 
-					| formattedCode |
-
-					formattedCode := BIConfigurableFormatter format: method ast.
-					class compile: formattedCode
-					]
-			]
+  ( RBPackageEnvironment packageName: definitionCategory ) classesDo: [ :class |
+      class methodsDo: [ :method |
+          | formattedCode |
+          formattedCode := BuenosAiresSmalltalkFormatter format: method ast.
+          class compile: formattedCode
+        ]
+    ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 
 	^ ( aFieldDefinition isReserved
@@ -61,7 +59,7 @@ AmqpSpecCompiler >> decodeFieldSource: aFieldDefinition [
 		, aFieldDefinition domainType capitalized , '.'
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 
 	^ String
@@ -108,48 +106,60 @@ AmqpSpecCompiler >> decodeMethodSource: aMethodDefinition [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> decodePropertiesSource: aClassDefinition [
 
-	| s |
-
-	s := WriteStream with: 'decodeFrom: codec
+  ^ String streamContents: [ :s |
+        s nextPutAll: 'decodeFrom: codec
 	| qFlags |
 	qFlags := self decodeFlagsFrom: codec.
 '.
-	aClassDefinition
-		propertiesAndMasksDo: [ :fieldDefinition :bitMask | 
-			fieldDefinition domainType = 'bit'
-				ifTrue: [ fieldDefinition isReserved
-						ifFalse: [ s
-								nextPutAll: '	' , fieldDefinition methodName , ' := (qFlags bitAnd: ' , bitMask asString , ') ~= 0.';
-								cr
-							]
-					]
-				ifFalse: [ s nextPutAll: '	(qFlags bitAnd: ' , bitMask asString , ') = 0 ifTrue: ['.
-					fieldDefinition isReserved
-						ifFalse: [ s nextPutAll: fieldDefinition  name lowerCamelCased  , ' := nil' ].
-					s
-						nextPutAll: '] ifFalse: [' , ( self decodeFieldSource: fieldDefinition ) , '].';
-						cr
-					]
-			].
-	^ s contents
+        aClassDefinition propertiesAndMasksDo: [ :fieldDefinition :bitMask |
+            fieldDefinition domainType = 'bit'
+              ifTrue: [
+                  fieldDefinition isReserved ifFalse: [
+                      s
+                        nextPutAll: '	';
+                        nextPutAll: fieldDefinition methodName;
+                        nextPutAll: ' := (qFlags bitAnd: ';
+                        nextPutAll: bitMask asString;
+                        nextPutAll: ') ~= 0.';
+                        cr
+                    ]
+                ]
+              ifFalse: [
+                  s
+                    nextPutAll: '	(qFlags bitAnd: ';
+                    nextPutAll: bitMask asString;
+                    nextPutAll: ') = 0 ifTrue: ['.
+                  fieldDefinition isReserved ifFalse: [
+                      s
+                        nextPutAll: fieldDefinition name lowerCamelCased;
+                        nextPutAll: ' := nil'
+                    ].
+                  s
+                    nextPutAll: '] ifFalse: [';
+                    nextPutAll: ( self decodeFieldSource: fieldDefinition );
+                    nextPutAll: '].';
+                    cr
+                ]
+          ]
+      ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> definitionCategory [
 
 	^ definitionCategory
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> definitionCategory: anObject [
 
 	definitionCategory := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 
 	^ 'codec next' , aFieldDefinition domainType capitalized , 'Put: '
@@ -159,7 +169,7 @@ AmqpSpecCompiler >> encodeFieldSource: aFieldDefinition [
 				ifFalse: [ aFieldDefinition name lowerCamelCased ] ) , '.'
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 
 	| bitindex finishbits |
@@ -221,7 +231,7 @@ AmqpSpecCompiler >> encodeMethodSource: aMethodDefinition [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 
 	| source |
@@ -263,14 +273,14 @@ AmqpSpecCompiler >> encodePropertiesSource: aClassDefinition [
 	^ source contents
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> generateClass: aClassDefinition [
 
 	self generateContentProperties: aClassDefinition.
 	aClassDefinition methods valuesDo: [ :method | self generateMethod: method ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 
 	| class fieldDefinitions |
@@ -298,7 +308,7 @@ AmqpSpecCompiler >> generateContentProperties: aClassDefinition [
 	class compile: ( self encodePropertiesSource: aClassDefinition ) classified: 'AMQP codec'
 ]
 
-{ #category : #'code generation' }
+{ #category : 'code generation' }
 AmqpSpecCompiler >> generateEverything [
 
 	| protocol class |
@@ -345,7 +355,7 @@ AmqpSpecCompiler >> generateEverything [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> generateMethod: aMethodDefinition [
 
 	| class fieldDefinitions |
@@ -376,7 +386,7 @@ AmqpSpecCompiler >> generateMethod: aMethodDefinition [
 	class compile: ( self encodeMethodSource: aMethodDefinition ) classified: 'AMQP codec'
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> initializerSource [
 
 	^ String
@@ -414,13 +424,13 @@ AmqpSpecCompiler >> initializerSource [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> prefix [
 
 	^ prefix
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> reservedValueForDomain: domain [
 
 	domain = 'octet'
@@ -434,13 +444,13 @@ AmqpSpecCompiler >> reservedValueForDomain: domain [
 	^ 'nil'
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> spec [
 
 	^ spec
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> spec: anObject [
 
 	spec := anObject.
@@ -448,7 +458,7 @@ AmqpSpecCompiler >> spec: anObject [
 	prefix := 'Amqp' , spec versionString
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables: aCollection [
 
 	| instanceVariableNames |
@@ -467,7 +477,7 @@ AmqpSpecCompiler >> subclassOf: aSuperClass named: aClassName instanceVariables:
 		package: definitionCategory
 ]
 
-{ #category : #'code generation' }
+{ #category : 'code generation' }
 AmqpSpecCompiler >> wipePackage [
 
 	( self confirm: 'Are you sure you want to erase all classes in package ' , definitionCategory , '?' )
