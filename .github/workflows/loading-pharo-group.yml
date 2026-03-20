@@ -1,10 +1,12 @@
-name: Pharo Unit Tests
+name: Reusable Baseline groups
 on:
-  - push
-  - pull_request
-  - workflow_dispatch
+  workflow_call:
+    inputs:
+      load-spec:
+        required: true
+        type: string
 jobs:
-   unit-tests-pharo-10:
+  group-loading-pharo-10:
     runs-on: ubuntu-latest
     name: Pharo64-10
     services:
@@ -15,20 +17,13 @@ jobs:
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v6
-      - name: Load Image and Run Tests
-        uses: ba-st-actions/pharo-ci@v10
+      - uses: ba-st-actions/pharo-ci@v10
         with:
-          spec: .smalltalkci/.unit-tests.ston
+          spec: .smalltalkci/.loading.${{ inputs.load-spec }}.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 15
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          name: Unit-Tests-Pharo-10
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit
-   unit-tests-pharo-11:
+  group-loading-pharo-11:
     runs-on: ubuntu-latest
     name: Pharo64-11
     services:
@@ -39,20 +34,13 @@ jobs:
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v6
-      - name: Load Image and Run Tests
-        uses: ba-st-actions/pharo-ci@v11
+      - uses: ba-st-actions/pharo-ci@v11
         with:
-          spec: .smalltalkci/.unit-tests.ston
+          spec: .smalltalkci/.loading.${{ inputs.load-spec }}.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 15
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          name: Unit-Tests-Pharo-11
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit
-   unit-tests-pharo-12:
+  group-loading-pharo-12:
     runs-on: ubuntu-latest
     name: Pharo64-12
     services:
@@ -63,20 +51,13 @@ jobs:
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v6
-      - name: Load Image and Run Tests
-        uses: ba-st-actions/pharo-ci@v12
+      - uses: ba-st-actions/pharo-ci@v12
         with:
-          spec: .smalltalkci/.unit-tests.ston
+          spec: .smalltalkci/.loading.${{ inputs.load-spec }}.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 15
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          name: Unit-Tests-Pharo-12
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit
-   unit-tests-pharo-13:
+  group-loading-pharo-13:
     runs-on: ubuntu-latest
     name: Pharo64-13
     services:
@@ -87,16 +68,9 @@ jobs:
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v6
-      - name: Load Image and Run Tests
-        uses: ba-st-actions/pharo-ci@v13
+      - uses: ba-st-actions/pharo-ci@v13
         with:
-          spec: .smalltalkci/.unit-tests.ston
+          spec: .smalltalkci/.loading.${{ inputs.load-spec }}.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 15
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          name: Unit-Tests-Pharo-13
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit
