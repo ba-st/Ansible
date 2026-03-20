@@ -18,7 +18,9 @@ At the code level changes are minor, you will create an exchange of type
  whose binding key is equal to the routing key of the message.
 
 ```smalltalk
-channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs'
+  of: 'direct'
+  applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
 ```
@@ -39,7 +41,9 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs'
+  of: 'direct'
+  applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 
 #('info' 'warning' 'error') do: [ :severity |
@@ -88,7 +92,9 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs'
+  of: 'direct'
+  applying: [:exchange | ].
 result := channel declareQueueApplying: [ :queue | ].
 channel queueBind: result method queue exchange: 'better_logs' routingKey: 'error'.
 
@@ -126,7 +132,9 @@ connection := AmqpConnectionBuilder new
 connection open.
 
 channel := connection createChannel.
-channel declareExchangeNamed: 'better_logs' of: 'direct' applying: [:exchange | ].
+channel declareExchangeNamed: 'better_logs'
+  of: 'direct'
+  applying: [:exchange | ].
 
 channel
   basicPublish: '2014-10-31 13:11:10.8458 Service started up' utf8Encoded

@@ -35,8 +35,9 @@ channel := connection createChannel.
 ```
 
 Channels are logical connections to the broker. Channels allow sharing a
- connection by multiplexing the messages through them; this means communication
- on a channel is isolated from communication on other channels sharing the same connection.
+connection by multiplexing the messages through them; this means communication
+on a channel is isolated from communication on other channels sharing the same
+connection.
 
 On this channel you're going to create a queue named `task_queue`
 

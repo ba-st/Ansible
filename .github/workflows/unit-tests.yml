@@ -21,6 +21,7 @@ jobs:
           spec: .smalltalkci/.unit-tests.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANSIBLE_RABBITMQ_HOSTNAME: rabbitmq
         timeout-minutes: 15
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -45,6 +46,7 @@ jobs:
           spec: .smalltalkci/.unit-tests.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANSIBLE_RABBITMQ_HOSTNAME: rabbitmq
         timeout-minutes: 15
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -69,6 +71,7 @@ jobs:
           spec: .smalltalkci/.unit-tests.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANSIBLE_RABBITMQ_HOSTNAME: rabbitmq
         timeout-minutes: 15
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -93,6 +96,7 @@ jobs:
           spec: .smalltalkci/.unit-tests.ston
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANSIBLE_RABBITMQ_HOSTNAME: rabbitmq
         timeout-minutes: 15
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

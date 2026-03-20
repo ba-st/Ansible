@@ -1,4 +1,4 @@
-# RabbitMQPublisher
+# `RabbitMQPublisher`
 
 This object will connect to an AMQP channel and knows how to publish messages
 to the specified queue for further processing.
@@ -7,15 +7,15 @@ Accepts the following options:
 
 <!-- markdownlint-disable MD013 -->
 | Attribute name | Description | Optional/Mandatory | Default value |
-| ---------------|-------------|--------------------|---------------|
-| #hostname | Hostname of the rabbitmq broker | Optional | localhost |
-| #port | Port numbre of the rabbitmq broker | Optional | 5672 |
-| #username | Username of the rabbitmq broker | Optional | guest |
-| #password | Username of the rabbitmq broker | Optional | guest |
+| -------------- | ----------- | ------------------ | ------------- |
+| #hostname | Hostname of the RabbitMQ broker | Optional | localhost |
+| #port | Port number of the RabbitMQ broker | Optional | 5672 |
+| #username | Username of the RabbitMQ broker | Optional | guest |
+| #password | Username of the RabbitMQ broker | Optional | guest |
 | #maximumConnectionAttemps | Amount of retries when connecting to the broker fails | Optional | 3 |
-| #timeSlotBetweenConnectionRetriesInMs | Time duration between retry attempts determined by using the exponential backoff algorithm | Optional | 3000 |
+| #timeSlotBetweenConnectionRetriesInMs | Time duration between retry attempts determined by using the exponential back off algorithm | Optional | 3000 |
 | #enableDebuggingLogs | A boolean indicating whether to log debugging events | Optional | false |
-| #extraClientProperties | A dictionary with keys and values to set the [client properties](https://www.rabbitmq.com/docs/connections#capabilities) |Optional | Empty |
+| #extraClientProperties | A dictionary with keys and values to set the [client properties](https://www.rabbitmq.com/docs/connections#capabilities) | Optional | Empty |
 | #retry | A block that can configure the internal `Retry` instance | Optional | `[]` |
 
 ## Usage
@@ -48,7 +48,7 @@ publisher publish: 'The message' to: 'the-queue'.
 publisher publish: 'The message' to: 'a-routing-key' through: 'the-exchange'.
 ```
 
-* Publish to all queues bound to a [fanout exchange](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-fanout).
+* Publish to all queues bound to a [fan out exchange](https://www.rabbitmq.com/tutorials/amqp-concepts#exchange-fanout).
 
 ```smalltalk
 publisher broadcast: 'The message' toAllQueuesBindedTo: 'a-fanout-exchange'.
