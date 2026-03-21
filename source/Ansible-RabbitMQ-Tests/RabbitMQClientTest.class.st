@@ -119,16 +119,6 @@ RabbitMQClientTest >> closeAllConnectionsFromTheClientSide [
     thenDo: #closeAndDestroy
 ]
 
-{ #category : 'private - support' }
-RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
-
-	^ OSPlatform current runCommand:
-		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
-			    expandMacrosWith: aRabbitmqContainerId
-			    with: aUsername
-			    with: aCloseReason )
-]
-
 { #category : 'private - accessing' }
 RabbitMQClientTest >> defaultDirectExchangeName [
 
@@ -179,12 +169,6 @@ RabbitMQClientTest >> rabbitHostname [
 
   AMQPTest withHostnameDo: [ :hostname | ^ hostname ].
   ^ 'localhost'
-]
-
-{ #category : 'private - accessing' }
-RabbitMQClientTest >> rabbitMQContainerID [
-
-	^ ( OSPlatform current resultOfCommand: 'docker ps -q --filter "name=rabbitmq"' ) trim
 ]
 
 { #category : 'private - accessing' }
@@ -446,11 +430,15 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
             publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
-			'\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+          { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest'
+              expandMacrosWith: self rabbitHostname .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+              expandMacrosWith: self rabbitHostname .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)'
+              expandMacrosWith: self rabbitHostname .
+            '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+              expandMacrosWith: self rabbitHostname }
     ].
 
 
