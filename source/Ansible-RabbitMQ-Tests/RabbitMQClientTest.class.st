@@ -40,7 +40,7 @@ RabbitMQClientTest >> anotherRabbitMQPublisher [
       ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - asserting' }
 RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queueName [
 
   | worker queue messageWasConsumed |
@@ -48,6 +48,7 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
   worker := RabbitMQWorker
               configuredBy: [ :options |
                   options
+                    at: #hostname put: self rabbitHostname;
                     at: #queueName put: queueName;
                     at: #queueDurable put: false;
                     at: #enableDebuggingLogs put: true
@@ -70,7 +71,7 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
   ] ensure: [ worker stop ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - asserting' }
 RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queueName [
 
   | queue messageWasPublished |
@@ -113,7 +114,7 @@ RabbitMQClientTest >> closeAllConnectionsFromTheBrokerSide [
 			]
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsFromTheClientSide [
 
   Socket allInstances
@@ -315,20 +316,22 @@ RabbitMQClientTest >> testCannotStartBecauseNotFoundARabbitMQService [
 { #category : 'tests' }
 RabbitMQClientTest >> testDebuggingLogsEnabled [
 
-	| anotherPublisher |
+  | anotherPublisher |
+  anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
 
-	anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
-
-	self
-		runMemoryLoggerDuring: [
-				anotherPublisher start.
-				anotherPublisher publish: 'Hello!' to: self queueName.
-				anotherPublisher stop
-			]
-		assertingLogRecordsMatchRegexes:
-			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-				'\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+  self
+    runMemoryLoggerDuring: [
+        anotherPublisher start.
+        anotherPublisher publish: 'Hello!' to: self queueName.
+        anotherPublisher stop
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+          expandMacrosWith: self rabbitHostname .
+        '\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)-><1s>\:5672"\}'
+          expandMacrosWith: self rabbitHostname .
+        '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to Normal shutdown'
+          expandMacrosWith: self rabbitHostname }
 ]
 
 { #category : 'tests' }
