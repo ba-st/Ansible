@@ -1,28 +1,32 @@
 Class {
-	#name : #AmqpChannelTest,
-	#superclass : #TestCase,
+	#name : 'AmqpChannelTest',
+	#superclass : 'TestCase',
 	#instVars : [
 		'connection'
 	],
-	#category : #'Ansible-Protocol-Tests'
+	#category : 'Ansible-Protocol-Tests',
+	#package : 'Ansible-Protocol-Tests'
 }
 
-{ #category : #running }
+{ #category : 'running' }
 AmqpChannelTest >> setUp [
 
-	super setUp.
-	connection := AmqpConnectionBuilder usingAMQP091Protocol build.
-	connection open
+  | connectionBuilder |
+  super setUp.
+  connectionBuilder := AmqpConnectionBuilder usingAMQP091Protocol.
+  AMQPTest withHostnameDo: [ :hostname | connectionBuilder hostname: hostname ].
+  connection := connectionBuilder build.
+  connection open
 ]
 
-{ #category : #running }
+{ #category : 'running' }
 AmqpChannelTest >> tearDown [
 
 	connection ifNotNil: #close.
 	super tearDown
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 AmqpChannelTest >> testDeclareQueue [
 
 	| channel result |
