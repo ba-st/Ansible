@@ -40,5 +40,5 @@ To run the unit tests you need a working RabbitMQ instance. The easier way is
 to start one using docker:
 
 ```bash
-docker run -d -p 5672:5672 rabbitmq:latest
+docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:management
 ```
