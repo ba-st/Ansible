@@ -97,21 +97,18 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 
 { #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsFromTheBrokerSide [
+  "Use the HTTP admin API to close all the connections of the user"
 
-	| rabbitmqContainerId closeReason |
-
-	rabbitmqContainerId := self rabbitMQContainerID.
-
-	closeReason := 'CloseConnectionsTest'.
-
-	rabbitmqContainerId isEmpty
-		then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
-		otherwise: [
-			self
-				closeAllConnectionsOf: rabbitmqContainerId
-				for: self defaultRabbitMQWorkerUsername
-				because: closeReason
-			]
+  ZnClient new
+    enforceHttpSuccess: true;
+    accept: ZnMimeType applicationJson;
+    url: ( 'http://<1s>:15672/api/connections/username/<2s>'
+          expandMacrosWith: self rabbitHostname
+          with: self defaultRabbitMQWorkerUsername );
+    headerAt: 'X-Reason' put: 'CloseConnectionsTest';
+    setBasicAuthenticationUsername: self defaultRabbitMQWorkerUsername
+    password: AmqpConnectionBuilder usingAMQP091Protocol credentials password;
+    delete
 ]
 
 { #category : 'private - support' }
