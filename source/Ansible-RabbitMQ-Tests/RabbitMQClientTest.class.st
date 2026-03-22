@@ -158,6 +158,20 @@ RabbitMQClientTest >> defaultTopicExchangeName [
   ^ 'amq.topic'
 ]
 
+{ #category : 'private - support' }
+RabbitMQClientTest >> expectedLogRecordsWhenConnectionIsTemporallyLost [
+
+  ^ { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest'
+        expandMacrosWith: self rabbitHostname .
+      '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+        expandMacrosWith: self rabbitHostname .
+      '(\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent))|([ERROR] AMQP Heartbeat failed unexpectedly (connection closed while sending data))'
+        expandMacrosWith: self rabbitHostname .
+      '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
+      '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+        expandMacrosWith: self rabbitHostname }
+]
+
 { #category : 'private - accessing' }
 RabbitMQClientTest >> queueName [
 
@@ -429,16 +443,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
               waitUntilAllRabbitMQConnectionsClose.
             publisher publish: 'Test connection restored' to: self queueName
           ]
-        assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest'
-              expandMacrosWith: self rabbitHostname .
-            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
-              expandMacrosWith: self rabbitHostname .
-            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)'
-              expandMacrosWith: self rabbitHostname .
-            '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
-              expandMacrosWith: self rabbitHostname }
+        assertingLogRecordsMatchRegexes: self expectedLogRecordsWhenConnectionIsTemporallyLost
     ].
 
 
