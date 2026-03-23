@@ -165,7 +165,7 @@ RabbitMQClientTest >> expectedLogRecordsWhenConnectionIsTemporallyLost [
         expandMacrosWith: self rabbitHostname .
       '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
         expandMacrosWith: self rabbitHostname .
-      '\[ERROR\] AMQP Heartbeat failed unexpectedly (connection closed while sending data|send data timeout; data not sent)|\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)'
+      '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|send data timeout; data not sent)\)|\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)'
         expandMacrosWith: self rabbitHostname .
       '\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
       '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
