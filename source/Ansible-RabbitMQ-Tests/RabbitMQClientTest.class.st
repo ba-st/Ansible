@@ -5,8 +5,7 @@ Class {
 		'reversedTexts',
 		'workerProcess',
 		'loggingAsserter',
-		'publisher',
-		'semaphore'
+		'publisher'
 	],
 	#category : 'Ansible-RabbitMQ-Tests',
 	#package : 'Ansible-RabbitMQ-Tests'
@@ -30,18 +29,18 @@ RabbitMQClientTest >> addTimestampRegexTo: aLogEntryCollection [
 { #category : 'private - accessing' }
 RabbitMQClientTest >> anotherRabbitMQPublisher [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 1234;
-				  at: #username put: 'bugs';
-				  at: #password put: 'bunny';
-				  at: #maximumConnectionAttemps put: 1;
-				  at: #timeSlotBetweenConnectionRetriesInMs put: 1
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        options
+          at: #hostname put: self rabbitHostname;
+          at: #port put: 1234;
+          at: #username put: 'bugs';
+          at: #password put: 'bunny';
+          at: #maximumConnectionAttemps put: 1;
+          at: #timeSlotBetweenConnectionRetriesInMs put: 1
+      ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - asserting' }
 RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queueName [
 
   | worker queue messageWasConsumed |
@@ -49,6 +48,7 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
   worker := RabbitMQWorker
               configuredBy: [ :options |
                   options
+                    at: #hostname put: self rabbitHostname;
                     at: #queueName put: queueName;
                     at: #queueDurable put: false;
                     at: #enableDebuggingLogs put: true
@@ -71,7 +71,7 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
   ] ensure: [ worker stop ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - asserting' }
 RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queueName [
 
   | queue messageWasPublished |
@@ -97,39 +97,26 @@ RabbitMQClientTest >> assertQueueStatusAfterPublishing: messagesToSend on: queue
 
 { #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsFromTheBrokerSide [
+  "Use the HTTP admin API to close all the connections of the user"
 
-	| rabbitmqContainerId closeReason |
-
-	rabbitmqContainerId := self rabbitMQContainerID.
-
-	closeReason := 'CloseConnectionsTest'.
-
-	rabbitmqContainerId isEmpty
-		then: [ Error signal: 'Could not find a running RabbitMQ container.' ]
-		otherwise: [
-			self
-				closeAllConnectionsOf: rabbitmqContainerId
-				for: self defaultRabbitMQWorkerUsername
-				because: closeReason
-			]
+  ZnClient new
+    enforceHttpSuccess: true;
+    accept: ZnMimeType applicationJson;
+    url: ( 'http://<1s>:15672/api/connections/username/<2s>'
+          expandMacrosWith: self rabbitHostname
+          with: self defaultRabbitMQWorkerUsername );
+    headerAt: 'X-Reason' put: 'CloseConnectionsTest';
+    setBasicAuthenticationUsername: self defaultRabbitMQWorkerUsername
+    password: AmqpConnectionBuilder usingAMQP091Protocol credentials password;
+    delete
 ]
 
-{ #category : 'tests' }
+{ #category : 'private - support' }
 RabbitMQClientTest >> closeAllConnectionsFromTheClientSide [
 
   Socket allInstances
     select: [ :socket | socket isConnected and: [ socket remotePort = 5672 ] ]
     thenDo: #closeAndDestroy
-]
-
-{ #category : 'private - support' }
-RabbitMQClientTest >> closeAllConnectionsOf: aRabbitmqContainerId for: aUsername because: aCloseReason [
-
-	^ OSPlatform current runCommand:
-		  ( 'docker exec <1s> rabbitmqctl close_all_user_connections <2s> <3s>'
-			    expandMacrosWith: aRabbitmqContainerId
-			    with: aUsername
-			    with: aCloseReason )
 ]
 
 { #category : 'private - accessing' }
@@ -147,16 +134,16 @@ RabbitMQClientTest >> defaultFanoutExchangeName [
 { #category : 'private - accessing' }
 RabbitMQClientTest >> defaultRabbitMQPublisher [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 5672;
-				  at: #username: put: 'guest';
-				  at: #password put: 'guest';
-				  at: #extraClientProperties put: ( Dictionary new
-						    at: 'process' put: 'RabbitMQClientTest Publisher';
-						    yourself )
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        options
+          at: #hostname put: self rabbitHostname;
+          at: #port put: 5672;
+          at: #username: put: 'guest';
+          at: #password put: 'guest';
+          at: #extraClientProperties put: ( Dictionary new
+                at: 'process' put: 'RabbitMQClientTest Publisher';
+                yourself )
+      ]
 ]
 
 { #category : 'private - accessing' }
@@ -171,6 +158,21 @@ RabbitMQClientTest >> defaultTopicExchangeName [
   ^ 'amq.topic'
 ]
 
+{ #category : 'private - support' }
+RabbitMQClientTest >> expectedLogRecordsWhenConnectionIsTemporallyLost [
+
+  ^ { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest'
+        expandMacrosWith: self rabbitHostname .
+      '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+        expandMacrosWith: self rabbitHostname .
+      '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|send data timeout; data not sent)\).|\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)'
+        expandMacrosWith: self rabbitHostname .
+      '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)|\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)'
+        expandMacrosWith: self rabbitHostname .
+      '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+        expandMacrosWith: self rabbitHostname }
+]
+
 { #category : 'private - accessing' }
 RabbitMQClientTest >> queueName [
 
@@ -178,22 +180,23 @@ RabbitMQClientTest >> queueName [
 ]
 
 { #category : 'private - accessing' }
-RabbitMQClientTest >> rabbitMQContainerID [
+RabbitMQClientTest >> rabbitHostname [
 
-	^ ( OSPlatform current resultOfCommand: 'docker ps -q --filter "name=rabbitmq"' ) trim
+  AMQPTest withHostnameDo: [ :hostname | ^ hostname ].
+  ^ 'localhost'
 ]
 
 { #category : 'private - accessing' }
 RabbitMQClientTest >> rabbitMQPublisherWithDebuggingLogs [
 
-	^ RabbitMQPublisher configuredBy: [ :options |
-			  options
-				  at: #hostname put: 'localhost';
-				  at: #port put: 5672;
-				  at: #username: put: 'guest';
-				  at: #password put: 'guest';
-				  at: #enableDebuggingLogs put: true
-		  ]
+  ^ RabbitMQPublisher configuredBy: [ :options |
+        options
+          at: #hostname put: self rabbitHostname;
+          at: #port put: 5672;
+          at: #username: put: 'guest';
+          at: #password put: 'guest';
+          at: #enableDebuggingLogs put: true
+      ]
 ]
 
 { #category : 'private - support' }
@@ -227,7 +230,7 @@ RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: 
                worker := RabbitMQWorker
                            configuredBy: [ :options |
                                options
-                                 at: #hostname put: 'localhost';
+                                 at: #hostname put: self rabbitHostname;
                                  at: #queueName put: aQueueName;
                                  at: #extraClientProperties put: ( Dictionary new
                                        at: 'process' put: aName;
@@ -284,42 +287,47 @@ RabbitMQClientTest >> storeText: aString [
 { #category : 'running' }
 RabbitMQClientTest >> tearDown [
 
-	[ publisher channel queueDelete: self queueName ]
-		on: AmqpDisconnectedError, NetworkError
-		do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
-	publisher stop.
-	workerProcess terminate.
-	super tearDown
+  [ publisher channel ifNotNil: [ :channel | channel queueDelete: self queueName ] ]
+    on: AmqpDisconnectedError , NetworkError
+    do: [ :signal | " Handle when tests fail and the channel was never opened" signal return ].
+  publisher stop.
+  workerProcess terminate.
+  super tearDown
 ]
 
 { #category : 'tests' }
 RabbitMQClientTest >> testCannotStartBecauseNotFoundARabbitMQService [
 
-	self
-		runMemoryLoggerDuring: [ self should: [ self anotherRabbitMQPublisher start ] raise: NetworkError ]
-		assertingLogRecordsMatchRegexes:
-			{ '\[INFO\] AMQP connection to localhost\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to 127.0.0.1\:1234' .
-				'\[ERROR\] Attempt #1/1 to connect to RabbitMQ failed\: (Connection aborted|Cannot connect) to 127.0.0.1\:1234' .
-				'\[INFO\] AMQP connection to localhost\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to 127.0.0.1\:1234' }
+  self
+    runMemoryLoggerDuring: [
+      self should: [ self anotherRabbitMQPublisher start ] raise: NetworkError ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection to <1s>\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to \d+.\d+.\d+.\d+\:1234'
+          expandMacrosWith: self rabbitHostname .
+        '\[ERROR\] Attempt #1/1 to connect to RabbitMQ failed\: (Connection aborted|Cannot connect) to \d+.\d+.\d+.\d+\:1234' .
+        '\[INFO\] AMQP connection to <1s>\:1234 failed to establish because (ConnectionClosed\: Connection aborted|ConnectionTimedOut\: Cannot connect) to \d+.\d+.\d+.\d+\:1234'
+          expandMacrosWith: self rabbitHostname }
 ]
 
 { #category : 'tests' }
 RabbitMQClientTest >> testDebuggingLogsEnabled [
 
-	| anotherPublisher |
+  | anotherPublisher |
+  anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
 
-	anotherPublisher := self rabbitMQPublisherWithDebuggingLogs.
-
-	self
-		runMemoryLoggerDuring: [
-				anotherPublisher start.
-				anotherPublisher publish: 'Hello!' to: self queueName.
-				anotherPublisher stop
-			]
-		assertingLogRecordsMatchRegexes:
-			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-				'\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+  self
+    runMemoryLoggerDuring: [
+        anotherPublisher start.
+        anotherPublisher publish: 'Hello!' to: self queueName.
+        anotherPublisher stop
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+          expandMacrosWith: self rabbitHostname .
+        '\[DEBUG\] RabbitMQ message published \{"messagePublished"\:"Hello!","routingKey"\:"tasks-for-testDebuggingLogsEnabled","connectionDescription"\:"localhost\:(\d+)-><1s>\:5672"\}'
+          expandMacrosWith: self rabbitHostname .
+        '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to Normal shutdown'
+          expandMacrosWith: self rabbitHostname }
 ]
 
 { #category : 'tests' }
@@ -334,27 +342,31 @@ RabbitMQClientTest >> testDebuggingLogsEnabledInWorker [
   self
     runMemoryLoggerDuring: [ self assertQueueStatusAfterConsuming: messagesToSend from: queueName ]
     assertingLogRecordsMatchRegexes:
-      { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-        '\[DEBUG\] RabbitMQ message consumed \{"deliveryTag"\:1,"messageConsumed"\:"Do it!","routingKey"\:"tasks-for-testDebuggingLogsEnabledInWorker","connectionDescription"\:"localhost\:(\d+)->localhost\:5672"\}' .
-        '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+      { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+          expandMacrosWith: self rabbitHostname .
+        '\[DEBUG\] RabbitMQ message consumed \{"deliveryTag"\:1,"messageConsumed"\:"Do it!","routingKey"\:"tasks-for-testDebuggingLogsEnabledInWorker","connectionDescription"\:"localhost\:(\d+)-><1s>\:5672"\}'
+          expandMacrosWith: self rabbitHostname .
+        '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to Normal shutdown'
+          expandMacrosWith: self rabbitHostname }
 ]
 
 { #category : 'tests' }
 RabbitMQClientTest >> testDebuggingLogsTurnedOff [
 
-	| anotherPublisher |
+  | anotherPublisher |
+  anotherPublisher := self defaultRabbitMQPublisher.
 
-	anotherPublisher := self defaultRabbitMQPublisher.
-
-	self
-		runMemoryLoggerDuring: [
-				anotherPublisher start.
-				anotherPublisher publish: 'Hello!' to: self queueName.
-				anotherPublisher stop
-			]
-		assertingLogRecordsMatchRegexes:
-			{ '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-				'\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to Normal shutdown' }
+  self
+    runMemoryLoggerDuring: [
+        anotherPublisher start.
+        anotherPublisher publish: 'Hello!' to: self queueName.
+        anotherPublisher stop
+      ]
+    assertingLogRecordsMatchRegexes:
+      { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+          expandMacrosWith: self rabbitHostname .
+        '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to Normal shutdown'
+          expandMacrosWith: self rabbitHostname }
 ]
 
 { #category : 'tests' }
@@ -393,11 +405,16 @@ RabbitMQClientTest >> testPublishingMessageWhenClientUnexpectedlyClosesConnectio
             publisher publish: 'Test connection restored' to: self queueName
           ]
         assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+          { '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (Connection close while waiting for data.|primitive #primSocketSendDone\: in Socket failed|primitive #primSocketReceiveDataAvailable\: in Socket failed)'
+              expandMacrosWith: self rabbitHostname .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+              expandMacrosWith: self rabbitHostname .
+            '\[ERROR\] AMQP Heartbeat failed unexpectedly \((connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)\).'
+              expandMacrosWith: self rabbitHostname .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 closed due to (connection closed while sending data|Socket destroyed, cannot retrieve error message|primitive #primSocketSendDone\: in Socket failed)'
+              expandMacrosWith: self rabbitHostname .
+            '\[INFO\] AMQP connection localhost\:(\d+)-><1s>\:5672 established successfully'
+              expandMacrosWith: self rabbitHostname }
     ].
 
   self
@@ -427,12 +444,7 @@ RabbitMQClientTest >> testPublishingMessageWhenConnectionIsTemporallyLost [
               waitUntilAllRabbitMQConnectionsClose.
             publisher publish: 'Test connection restored' to: self queueName
           ]
-        assertingLogRecordsMatchRegexes:
-          { '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to CONNECTION_FORCED - CloseConnectionsTest' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 closed due to (connection closed while sending data|send data timeout; data not sent)' .
-			'\[ERROR\] Attempt #1\/3 to connect to RabbitMQ failed\: (connection closed while sending data|send data timeout; data not sent)' .
-            '\[INFO\] AMQP connection localhost\:(\d+)->localhost\:5672 established successfully' }
+        assertingLogRecordsMatchRegexes: self expectedLogRecordsWhenConnectionIsTemporallyLost
     ].
 
 

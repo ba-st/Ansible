@@ -1,33 +1,34 @@
 Class {
-	#name : #AmqpEntityDefinition,
-	#superclass : #Object,
+	#name : 'AmqpEntityDefinition',
+	#superclass : 'Object',
 	#instVars : [
 		'name',
 		'xml',
 		'index'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> index [
 
 	^ index
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> index: anObject [
 
 	index := anObject
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpEntityDefinition >> installOn: aDictionary [
 
 	aDictionary at: name put: self
 ]
 
-{ #category : #building }
+{ #category : 'building' }
 AmqpEntityDefinition >> loadFrom: anXmlNode [
 
 	xml := anXmlNode.
@@ -36,19 +37,19 @@ AmqpEntityDefinition >> loadFrom: anXmlNode [
 	index ifNotNil: [ index := index asInteger ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> name [
 
 	^ name
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> name: anObject [
 
 	name := anObject
 ]
 
-{ #category : #printing }
+{ #category : 'printing' }
 AmqpEntityDefinition >> printOn: aStream [
 
 	super printOn: aStream.
@@ -60,13 +61,13 @@ AmqpEntityDefinition >> printOn: aStream [
 		nextPut: $)
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> xml [
 
 	^ xml
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpEntityDefinition >> xml: anObject [
 
 	xml := anObject

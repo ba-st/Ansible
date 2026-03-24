@@ -1,37 +1,38 @@
 Class {
-	#name : #AmqpName,
-	#superclass : #Object,
+	#name : 'AmqpName',
+	#superclass : 'Object',
 	#instVars : [
 		'name'
 	],
-	#category : #'Ansible-Tools'
+	#category : 'Ansible-Tools',
+	#package : 'Ansible-Tools'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 AmqpName class >> from: aString [ 
 	
 	^ self new initializeFrom: aString
 ]
 
-{ #category : #comparing }
+{ #category : 'comparing' }
 AmqpName >> = anObject [
 
 	^ self class = anObject class and: [ self name = anObject name ]
 ]
 
-{ #category : #comparing }
+{ #category : 'comparing' }
 AmqpName >> hash [
 
 	^ name hash 
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 AmqpName >> initializeFrom: aString [ 
 	
 	name := aString
 ]
 
-{ #category : #transforming }
+{ #category : 'transforming' }
 AmqpName >> lowerCamelCased [
 
 	^ String
@@ -44,13 +45,13 @@ AmqpName >> lowerCamelCased [
 			]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpName >> name [
 
 	^ name
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 AmqpName >> parts [ 
 
 	| string |
@@ -61,13 +62,13 @@ AmqpName >> parts [
 	^ string substrings
 ]
 
-{ #category : #printing }
+{ #category : 'printing' }
 AmqpName >> printOn: aStream [
 
 	aStream nextPutAll: name
 ]
 
-{ #category : #transforming }
+{ #category : 'transforming' }
 AmqpName >> upperCamelCased [
 
 	^ String

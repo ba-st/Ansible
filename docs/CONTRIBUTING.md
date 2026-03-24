@@ -16,7 +16,7 @@ You can report issues [here](https://github.com/ba-st/Ansible/issues/new)
  incompatible change is made the major version MUST be increased.
 - The source code is hosted in this repository using the Tonel format in
  the `source` folder.
-- The `<DEFAULT_BRANCH>` branch contains the latest changes and should always
+- The `release-candidate` branch contains the latest changes and should always
  be in a releasable state.
 - Feel free to send pull requests or fork the project.
 - Code contributions without test cases have a lower probability of being merged
@@ -34,7 +34,7 @@ You can report issues [here](https://github.com/ba-st/Ansible/issues/new)
 7. Do the changes
 8. Run the test cases
 9. Commit and push your changes to the branch using the Iceberg UI
-10. Create a Pull Request against the `<DEFAULT_BRANCH>` branch
+10. Create a Pull Request against the `release-candidate` branch
 
 ## Contributing documentation
 

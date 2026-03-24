@@ -28,9 +28,11 @@ BaselineOfAnsible >> postLoadInitialization [
   " ExpectedSocketFailure is used to handle socket failures across 
 	different Pharo versions (SocketError was introduced in Pharo 11) "
 
-  Smalltalk at: #ExpectedSocketFailure put: ( ( Smalltalk includesKey: #SocketError )
-        ifTrue: [ Smalltalk at: #SocketError ]
-        ifFalse: [ PrimitiveFailed ] )
+  Smalltalk globals
+    at: #ExpectedSocketFailure
+    put: ( ( Smalltalk globals includesKey: #SocketError )
+          ifTrue: [ Smalltalk globals at: #SocketError ]
+          ifFalse: [ PrimitiveFailed ] )
 ]
 
 { #category : 'accessing' }
@@ -42,58 +44,61 @@ BaselineOfAnsible >> projectClass [
 { #category : 'initialization' }
 BaselineOfAnsible >> setUpDependencies: spec [
 
-	spec
-		baseline: 'XMLParser'
-		with: [ spec repository: 'github://pharo-contributions/XML-XMLParser:master/src' ];
-		project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: #( 'Core' ) ].
+  spec
+    baseline: 'XMLParser'
+    with: [ spec repository: 'github://pharo-contributions/XML-XMLParser:master/src' ];
+    project: 'XMLParser-Core' copyFrom: 'XMLParser' with: [ spec loads: 'Core' ].
 
-	spec
-		baseline: 'Bell' with: [ spec repository: 'github://ba-st/Bell:v3' ];
-		project: 'Bell-SUnit' copyFrom: 'Bell' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
-		
-	spec
-		baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v6' ];
-		project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
+  spec
+    baseline: 'Bell' with: [ spec repository: 'github://ba-st/Bell:v4' ];
+    project: 'Bell-SUnit' copyFrom: 'Bell' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
 
-	spec
-		baseline: 'Buoy' with: [ spec repository: 'github://ba-st/Buoy:v8' ];
-		project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
+  spec
+    baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v7' ];
+    project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
 
-	spec
-		baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v6' ];
-		project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
+  spec
+    baseline: 'Buoy' with: [ spec repository: 'github://ba-st/Buoy:v8' ];
+    project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
+
+  spec
+    baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v7' ];
+    project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
 ]
 
 { #category : 'baselines' }
 BaselineOfAnsible >> setUpDeploymentPackages: spec [
-	
-	spec
-		for: #('pharo7.x' 'pharo8.x' 'pharo9.x' 'pharo10.x' 'pharo11.x')
-		do: [ 
-			spec
-				package: 'Ansible-Pharo-Pending-Patches';
-				group: 'RabbitMQ' with: 'Ansible-Pharo-Pending-Patches'. 
-			spec
-				package: 'Ansible-RabbitMQ'
-				with: [ spec requires: #( 'Ansible-Pharo-Pending-Patches' 'Ansible-Protocol-091' 'Launchpad-Deployment' 'Hyperspace-Deployment' ) ];
-				group: 'RabbitMQ' with: 'Ansible-RabbitMQ' ].
-			
-	spec
-		package: 'Ansible-Protocol-Core';
-		group: 'Deployment-08' with: 'Ansible-Protocol-Core';
-		group: 'Deployment-091' with: 'Ansible-Protocol-Core';
-		package: 'Ansible-Protocol-Common' with: [ spec requires: 'Ansible-Protocol-Core' ];
-		group: 'Deployment-08' with: 'Ansible-Protocol-Common';
-		group: 'Deployment-091' with: 'Ansible-Protocol-Common';
-		package: 'Ansible-Protocol-08' with: [ spec requires: 'Ansible-Protocol-Common' ];
-		group: 'Deployment-08' with: 'Ansible-Protocol-08';
-		package: 'Ansible-Protocol-091' with: [ spec requires: 'Ansible-Protocol-Common' ];
-		group: 'Deployment-091' with: 'Ansible-Protocol-091'.
 
-	spec
-		package: 'Ansible-RabbitMQ'
-		with: [ spec requires: #( 'Ansible-Protocol-091' 'Launchpad-Deployment' 'Hyperspace-Deployment' ) ];
-		group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
+  spec for: #( 'pharo10.x' 'pharo11.x' ) do: [
+      spec
+        package: 'Ansible-Pharo-Pending-Patches';
+        group: 'RabbitMQ' with: 'Ansible-Pharo-Pending-Patches'.
+      spec
+        package: 'Ansible-RabbitMQ' with: [
+            spec requires:
+                #( 'Ansible-Pharo-Pending-Patches' 'Ansible-Protocol-091' 'Launchpad-Deployment'
+                   'Hyperspace-Deployment' )
+          ];
+        group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
+    ].
+
+  spec
+    package: 'Ansible-Protocol-Core';
+    group: 'Deployment-08' with: 'Ansible-Protocol-Core';
+    group: 'Deployment-091' with: 'Ansible-Protocol-Core';
+    package: 'Ansible-Protocol-Common' with: [ spec requires: 'Ansible-Protocol-Core' ];
+    group: 'Deployment-08' with: 'Ansible-Protocol-Common';
+    group: 'Deployment-091' with: 'Ansible-Protocol-Common';
+    package: 'Ansible-Protocol-08' with: [ spec requires: 'Ansible-Protocol-Common' ];
+    group: 'Deployment-08' with: 'Ansible-Protocol-08';
+    package: 'Ansible-Protocol-091' with: [ spec requires: 'Ansible-Protocol-Common' ];
+    group: 'Deployment-091' with: 'Ansible-Protocol-091'.
+
+  spec
+    package: 'Ansible-RabbitMQ'
+    with: [
+        spec requires: #( 'Ansible-Protocol-091' 'Launchpad-Deployment' 'Hyperspace-Deployment' ) ];
+    group: 'RabbitMQ' with: 'Ansible-RabbitMQ'
 ]
 
 { #category : 'baselines' }
