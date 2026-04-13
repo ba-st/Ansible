@@ -54,7 +54,7 @@ BaselineOfAnsible >> setUpDependencies: spec [
     project: 'Bell-SUnit' copyFrom: 'Bell' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
 
   spec
-    baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v7' ];
+    baseline: 'Launchpad' with: [ spec repository: 'github://ba-st/Launchpad:v8' ];
     project: 'Launchpad-Deployment' copyFrom: 'Launchpad' with: [ spec loads: 'Deployment' ].
 
   spec
@@ -62,7 +62,7 @@ BaselineOfAnsible >> setUpDependencies: spec [
     project: 'Buoy-SUnit' copyFrom: 'Buoy' with: [ spec loads: 'Dependent-SUnit-Extensions' ].
 
   spec
-    baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v7' ];
+    baseline: 'Hyperspace' with: [ spec repository: 'github://ba-st/Hyperspace:v8' ];
     project: 'Hyperspace-Deployment' copyFrom: 'Hyperspace' with: [ spec loads: 'Deployment' ]
 ]
 
