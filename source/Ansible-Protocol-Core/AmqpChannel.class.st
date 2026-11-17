@@ -255,10 +255,14 @@ AmqpChannel >> handleBasicDeliver: cmd [
 { #category : 'AMQP server-generated events' }
 AmqpChannel >> handleChannelClose: cmd [
 
+	LogRecord emitWarning: ( 'AMQP channel <1p> of connection <2s> closed by the broker due to <3s>'
+			  expandMacrosWith: handler channelNumber
+			  with: handler connection connectionPairsDescription
+			  with: cmd method replyText ).
 	handler internalClose: cmd method.
 	handler connection
 		sendMethod: protocolVersion channelCloseOkMethod new
-		onChannel: handler channelNumber	"TODO: notify callbacks of closure"
+		onChannel: handler channelNumber
 ]
 
 { #category : 'initialization' }
