@@ -6,24 +6,6 @@ on:
         required: true
         type: string
 jobs:
-  group-loading-pharo-10:
-    runs-on: ubuntu-latest
-    name: Pharo64-10
-    services:
-      rabbitmq:
-        image: rabbitmq:management
-        ports: 
-          - 5672:5672
-        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ba-st-actions/pharo-ci@v10
-        with:
-          spec: .smalltalkci/.loading.${{ inputs.load-spec }}.ston
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANSIBLE_RABBITMQ_HOSTNAME: rabbitmq
-        timeout-minutes: 15
   group-loading-pharo-11:
     runs-on: ubuntu-latest
     name: Pharo64-11
