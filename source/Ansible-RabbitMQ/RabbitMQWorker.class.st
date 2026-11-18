@@ -63,7 +63,7 @@ RabbitMQWorker >> declareQueueInChannel [
 
   channel declareQueueApplying: [ :builder |
       builder name: self queueName.
-      self makeQueueDurable then: [ builder beDurable ]
+      self makeQueueDurable ifFalse: [ builder beTransient ]
     ]
 ]
 

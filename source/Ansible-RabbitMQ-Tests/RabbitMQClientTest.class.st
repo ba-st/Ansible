@@ -50,7 +50,6 @@ RabbitMQClientTest >> assertQueueStatusAfterConsuming: messagesToSend from: queu
                   options
                     at: #hostname put: self rabbitHostname;
                     at: #queueName put: queueName;
-                    at: #queueDurable put: false;
                     at: #enableDebuggingLogs put: true
                 ]
               processingMessagesWith: [ :messageReceived |
