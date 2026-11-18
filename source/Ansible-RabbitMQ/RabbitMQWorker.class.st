@@ -52,6 +52,13 @@ RabbitMQWorker >> bindQueueTo: anExchange routedBy: aRoutingKey [
 ]
 
 { #category : 'private' }
+RabbitMQWorker >> consumeWhileChannelIsOpen [
+
+  [ connection assertSocketConnected and: [ channel whenOpenDo: [ true ] whenClosedDo: [ false ] ] ]
+    whileTrue: [ connection mainLoopCycle ]
+]
+
+{ #category : 'private' }
 RabbitMQWorker >> declareQueueInChannel [
 
   channel declareQueueApplying: [ :builder |
@@ -135,13 +142,13 @@ RabbitMQWorker >> startProcessing [
   self startConsumingFromQueue.
 
   [
-    [ connection waitForEvent ]
+    [ self consumeWhileChannelIsOpen ]
       on: self connectivityErrors
       do: [ :error |
           connection hardCloseDescribedWith: error messageText.
-          self restartConsumingFromQueue.
           error return
-        ]
+        ].
+    self restartConsumingFromQueue
   ] repeat
 ]
 

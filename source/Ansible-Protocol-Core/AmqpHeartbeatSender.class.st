@@ -45,8 +45,7 @@ AmqpHeartbeatSender >> mainKeepAliveCycleEvery: aTimeInterval [
       [
         ( Delay forSeconds: aTimeInterval ) wait.
         [
-          connection sendFrame: self heartbeatFrame.
-          connection codec flush
+          connection sendFrameAndFlush: self heartbeatFrame
         ]
           on: self connectivityErrors
           do: [ :signal |

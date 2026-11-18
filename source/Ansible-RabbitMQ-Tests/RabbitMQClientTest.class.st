@@ -221,6 +221,33 @@ RabbitMQClientTest >> runMemoryLoggerDuring: aBlock assertingLogRecordsMatchRege
     assertLogRecordsMatchUsing: expectedLogEntriesWithTimestamp
 ]
 
+{ #category : 'private - support' }
+RabbitMQClientTest >> runWorkerAcknowledgingFirstMessageTwiceStoringTextsIn: aTextCollection during: aBlock [
+
+  | worker process |
+  worker := RabbitMQWorker
+              configuredBy: [ :options |
+                  options
+                    at: #hostname put: self rabbitHostname;
+                    at: #queueName put: self queueName
+                ]
+              processingMessagesWith: [ :message |
+                  aTextCollection add: message body utf8Decoded.
+                  aTextCollection size = 1 ifTrue: [ worker channel basicAck: message method deliveryTag ]
+                ].
+  process := [ [ worker start ] ensure: [ worker stop ] ] newProcess.
+  process
+    name: 'Worker acknowledging twice';
+    priority: Processor userBackgroundPriority.
+  [
+    process resume.
+    Processor yield.
+    self wait.
+    aBlock value.
+    self wait
+  ] ensure: [ process terminate ]
+]
+
 { #category : 'running' }
 RabbitMQClientTest >> runWorkerNamed: aName consumingFrom: aQueueName bindedTo: anExchange routedBy: aRoutingKey doing: aProcessingBlock during: aBlock [
 
@@ -591,6 +618,34 @@ RabbitMQClientTest >> testPublishingToTopicExchange [
   self
     withTheOnlyOneIn: firstWorkerMessages do: [ :text | self assert: text equals: 'olleH' ];
     withTheOnlyOneIn: secondWorkerMessages do: [ :text | self assert: text equals: 'Hello' ]
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testWorkerConsumesAgainAfterBrokerClosesItsChannel [
+
+  | consumedTexts |
+  consumedTexts := OrderedCollection new.
+  self runWorkerAcknowledgingFirstMessageTwiceStoringTextsIn: consumedTexts during: [
+      publisher publish: 'Hello' to: self queueName.
+      self wait.
+      publisher publish: 'World' to: self queueName
+    ].
+  self assertCollection: consumedTexts equals: ( OrderedCollection with: 'Hello' with: 'World' )
+]
+
+{ #category : 'tests' }
+RabbitMQClientTest >> testWorkerLogsChannelClosedByBroker [
+
+  self runWorkerAcknowledgingFirstMessageTwiceStoringTextsIn: OrderedCollection new during: [
+      self
+        runMemoryLoggerDuring: [
+            publisher publish: 'Hello' to: self queueName.
+            self wait
+          ]
+        assertingLogRecordsMatchRegexes:
+          { '\[WARNING\] AMQP channel 1 of connection localhost\:(\d+)-><1s>\:5672 closed by the broker due to PRECONDITION_FAILED - unknown delivery tag 1'
+              expandMacrosWith: self rabbitHostname }
+    ]
 ]
 
 { #category : 'private - support' }

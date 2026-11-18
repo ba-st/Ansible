@@ -58,6 +58,12 @@ AMQPTest >> messageAs: aLevelDescription from: aSourceIdentifier to: aTargetIden
 ]
 
 { #category : 'tests - support' }
+AMQPTest >> messageCountOfQueueNamed: aQueueName on: aChannel [
+
+  ^ ( aChannel declareQueueApplying: [ :builder | builder name: aQueueName ] ) method messageCount
+]
+
+{ #category : 'tests - support' }
 AMQPTest >> publish: aMessageCollection onExchangeNamed: anExchangeName of: anExchangeType [
 
 	self
@@ -165,6 +171,20 @@ AMQPTest >> setUp [
 				queueDelete: 'tasks';
 				queueDelete: 'hello'
 			]
+]
+
+{ #category : 'tests - support' }
+AMQPTest >> settledMessageCountOfQueueNamed: aQueueName on: aChannel [
+
+  | previousCount currentCount |
+  previousCount := -1.
+  currentCount := self messageCountOfQueueNamed: aQueueName on: aChannel.
+  [ currentCount = previousCount ] whileFalse: [
+      ( Delay forMilliseconds: 200 ) wait.
+      previousCount := currentCount.
+      currentCount := self messageCountOfQueueNamed: aQueueName on: aChannel
+    ].
+  ^ currentCount
 ]
 
 { #category : 'tests - accessing' }
@@ -764,6 +784,26 @@ AMQPTest >> testPublisherSubscriberUsingTopicsExchange [
 	self
 		assert: publicErrorLoggerMessages size equals: 5;
 		assert: anonymousInfoLoggerMessages size equals: 6
+]
+
+{ #category : 'tests' }
+AMQPTest >> testPublishingWhileSendingHeartbeatsDeliversEachMessageOnce [
+
+  | numberOfMessages |
+  numberOfMessages := 10000.
+  self withConnectionDo: [ :connection |
+      | channel heartbeatSender |
+      channel := connection createChannel.
+      channel declareQueueApplying: [ :builder | builder name: 'tasks' ].
+      heartbeatSender := AmqpHeartbeatSender keepingOpen: connection.
+      heartbeatSender startBeatingEvery: 1 / 1000.
+      [
+        1 to: numberOfMessages do: [ :messageNumber |
+          channel basicPublish: messageNumber printString utf8Encoded exchange: '' routingKey: 'tasks' ]
+      ] ensure: [ heartbeatSender stop ].
+      self assert: ( self settledMessageCountOfQueueNamed: 'tasks' on: channel ) equals: numberOfMessages.
+      channel queueDelete: 'tasks'
+    ]
 ]
 
 { #category : 'tests - support' }

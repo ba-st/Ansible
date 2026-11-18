@@ -15,7 +15,8 @@ Class {
 		'hostname',
 		'socketConnectionStatus',
 		'portNumber',
-		'extraClientProperties'
+		'extraClientProperties',
+		'writeLock'
 	],
 	#category : 'Ansible-Protocol-Core',
 	#package : 'Ansible-Protocol-Core'
@@ -159,7 +160,8 @@ AmqpConnection >> initialize [
 	virtualHost := '/'.
 	isOpen := false.
 	channels := Dictionary new.
-	nextChannel := 0
+	nextChannel := 0.
+	writeLock := Mutex new
 ]
 
 { #category : 'initialization' }
@@ -378,16 +380,21 @@ AmqpConnection >> sendFrame: aFrame [
 ]
 
 { #category : 'connection-handling' }
+AmqpConnection >> sendFrameAndFlush: aFrame [
+
+	writeLock critical: [
+		self sendFrame: aFrame.
+		codec flush ]
+]
+
+{ #category : 'connection-handling' }
 AmqpConnection >> sendMethod: aMethod onChannel: aChannelNumber [
 
-	self
-		sendFrame:
-			( AmqpMethodFrame new
-				frameType: self protocolClass frameMethod;
-				channelNumber: aChannelNumber;
-				methodId: aMethod codecMethodId;
-				method: aMethod ).
-	codec flush
+	self sendFrameAndFlush: ( AmqpMethodFrame new
+			  frameType: self protocolClass frameMethod;
+			  channelNumber: aChannelNumber;
+			  methodId: aMethod codecMethodId;
+			  method: aMethod )
 ]
 
 { #category : 'connection-handling' }
@@ -396,25 +403,26 @@ AmqpConnection >> sendMethod: aMethod properties: aProperties body: aByteArray o
 	| pos |
 
 	self assertChannelOpen: channelNumber.
-	self
-		sendFrame:
-			( AmqpMethodFrame new
-				frameType: protocolClass frameMethod;
-				channelNumber: channelNumber;
-				methodId: aMethod codecMethodId;
-				method: aMethod ).
-	self
-		sendFrame:
-			( AmqpContentHeaderFrame new
-				frameType: protocolClass frameHeader;
-				channelNumber: channelNumber;
-				classId: aProperties codecClassId;
-				bodySize: aByteArray size;
-				properties: aProperties ).
-	pos := 1.
-	[ pos <= aByteArray size ]
-		whileTrue: [ pos := self sendBodyFrameContaining: aByteArray startingAt: pos onChannel: channelNumber ].
-	codec flush
+	writeLock critical: [
+		self
+			sendFrame:
+				( AmqpMethodFrame new
+					frameType: protocolClass frameMethod;
+					channelNumber: channelNumber;
+					methodId: aMethod codecMethodId;
+					method: aMethod ).
+		self
+			sendFrame:
+				( AmqpContentHeaderFrame new
+					frameType: protocolClass frameHeader;
+					channelNumber: channelNumber;
+					classId: aProperties codecClassId;
+					bodySize: aByteArray size;
+					properties: aProperties ).
+		pos := 1.
+		[ pos <= aByteArray size ]
+			whileTrue: [ pos := self sendBodyFrameContaining: aByteArray startingAt: pos onChannel: channelNumber ].
+		codec flush ]
 ]
 
 { #category : 'private-opening' }
