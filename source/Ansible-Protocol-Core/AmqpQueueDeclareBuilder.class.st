@@ -26,10 +26,17 @@ AmqpQueueDeclareBuilder >> autoDelete [
 	autoDelete := true
 ]
 
-{ #category : 'configuring' }
+{ #category : 'configuring - deprecated' }
 AmqpQueueDeclareBuilder >> beDurable [
 	
+	self deprecated: 'Deprecated as queues are initialized as durable by default'.
 	durable := true
+]
+
+{ #category : 'configuring' }
+AmqpQueueDeclareBuilder >> beTransient [
+	
+	durable := false
 ]
 
 { #category : 'configuring' }
@@ -64,7 +71,7 @@ AmqpQueueDeclareBuilder >> initializeFor: aProtocolVersion [
 	protocolVersion := aProtocolVersion.
 	"Initialize default values."
 	queueName := ''.
-	durable := false.
+	durable := true.
 	exclusive := false.
 	autoDelete := false.
 	passive := false.
